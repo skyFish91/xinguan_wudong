@@ -28,7 +28,7 @@ export default () => {
       // 刷新token 过期时间，单位秒
       refreshExpire: 60 * 60 * 24 * 30,
       // jwt 秘钥
-      secret: 'cool-app-xxxxxx',
+      secret: 'cd9b60ae-18fc-4db8-bb1a-abe7eb14c931x',
     },
   } as ModuleConfig;
 };

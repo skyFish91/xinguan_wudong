@@ -16,17 +16,27 @@ request.interceptors.request.use((config) => {
 request.interceptors.response.use(
   (res) => {
     const body = res.data;
-    // 仅当 code 为数字且非 0 时视为业务错误（电子票等业务数据里的字符串 code 不误判）
-    if (body && typeof body === 'object' && typeof body.code === 'number' && body.code !== 0) {
-      ElMessage.error(body.message || '请求失败');
-      if (body.code === 1001 || body.code === 1002) {
-        // 登录失效，跳登录页
-        localStorage.removeItem('token');
-        localStorage.removeItem('userInfo');
-        window.location.href = '/login';
+    // 后端返回格式：{ code: 1000, message: 'success', data: {...} }
+    // code: 1000 表示成功，其他表示失败
+    if (body && typeof body === 'object') {
+      if (typeof body.code === 'number') {
+        if (body.code === 1000) {
+          // 成功：返回 data 部分
+          return body.data || body;
+        } else {
+          // 业务错误
+          ElMessage.error(body.message || '请求失败');
+          if (body.code === 1001 || body.code === 1002) {
+            // 登录失效，跳登录页
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            window.location.href = '/login';
+          }
+          return Promise.reject(new Error(body.message));
+        }
       }
-      return Promise.reject(new Error(body.message));
     }
+    // 没有 code 字段，直接返回
     return body;
   },
   (err) => {

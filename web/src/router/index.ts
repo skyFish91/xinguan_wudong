@@ -37,9 +37,12 @@ const router = createRouter({
 
 // 登录守卫
 router.beforeEach((to) => {
+  // 只有需要登录的页面才检查，首页不需要登录
   if (to.meta.requiresAuth && !localStorage.getItem('token')) {
     return { path: '/login', query: { redirect: to.fullPath } };
   }
+  // 其他页面放行
+  return true;
 });
 
 export default router;

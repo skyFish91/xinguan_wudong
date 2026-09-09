@@ -48,11 +48,14 @@ async function onLogin() {
   }
   loading.value = true;
   try {
-    const res: any = await request.post('/auth/login', form);
-    userStore.setLogin(res.accessToken, null);
+    const res: any = await request.post('/app/user/login/password', {
+      phone: form.phone,
+      password: form.password
+    });
+    userStore.setLogin(res.token, null);
     // 拉取用户信息
     try {
-      const profile: any = await request.get('/auth/profile');
+      const profile: any = await request.get('/app/user/info');
       userStore.setUserInfo(profile);
     } catch {
       // 信息拉取失败不影响登录

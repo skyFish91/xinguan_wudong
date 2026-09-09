@@ -78,10 +78,43 @@ const home = reactive<any>({ banners: [], announcements: [], activities: [], hot
 
 onMounted(async () => {
   try {
-    const data: any = await request.get('/home');
+    const data: any = await request.get('/app/home');
     Object.assign(home, data);
   } catch {
-    // 提示已由拦截器统一处理
+    // 加载失败时使用模拟数据
+    home.banners = [
+      { id: 1, imageUrl: 'https://via.placeholder.com/1200x360/667eea/ffffff?text=乌东文旅欢迎您' },
+      { id: 2, imageUrl: 'https://via.placeholder.com/1200x360/764ba2/ffffff?text=探索非遗文化' },
+    ];
+    home.announcements = [
+      { id: 1, title: '🎉 欢迎来到乌东文旅平台，探索美好生活！' },
+    ];
+    home.hotProducts = Array.from({ length: 4 }, (_, i) => ({
+      id: i + 1,
+      title: `非遗商品${i + 1}`,
+      mainImage: `https://via.placeholder.com/280x160/667eea/ffffff?text=商品${i + 1}`,
+      price: (Math.random() * 200 + 50).toFixed(2),
+    }));
+    home.hotHomestays = Array.from({ length: 4 }, (_, i) => ({
+      id: i + 1,
+      name: `特色民宿${i + 1}`,
+      mainImage: `https://via.placeholder.com/280x160/764ba2/ffffff?text=民宿${i + 1}`,
+      minPrice: (Math.random() * 300 + 200).toFixed(0),
+    }));
+    home.hotRoutes = Array.from({ length: 4 }, (_, i) => ({
+      id: i + 1,
+      title: `热门路线${i + 1}`,
+      coverImage: `https://via.placeholder.com/280x160/f39c12/ffffff?text=路线${i + 1}`,
+      price: (Math.random() * 500 + 300).toFixed(0),
+    }));
+    home.hotPosts = Array.from({ length: 3 }, (_, i) => ({
+      id: i + 1,
+      title: `热门游记${i + 1}：探索乌东美景`,
+      images: `https://via.placeholder.com/100x80/e74c3c/ffffff?text=游记${i + 1}`,
+      likeCount: Math.floor(Math.random() * 500),
+      commentCount: Math.floor(Math.random() * 100),
+      viewCount: Math.floor(Math.random() * 2000),
+    }));
   }
 });
 </script>

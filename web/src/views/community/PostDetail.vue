@@ -134,7 +134,7 @@ function needLogin() {
 
 async function load() {
   try {
-    post.value = await request.get(`/community/posts/${route.params.id}`);
+    post.value = await request.get(`/app/note/detail/${route.params.id}`);
   } catch {
     // 已提示
   }
@@ -143,7 +143,7 @@ async function load() {
 
 async function loadComments() {
   try {
-    comments.value = await request.get(`/community/posts/${route.params.id}/comments`);
+    comments.value = await request.get(`/app/note/${route.params.id}/comments`);
   } catch {
     // 已提示
   }
@@ -152,7 +152,7 @@ async function loadComments() {
 async function toggleLike() {
   if (needLogin()) return;
   try {
-    const r: any = await request.post('/community/like', { targetType: 'post', targetId: post.value.id });
+    const r: any = await request.post('/app/like/toggle', { targetType: 'post', targetId: post.value.id });
     post.value.liked = r.liked;
     post.value.likeCount += r.liked ? 1 : -1;
   } catch {
@@ -163,7 +163,7 @@ async function toggleLike() {
 async function toggleFavorite() {
   if (needLogin()) return;
   try {
-    const r: any = await request.post(`/community/posts/${post.value.id}/favorite`);
+    const r: any = await request.post(`/app/note/${post.value.id}/favorite`);
     post.value.favorited = r?.favorited ?? !post.value.favorited;
     post.value.favoriteCount += post.value.favorited ? 1 : -1;
     ElMessage.success(post.value.favorited ? '已收藏' : '已取消收藏');
@@ -175,7 +175,7 @@ async function toggleFavorite() {
 async function toggleFollow() {
   if (needLogin()) return;
   try {
-    const r: any = await request.post('/community/follow', { followUserId: post.value.author.id });
+    const r: any = await request.post('/app/user/follow', { followUserId: post.value.author.id });
     post.value.followed = r?.followed ?? !post.value.followed;
   } catch {
     // 已提示
@@ -195,7 +195,7 @@ async function submitComment(parentId = 0) {
     return;
   }
   try {
-    const r: any = await request.post(`/community/posts/${post.value.id}/comments`, {
+    const r: any = await request.post(`/app/note/${post.value.id}/comments`, {
       content: commentText.value,
       parentId: parentId || replyingTo.value || undefined,
     });
@@ -212,7 +212,7 @@ async function submitComment(parentId = 0) {
 
 async function deleteComment(c: any) {
   try {
-    await request.post(`/community/comments/${c.id}/delete`);
+    await request.post(`/app/comment/${c.id}/delete`);
     ElMessage.success('已删除');
     loadComments();
   } catch {
@@ -223,7 +223,7 @@ async function deleteComment(c: any) {
 async function toggleCommentLike(c: any) {
   if (needLogin()) return;
   try {
-    const r: any = await request.post('/community/like', { targetType: 'comment', targetId: c.id });
+    const r: any = await request.post('/app/like/toggle', { targetType: 'comment', targetId: c.id });
     c.likeCount += r.liked ? 1 : -1;
   } catch {
     // 已提示
@@ -236,7 +236,7 @@ async function submitReport() {
     return;
   }
   try {
-    await request.post('/community/reports', {
+    await request.post('/app/report/create', {
       targetType: 'post',
       targetId: post.value.id,
       reason: reportReason.value,

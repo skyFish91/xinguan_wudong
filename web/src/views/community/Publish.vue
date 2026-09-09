@@ -82,7 +82,7 @@ async function doUpload(options: any) {
   const fd = new FormData();
   fd.append('file', options.file);
   try {
-    const saved: any = await request.post('/upload/file', fd);
+    const saved: any = await request.post('/app/upload/image', fd);
     if (saved?.length) {
       images.value.push(saved[0].url);
     }
@@ -106,7 +106,7 @@ async function submit() {
   }
   publishing.value = true;
   try {
-    const result: any = await request.post('/community/posts', {
+    const result: any = await request.post('/app/note/publish', {
       title: form.title,
       content: form.content,
       images: JSON.stringify(images.value),
@@ -128,7 +128,7 @@ async function submit() {
 
 onMounted(async () => {
   try {
-    topics.value = await request.get('/community/topics');
+    topics.value = await request.get('/app/topic/list');
   } catch {
     // 已提示
   }

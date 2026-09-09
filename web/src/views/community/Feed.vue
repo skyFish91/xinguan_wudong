@@ -101,9 +101,9 @@ async function load(p = 1) {
   }
   loading.value = true;
   try {
-    const data: any = await request.get('/community/posts', {
+    const data: any = await request.get('/app/note/list', {
       params: {
-        tab: tab.value === 'follow' ? 'follow' : tab.value === 'hot' ? 'hot' : undefined,
+        sort: tab.value === 'hot' ? 'hot' : 'new',
         topicId: currentTopic.value || undefined,
         page: page.value,
         pageSize,
@@ -124,7 +124,7 @@ async function load(p = 1) {
 
 onMounted(async () => {
   try {
-    topics.value = await request.get('/community/topics');
+    topics.value = await request.get('/app/topic/list');
   } catch {
     // 已提示
   }
