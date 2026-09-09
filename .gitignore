@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.DS_Store
+coverage/
+# uploads 仅忽略运行时目录，保留 seeds 种子图（归档/镜像分发需要）
+uploads/tmp/
+uploads/2026*/
+*.zip
+*.tar.gz
+.temp/
