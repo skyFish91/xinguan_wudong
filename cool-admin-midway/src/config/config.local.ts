@@ -19,7 +19,8 @@ export default {
         // 统一 snake_case：与 DDL 对齐，避免 Cool 实体把 camelCase 列名写进业务表
         namingStrategy: new SnakeNamingStrategy(),
         // 自动建表 注意：线上部署的时候不要使用，有可能导致数据丢失
-        synchronize: true,
+        // 已关闭：数据库以 docs/database/*.sql DDL 为唯一权威，实体只做映射不做建表
+        synchronize: false,
         // 打印日志
         logging: false,
         // 字符集
