@@ -1634,5 +1634,6 @@ declare namespace Eps {
 		merchant: { merchant: MerchantMerchant; merchantApply: MerchantMerchantApply };
 		order: { order: OrderOrder };
 		sensitive: { sensitiveWord: SensitiveSensitiveWord };
+		community: {};
 	};
 }
