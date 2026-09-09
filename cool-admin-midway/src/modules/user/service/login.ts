@@ -108,13 +108,13 @@ export class UserLoginService extends BaseService {
       phone: Equal(phone),
     });
     if (!user) {
-      user = {
+      // 用 save 而非 insert：insert 不会回填自增主键，导致首次登录签发 token 时 userId 为 undefined
+      user = await this.userInfoEntity.save({
         phone,
         unionid: phone,
         loginType: 2,
         nickName: phone.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2'),
-      };
-      await this.userInfoEntity.insert(user);
+      });
     }
     return this.token({ id: user.id });
   }
@@ -300,7 +300,8 @@ export class UserLoginService extends BaseService {
     const tokenInfo = {
       isRefresh,
       ...info,
-      tenantId: user?.tenantId,
+      // 乌东平台单租户，不启用 cool 多租户
+      tenantId: null,
     };
     return jwt.sign(tokenInfo, secret, {
       expiresIn: isRefresh ? refreshExpire : expire,

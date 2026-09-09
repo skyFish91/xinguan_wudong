@@ -63,6 +63,31 @@ export default {
   //     },
   //   },
   // },
+  // ===== 乌东平台：Redis（验证码 / 幂等 / 限流 / 缓存） =====
+  redis: {
+    host: '127.0.0.1',
+    port: 6379,
+    password: '',
+    db: 0,
+  },
+  // ===== 乌东平台：业务参数 =====
+  wudong: {
+    // JWT 密钥，生产环境必须修改
+    jwtSecret: 'wudong-platform-jwt-secret',
+    // 用户端 token 有效期（秒）：7 天
+    userTokenExpire: 7 * 24 * 3600,
+    // 管理端 token 有效期（秒）：2 小时
+    adminTokenExpire: 2 * 3600,
+    // 上传目录与访问前缀
+    uploadDir: path.join(process.cwd(), 'public', 'upload'),
+    uploadBaseUrl: '/upload',
+    // 支付渠道：MOCK（本期默认） / WECHAT
+    payProvider: 'MOCK',
+    // 开发态短信验证码（无短信服务商）
+    devSmsCode: '123456',
+    // 订单未支付自动关闭时长（分钟）
+    orderExpireMinutes: 30,
+  },
   cool: {
     // 已经插件化，本地文件上传查看 plugin/config.ts，其他云存储查看对应插件的使用
     file: {},

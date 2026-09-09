@@ -1,6 +1,7 @@
 import { CoolConfig } from '@cool-midway/core';
 import { MidwayConfig } from '@midwayjs/core';
 import { TenantSubscriber } from '../modules/base/db/tenant';
+import { SnakeNamingStrategy } from '../common/naming-strategy';
 
 /**
  * 本地开发 npm run dev 读取的配置文件
@@ -11,10 +12,12 @@ export default {
       default: {
         type: 'mysql',
         host: '127.0.0.1',
-        port: 3307,
+        port: 3308,
         username: 'root',
-        password: 'Hhl123456',
+        password: 'wudong2026',
         database: 'wudong',
+        // 统一 snake_case：与 DDL 对齐，避免 Cool 实体把 camelCase 列名写进业务表
+        namingStrategy: new SnakeNamingStrategy(),
         // 自动建表 注意：线上部署的时候不要使用，有可能导致数据丢失
         synchronize: true,
         // 打印日志

@@ -2,23 +2,30 @@ import { BaseEntity } from '../../base/entity/base';
 import { Column, Entity, Index } from 'typeorm';
 
 /**
- * 微信用户
+ * 第三方账号绑定 —— 对齐 DDL `usr_oauth`
  */
-@Entity('user_wx')
+@Entity('usr_oauth')
 export class UserWxEntity extends BaseEntity {
   @Index()
-  @Column({ comment: '微信unionid', nullable: true })
-  unionid: string;
+  @Column({ name: 'user_id', comment: '用户ID' })
+  userId: number;
+
+  @Column({ name: 'provider', comment: '渠道 WECHAT_MINI/WECHAT_MP/WECHAT_APP', length: 20 })
+  provider: string;
 
   @Index()
-  @Column({ comment: '微信openid' })
+  @Column({ name: 'openid', comment: 'openid', length: 64 })
   openid: string;
 
-  @Column({ comment: '头像', nullable: true })
-  avatarUrl: string;
+  @Index()
+  @Column({ name: 'unionid', comment: 'unionid', length: 64, nullable: true })
+  unionid: string;
 
-  @Column({ comment: '昵称', nullable: true })
+  @Column({ name: 'nickname', comment: '昵称快照', length: 100, nullable: true })
   nickName: string;
+
+  @Column({ name: 'avatar', comment: '头像快照', length: 500, nullable: true })
+  avatarUrl: string;
 
   @Column({ comment: '性别 0-未知 1-男 2-女', default: 0 })
   gender: number;

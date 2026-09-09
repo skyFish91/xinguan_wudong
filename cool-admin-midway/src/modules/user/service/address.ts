@@ -43,8 +43,8 @@ export class UserAddressService extends BaseService {
         await this.userAddressEntity
           .createQueryBuilder()
           .update()
-          .set({ isDefault: false })
-          .where('userId = :userId ', { userId: this.ctx.user.id })
+          .set({ isDefault: 0 })
+          .where('user_id = :userId ', { userId: this.ctx.user.id })
           .andWhere('id != :id', { id: data.id })
           .execute();
       }
@@ -57,7 +57,7 @@ export class UserAddressService extends BaseService {
   async default(userId) {
     return await this.userAddressEntity.findOneBy({
       userId: Equal(userId),
-      isDefault: true,
+      isDefault: 1,
     });
   }
 }

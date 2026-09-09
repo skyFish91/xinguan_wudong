@@ -6,6 +6,7 @@ import {
   Inject,
   ILogger,
   MidwayWebRouterService,
+  MidwayDecoratorService,
 } from '@midwayjs/core';
 import * as koa from '@midwayjs/koa';
 // import * as crossDomain from '@midwayjs/cross-domain';
@@ -20,6 +21,9 @@ import * as cool from '@cool-midway/core';
 import * as upload from '@midwayjs/upload';
 // import * as task from '@cool-midway/task';
 // import * as rpc from '@cool-midway/rpc';
+
+import { ResponseMiddleware } from './common/middleware/response.middleware';
+import { registerCurrentUserHandlers } from './common/decorator/current-user';
 
 @Configuration({
   imports: [
@@ -66,5 +70,17 @@ export class MainConfiguration {
   @Inject()
   logger: ILogger;
 
-  async onReady() {}
+  @Inject()
+  decoratorService: MidwayDecoratorService;
+
+  async onReady() {
+    // 注册 @CurrentUser / @CurrentUserId 参数解析器
+    registerCurrentUserHandlers((key, fn) =>
+      this.decoratorService.registerParameterHandler(key, fn)
+    );
+
+    // 统一响应包装：把 Controller 的直接返回包成 { code:0, message:'ok', data }
+    // 并把 Cool 内置模块的 code:1000 归一化为 0（设计文档 §5.1）
+    this.app.useMiddleware([ResponseMiddleware]);
+  }
 }

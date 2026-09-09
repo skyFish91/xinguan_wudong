@@ -1,33 +1,37 @@
-import { BaseEntity } from '../../base/entity/base';
+import { WudongBaseEntity } from '../../base/entity/wudong-base';
 import { Column, Entity, Index } from 'typeorm';
 
 /**
- * 实物扩展（设计文档 §8.1）：衣、食(农产品特产)写
+ * 实物订单扩展 —— 对齐 DDL `ord_ext_goods`（衣、农产品特产）
  */
 @Entity('ord_ext_goods')
-export class OrderExtGoodsEntity extends BaseEntity {
+export class OrderExtGoodsEntity extends WudongBaseEntity {
   @Index({ unique: true })
-  @Column({ comment: '订单ID' })
+  @Column({ name: 'order_id', comment: '订单ID' })
   orderId: number;
 
-  @Column({ comment: '收货人', length: 50, nullable: true })
+  @Index()
+  @Column({ name: 'order_no', comment: '订单号', length: 32 })
+  orderNo: string;
+
+  @Column({ name: 'consignee', comment: '收货人', length: 50, nullable: true })
   receiverName: string;
 
-  @Column({ comment: '收货手机号', length: 20, nullable: true })
+  @Column({ name: 'phone', comment: '收货手机号', length: 20, nullable: true })
   receiverPhone: string;
 
-  @Column({ comment: '收货地址', length: 500, nullable: true })
+  @Column({ name: 'address', comment: '收货地址', length: 500, nullable: true })
   receiverAddress: string;
 
-  @Column({ comment: '物流公司', length: 50, nullable: true })
+  @Column({ name: 'logistics_com', comment: '物流公司', length: 50, nullable: true })
   logisticsCompany: string;
 
-  @Column({ comment: '物流单号', length: 100, nullable: true })
+  @Column({ name: 'logistics_no', comment: '物流单号', length: 100, nullable: true })
   logisticsNo: string;
 
-  @Column({ comment: '发货时间', type: 'varchar', length: 20, nullable: true })
-  shipTime: string;
+  @Column({ name: 'ship_time', comment: '发货时间', type: 'datetime', nullable: true })
+  shipTime: Date;
 
-  @Column({ comment: '收货时间', type: 'varchar', length: 20, nullable: true })
-  receiveTime: string;
+  @Column({ name: 'receive_time', comment: '收货时间', type: 'datetime', nullable: true })
+  receiveTime: Date;
 }
