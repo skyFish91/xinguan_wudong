@@ -49,7 +49,8 @@ INSERT INTO t_product_category (id, name, parent_id, icon, sort) VALUES
 (31, '刺绣挂件', 3, '', 1),
 (32, '刺绣荷包', 3, '', 2),
 (41, '苗族女装', 4, '', 1),
-(42, '苗族童装', 4, '', 2);
+(42, '苗族童装', 4, '', 2),
+(43, '苗族男装', 4, '', 3);
 
 -- ---------- 传承人 ----------
 INSERT INTO t_inheritor (id, name, title, craft, story) VALUES
@@ -76,7 +77,28 @@ INSERT INTO t_product (id, title, subtitle, category_id, merchant_id, main_image
 '<h3>穿着场景</h3><p>节日、旅拍、日常皆宜。提供 S/M/L 码。</p>', 3, 0, 1),
 (6, '蜡染布艺挂画', '梯田人家 装饰布艺', 21, 1, '/uploads/seeds/product-photos/miao-batik-hanging-v2.jpg', 268.00, 328.00, 40, 67, 4.5,
 '大幅蜡染挂画《梯田人家》，描绘乌东苗寨吊脚楼与层叠梯田，适合民宿、书房装饰。',
-'<h3>规格</h3><p>尺寸 60cm x 90cm，附挂绳，可挂可展。</p>', 2, 10, 1);
+'<h3>规格</h3><p>尺寸 60cm x 90cm，附挂绳，可挂可展。</p>', 2, 10, 1),
+(7, '苗族男装刺绣外套', '节庆盛装 手工织绣', 43, 1, '/uploads/seeds/product-photos/miao-male-clothes-2160.jpg', 698.00, 798.00, 18, 36, 4.8,
+'以深色织布为底，配苗绣、流苏与彩条纹样，适合节庆穿着、旅拍和舞台展示。',
+'<h3>穿着建议</h3><p>外套为宽松版型，内搭白色上衣更能凸显刺绣纹样。</p>', 3, 12, 1),
+(8, '彩珠流苏盛装披肩', '彩珠手工串饰 旅拍亮点', 41, 1, '/uploads/seeds/product-photos/miao-female-clothes-2164.jpg', 428.00, 528.00, 25, 49, 4.9,
+'以多色玻璃珠与刺绣底布制作，流苏层次丰富，是苗族盛装中最醒目的搭配单品。',
+'<h3>工艺说明</h3><p>彩珠逐颗串接，建议平放保存，避免重物挤压流苏。</p>', 3, 10, 1),
+(9, '苗银彩珠流苏项饰', '银片铃铛 彩珠垂坠', 12, 1, '/uploads/seeds/product-photos/miao-female-clothes-2166.jpg', 368.00, 468.00, 30, 62, 4.7,
+'银片、彩珠与小铃铛相互呼应，走动时清脆灵动，可搭配素色上衣或民族风服装。',
+'<h3>尺寸</h3><p>项饰长度约 42cm，流苏最长约 18cm，附可调节系带。</p>', 1, 8, 1),
+(10, '银泡纹蜡染布艺', '传统银泡纹 手工染制', 21, 1, '/uploads/seeds/product-photos/miao-female-clothes-2205.jpg', 158.00, 198.00, 50, 41, 4.6,
+'以传统银泡纹为灵感的蜡染布艺，可作为桌旗、收纳布或家居软装搭配使用。',
+'<h3>材质</h3><p>棉布手工染制，约 45cm x 45cm，建议冷水轻柔洗涤。</p>', 2, 8, 1),
+(11, '苗绣拼布女装上衣', '几何纹样 拼布刺绣', 41, 1, '/uploads/seeds/product-photos/miao-female-clothes-2165.jpg', 538.00, 638.00, 20, 28, 4.8,
+'选用几何拼布与彩线刺绣，保留苗族服饰的层次感，并调整为适合日常穿着的版型。',
+'<h3>尺码</h3><p>提供 S/M/L 三个尺码，棉麻面料，建议反面冷水手洗。</p>', 3, 0, 1),
+(12, '苗绣百褶裙', '彩线刺绣 手工压褶', 41, 1, '/uploads/seeds/product-photos/miao-female-clothes-2163.jpg', 488.00, 588.00, 22, 31, 4.7,
+'裙摆以彩线刺绣和手工压褶呈现苗族传统纹样，适合节庆、演出和旅行拍摄。',
+'<h3>保养说明</h3><p>建议干洗或手洗，悬挂晾干后可低温熨烫恢复褶皱。</p>', 3, 10, 1),
+(13, '苗族男装节庆围腰', '传统织带 复古配饰', 43, 1, '/uploads/seeds/product-photos/miao-male-clothes-2159.jpg', 198.00, 258.00, 40, 23, 4.5,
+'取材于苗族男装的传统织带与纹样，可搭配外套、衬衫或作为旅拍造型配饰。',
+'<h3>规格</h3><p>织带宽约 16cm，长度约 180cm，两端带手工流苏。</p>', 1, 8, 1);
 
 INSERT INTO t_product_sku (product_id, spec_name, price, stock, image) VALUES
 (1, '银饰-手镯-中号', 680.00, 30, '/uploads/seeds/product-silver-1.svg'),
@@ -87,7 +109,20 @@ INSERT INTO t_product_sku (product_id, spec_name, price, stock, image) VALUES
 (5, '服饰-女装-S', 468.00, 10, '/uploads/seeds/product-costume-1.svg'),
 (5, '服饰-女装-M', 468.00, 10, '/uploads/seeds/product-costume-1.svg'),
 (5, '服饰-女装-L', 468.00, 10, '/uploads/seeds/product-costume-1.svg'),
-(6, '蜡染-挂画-标准', 268.00, 40, '/uploads/seeds/product-batik-2.svg');
+(6, '蜡染-挂画-标准', 268.00, 40, '/uploads/seeds/product-batik-2.svg'),
+(7, '男装外套-M', 698.00, 6, '/uploads/seeds/product-photos/miao-male-clothes-2160.jpg'),
+(7, '男装外套-L', 698.00, 6, '/uploads/seeds/product-photos/miao-male-clothes-2160.jpg'),
+(7, '男装外套-XL', 718.00, 6, '/uploads/seeds/product-photos/miao-male-clothes-2160.jpg'),
+(8, '彩珠披肩-均码', 428.00, 25, '/uploads/seeds/product-photos/miao-female-clothes-2164.jpg'),
+(9, '流苏项饰-标准', 368.00, 30, '/uploads/seeds/product-photos/miao-female-clothes-2166.jpg'),
+(10, '银泡纹-45cm', 158.00, 50, '/uploads/seeds/product-photos/miao-female-clothes-2205.jpg'),
+(11, '女装上衣-S', 538.00, 7, '/uploads/seeds/product-photos/miao-female-clothes-2165.jpg'),
+(11, '女装上衣-M', 538.00, 7, '/uploads/seeds/product-photos/miao-female-clothes-2165.jpg'),
+(11, '女装上衣-L', 558.00, 6, '/uploads/seeds/product-photos/miao-female-clothes-2165.jpg'),
+(12, '百褶裙-S', 488.00, 7, '/uploads/seeds/product-photos/miao-female-clothes-2163.jpg'),
+(12, '百褶裙-M', 488.00, 8, '/uploads/seeds/product-photos/miao-female-clothes-2163.jpg'),
+(12, '百褶裙-L', 508.00, 7, '/uploads/seeds/product-photos/miao-female-clothes-2163.jpg'),
+(13, '节庆围腰-均码', 198.00, 40, '/uploads/seeds/product-photos/miao-male-clothes-2159.jpg');
 
 INSERT INTO t_product_image (product_id, image_url, sort) VALUES
 (1, '/uploads/seeds/product-photos/miao-silver-bracelet.jpg', 1),
@@ -95,7 +130,31 @@ INSERT INTO t_product_image (product_id, image_url, sort) VALUES
 (3, '/uploads/seeds/product-photos/miao-batik.jpg', 1),
 (4, '/uploads/seeds/product-photos/miao-embroidery.jpg', 1),
 (5, '/uploads/seeds/product-photos/miao-clothing.jpg', 1),
-(6, '/uploads/seeds/product-photos/miao-batik-hanging-v2.jpg', 1);
+(6, '/uploads/seeds/product-photos/miao-batik-hanging-v2.jpg', 1),
+(7, '/uploads/seeds/product-photos/miao-male-clothes-2160.jpg', 1),
+(8, '/uploads/seeds/product-photos/miao-female-clothes-2164.jpg', 1),
+(9, '/uploads/seeds/product-photos/miao-female-clothes-2166.jpg', 1),
+(10, '/uploads/seeds/product-photos/miao-female-clothes-2205.jpg', 1),
+(11, '/uploads/seeds/product-photos/miao-female-clothes-2165.jpg', 1),
+(12, '/uploads/seeds/product-photos/miao-female-clothes-2163.jpg', 1),
+(13, '/uploads/seeds/product-photos/miao-male-clothes-2159.jpg', 1);
+
+-- ---------- 商品评价示例（每件商品 0-4 条，固定种子数据） ----------
+INSERT INTO t_review (user_id, biz_type, biz_id, rating, content, merchant_reply, created_at) VALUES
+(2, 'product', 7, 5, '外套细节很有层次，旅拍时非常上镜，尺码也合适。', '感谢您的喜欢，祝您旅途愉快。', '2026-09-01 10:20:00'),
+(7, 'product', 7, 4, '织带和流苏做得很细致，建议再增加一个小码。', '', '2026-09-03 14:35:00'),
+(8, 'product', 7, 5, '颜色比照片里更有质感，节日表演穿很好看。', '谢谢认可，我们会继续做好手工细节。', '2026-09-05 09:48:00'),
+(9, 'product', 8, 5, '彩珠很亮但不夸张，披在素色衣服上特别出片。', '', '2026-09-02 16:10:00'),
+(2, 'product', 8, 4, '做工不错，流苏保存时要注意别压到。', '感谢提醒，平放保存会更好。', '2026-09-06 11:25:00'),
+(7, 'product', 8, 5, '送给朋友的生日礼物，她非常喜欢。', '', '2026-09-07 18:40:00'),
+(8, 'product', 8, 4, '配色很特别，快递包装也很仔细。', '', '2026-09-08 13:05:00'),
+(9, 'product', 9, 5, '铃铛声音清脆，项饰不会太重，日常搭配也可以。', '感谢您的细致分享。', '2026-09-04 12:16:00'),
+(2, 'product', 9, 4, '长度刚好，系带调节很方便。', '', '2026-09-09 15:30:00'),
+(7, 'product', 10, 5, '布艺纹样很精细，放在茶桌上很有民族风。', '', '2026-09-03 09:40:00'),
+(8, 'product', 11, 4, '上衣版型舒适，建议尺码表再写详细一点。', '谢谢建议，我们会补充更清晰的尺码指引。', '2026-09-06 17:55:00'),
+(9, 'product', 11, 5, '拼布和刺绣都很漂亮，旅行拍照效果很好。', '', '2026-09-08 10:08:00'),
+(2, 'product', 12, 5, '裙摆的褶皱很自然，走路时很有层次感。', '', '2026-09-05 14:20:00'),
+(7, 'product', 12, 4, '颜色很好看，和上衣搭配后很完整。', '感谢您的搭配分享。', '2026-09-09 11:46:00');
 
 -- ---------- 农产品（食） ----------
 INSERT INTO t_farm_category (id, name, icon, sort) VALUES

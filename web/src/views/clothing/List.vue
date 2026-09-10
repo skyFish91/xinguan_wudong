@@ -43,7 +43,7 @@
           </div>
 
           <el-empty v-if="!loading && !list.length" description="暂无商品" />
-          <div class="grid">
+          <TransitionGroup name="product-card" tag="div" class="grid">
             <el-card v-for="p in list" :key="p.id" class="item" shadow="hover" @click="$router.push(`/clothing/${p.id}`)">
               <img :src="p.mainImage" class="item-img" />
               <div class="item-title">{{ p.title }}</div>
@@ -53,7 +53,7 @@
                 <span class="sales">已售 {{ p.sales }}</span>
               </div>
             </el-card>
-          </div>
+          </TransitionGroup>
 
           <el-pagination
             v-if="total > pageSize"
@@ -189,12 +189,23 @@ onMounted(async () => {
 }
 .item {
   cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+.item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 24px rgba(66, 44, 28, 0.14);
 }
 .item-img {
   width: 100%;
   height: 170px;
   object-fit: cover;
   border-radius: 4px;
+  display: block;
+  transition: transform 0.35s ease;
+}
+.item:hover .item-img {
+  transform: scale(1.045);
 }
 .item-title {
   margin-top: 8px;
@@ -229,5 +240,21 @@ onMounted(async () => {
 .pager {
   margin-top: 20px;
   justify-content: center;
+}
+.product-card-enter-active,
+.product-card-move {
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+.product-card-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .item-img,
+  .product-card-enter-active,
+  .product-card-move {
+    transition: none;
+  }
 }
 </style>

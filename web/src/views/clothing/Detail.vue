@@ -193,12 +193,18 @@ onMounted(load);
 .top {
   display: flex;
   gap: 30px;
+  animation: detail-enter 0.38s ease-out both;
 }
 .main-img {
   width: 420px;
   height: 420px;
   object-fit: cover;
   border-radius: 8px;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.main-img:hover {
+  transform: scale(1.018);
+  box-shadow: 0 12px 28px rgba(66, 44, 28, 0.16);
 }
 .info {
   flex: 1;
@@ -301,5 +307,23 @@ onMounted(load);
   margin-top: 6px;
   color: #c0392b;
   font-size: 13px;
+}
+@keyframes detail-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .top {
+    animation: none;
+  }
+  .main-img {
+    transition: none;
+  }
 }
 </style>
