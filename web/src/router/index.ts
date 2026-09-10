@@ -15,10 +15,14 @@ const router = createRouter({
     // 住
     { path: '/hotel', component: () => import('../views/hotel/List.vue') },
     { path: '/hotel/:id', component: () => import('../views/hotel/Detail.vue') },
-    // 行
+    // 行（旅游模块 - 已整合你的页面）
     { path: '/travel', component: () => import('../views/travel/Scenics.vue') },
+    { path: '/travel/scenics', component: () => import('../views/travel/ScenicList.vue') },
+    { path: '/travel/scenics/:id', component: () => import('../views/travel/ScenicDetail.vue') },
     { path: '/travel/routes', component: () => import('../views/travel/Routes.vue') },
+    { path: '/travel/routes-list', component: () => import('../views/travel/RouteList.vue') },
     { path: '/travel/routes/:id', component: () => import('../views/travel/RouteDetail.vue') },
+    { path: '/travel/search', component: () => import('../views/travel/Search.vue') },
     { path: '/travel/guides', component: () => import('../views/travel/Guides.vue') },
     { path: '/travel/my-etickets', component: () => import('../views/travel/MyEtickets.vue'), meta: { requiresAuth: true } },
     // 社区
