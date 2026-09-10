@@ -26,8 +26,18 @@ async function initializeTestDB() {
     // MySQL 8.0+ 兼容：root 用户已有最高权限，无需额外授权
     console.log('权限已就绪（root 用户默认拥有所有权限）');
 
-    // 切换到测试数据库（使用 execute 执行单条语句）
-    await connection.execute('USE wudong_test');
+    // 关闭连接，重新连接到指定的数据库
+    await connection.end();
+
+    // 新建连接，直接指定数据库为 wudong_test
+    connection = await mysql.createConnection({
+      host: process.env.TEST_DB_HOST || '127.0.0.1',
+      port: Number(process.env.TEST_DB_PORT || 3306),
+      user: process.env.TEST_DB_USER || 'root',
+      password: process.env.TEST_DB_PASSWORD || 'root',
+      database: 'wudong_test',
+      multipleStatements: true,
+    });
 
     // 读取并执行 DDL（多条语句需使用 query 而非 execute）
     const sqlPath = path.join(__dirname, '../../sql/01-ddl.sql');
