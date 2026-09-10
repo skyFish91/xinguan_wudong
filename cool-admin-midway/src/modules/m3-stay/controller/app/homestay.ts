@@ -1,49 +1,9 @@
 import { Get, Post, Body, Param, Query, Provide } from '@midwayjs/core';
 import { CoolController, BaseController, CoolUrlTag } from '@cool-midway/core';
 import { InjectEntityModel } from '@midwayjs/typeorm';
-import { Repository, In, Between } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { IsNotEmpty } from 'class-validator';
 const dayjs = require('dayjs');
-
-// 临时Entity定义（后续从公共entity导入）
-export interface HomestayEntity {
-  id: number;
-  name: string;
-  address: string;
-  rating: number;
-  mainImage: string;
-  styleTags: string;
-  checkInTime: string;
-  checkOutTime: string;
-  hasBreakfast: boolean;
-  petPolicy: boolean;
-  deposit: number;
-  intro: string;
-  status: number;
-}
-
-export interface RoomTypeEntity {
-  id: number;
-  homestayId: number;
-  name: string;
-  price: number;
-  bedType: string;
-  area: number;
-  capacity: number;
-  facilities: string;
-  mainImage: string;
-  status: number;
-}
-
-export interface RoomInventoryEntity {
-  id: number;
-  roomTypeId: number;
-  invDate: string;
-  price: number;
-  total: number;
-  booked: number;
-  status: number;
-}
 
 export class HotelBookingDTO {
   @IsNotEmpty({ message: '民宿不能为空' })
