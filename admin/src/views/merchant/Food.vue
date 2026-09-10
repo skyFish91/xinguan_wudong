@@ -22,19 +22,21 @@
           <div class="toolbar">
             <el-button type="success" @click="openDish()">新增菜品</el-button>
           </div>
-          <el-table :data="dishes" border>
+          <el-table :data="dishes" stripe>
             <el-table-column prop="id" label="ID" width="70" />
             <el-table-column prop="name" label="菜名" width="180" />
-            <el-table-column prop="price" label="价格" width="90" />
+            <el-table-column label="价格" width="90">
+              <template #default="{ row }"><span class="money">¥{{ row.price }}</span></template>
+            </el-table-column>
             <el-table-column prop="intro" label="介绍" />
             <el-table-column label="招牌" width="80">
               <template #default="{ row }">
-                <el-tag v-if="row.isSignature" type="warning" size="small">招牌</el-tag>
+                <el-tag v-if="row.isSignature" type="warning" size="small" effect="dark">招牌</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="dark">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="140">
@@ -52,13 +54,13 @@
           <div class="toolbar">
             <el-button type="success" @click="openSlot()">新增时段</el-button>
           </div>
-          <el-table :data="slots" border>
+          <el-table :data="slots" stripe>
             <el-table-column prop="id" label="ID" width="70" />
             <el-table-column prop="slotName" label="时段" width="220" />
             <el-table-column prop="maxBooking" label="每时段可订数" width="120" />
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '启用' : '停用' }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="dark">{{ row.status === 1 ? '启用' : '停用' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="140">
@@ -79,7 +81,7 @@
             </el-select>
             <el-button type="primary" @click="loadBookings(1)">查询</el-button>
           </div>
-          <el-table :data="bookings" border>
+          <el-table :data="bookings" stripe>
             <el-table-column prop="orderNo" label="订单号" width="170" />
             <el-table-column prop="bookingDate" label="用餐日期" width="110">
               <template #default="{ row }">{{ String(row.bookingDate).slice(0, 10) }}</template>
@@ -87,10 +89,12 @@
             <el-table-column prop="guestCount" label="人数" width="70" />
             <el-table-column prop="contactName" label="联系人" width="100" />
             <el-table-column prop="contactPhone" label="联系电话" width="130" />
-            <el-table-column prop="totalAmount" label="金额" width="90" />
+            <el-table-column label="金额" width="90">
+              <template #default="{ row }"><span class="money">¥{{ row.totalAmount }}</span></template>
+            </el-table-column>
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'warning' : 'info'" size="small">{{ statusTexts[row.status] || `状态${row.status}` }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'warning' : 'info'" size="small" effect="dark">{{ statusTexts[row.status] || `状态${row.status}` }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="140">
@@ -120,16 +124,18 @@
             <el-button type="primary" @click="loadFarm(1)">查询</el-button>
             <el-button type="success" @click="openFarm()">新增农产品</el-button>
           </div>
-          <el-table :data="farms" border>
+          <el-table :data="farms" stripe>
             <el-table-column prop="id" label="ID" width="70" />
             <el-table-column prop="name" label="名称" />
-            <el-table-column prop="price" label="价格" width="90" />
+            <el-table-column label="价格" width="90">
+              <template #default="{ row }"><span class="money">¥{{ row.price }}</span></template>
+            </el-table-column>
             <el-table-column prop="spec" label="规格" width="110" />
             <el-table-column prop="stock" label="库存" width="80" />
             <el-table-column prop="sales" label="销量" width="80" />
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="dark">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="170">

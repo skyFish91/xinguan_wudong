@@ -249,6 +249,13 @@ html.dark .el-table th.el-table__cell {
 .mb-12 { margin-bottom: 12px; }
 .mb-16 { margin-bottom: 16px; }
 
+/* 金额强调 */
+.money {
+  color: var(--color-danger);
+  font-weight: 600;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+}
+
 /* 渐变数据卡 */
 .gradient-card {
   border-radius: var(--radius-lg);

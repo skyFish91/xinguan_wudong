@@ -7,16 +7,18 @@
           <div class="toolbar">
             <el-button type="success" @click="openRoute()">新增路线</el-button>
           </div>
-          <el-table :data="routes" border>
+          <el-table :data="routes" stripe>
             <el-table-column prop="id" label="ID" width="70" />
             <el-table-column prop="title" label="路线名" />
             <el-table-column prop="days" label="天数" width="70" />
-            <el-table-column prop="price" label="价格" width="90" />
+            <el-table-column label="价格" width="90">
+              <template #default="{ row }"><span class="money">¥{{ row.price }}</span></template>
+            </el-table-column>
             <el-table-column prop="themes" label="主题" width="100" />
             <el-table-column prop="sales" label="销量" width="80" />
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="dark">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="200">
@@ -55,13 +57,13 @@
             </el-select>
             <el-button type="primary" @click="loadEtickets(1)">查询</el-button>
           </div>
-          <el-table :data="etickets" border>
+          <el-table :data="etickets" stripe>
             <el-table-column prop="code" label="票号" width="170" />
             <el-table-column prop="visitorName" label="游客" width="110" />
             <el-table-column prop="useDate" label="使用日期" width="110" />
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : row.status === 2 ? 'danger' : 'warning'" size="small">
+                <el-tag :type="row.status === 1 ? 'success' : row.status === 2 ? 'danger' : 'warning'" size="small" effect="dark">
                   {{ row.status === 0 ? '未核销' : row.status === 1 ? '已核销' : '已退款' }}
                 </el-tag>
               </template>
@@ -88,7 +90,7 @@
             </el-select>
             <el-button type="primary" @click="loadOrders(1)">查询</el-button>
           </div>
-          <el-table :data="orders" border>
+          <el-table :data="orders" stripe>
             <el-table-column prop="orderNo" label="订单号" width="170" />
             <el-table-column label="类型" width="90">
               <template #default="{ row }">{{ row.orderType === 'ticket' ? '门票' : '路线' }}</template>
@@ -99,10 +101,12 @@
                 <span v-else>{{ row.remark }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="totalAmount" label="金额" width="100" />
+            <el-table-column label="金额" width="100">
+              <template #default="{ row }"><span class="money">¥{{ row.totalAmount }}</span></template>
+            </el-table-column>
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag size="small">{{ statusTexts[row.status] || `状态${row.status}` }}</el-tag>
+                <el-tag size="small" effect="dark">{{ statusTexts[row.status] || `状态${row.status}` }}</el-tag>
               </template>
             </el-table-column>
           </el-table>
