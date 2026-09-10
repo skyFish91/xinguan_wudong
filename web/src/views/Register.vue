@@ -105,15 +105,22 @@ onBeforeUnmount(() => clearInterval(timer));
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2c3e50, #34495e);
+  background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)),
+              url('https://picsum.photos/seed/wudong-village/1920/1080') center/cover;
+  /* 实际应使用乌东苗寨风雨桥或鼓楼图片 */
 }
 .reg-card {
-  width: 400px;
-  padding: 20px;
+  width: 440px;
+  padding: 30px;
+  backdrop-filter: blur(5px);
+  background: rgba(255, 255, 255, 0.95);
 }
 .title {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  color: #c0392b;
+  font-size: 24px;
+  font-weight: bold;
 }
 .full {
   width: 100%;
@@ -126,5 +133,13 @@ onBeforeUnmount(() => clearInterval(timer));
 .links {
   font-size: 13px;
   text-align: center;
+  margin-top: 12px;
+}
+.links a {
+  color: #c0392b;
+  text-decoration: none;
+}
+.links a:hover {
+  text-decoration: underline;
 }
 </style>

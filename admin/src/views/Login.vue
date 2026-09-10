@@ -11,12 +11,6 @@
           银饰千年 · 苗绣万里<br/>
           数据贯通 · 决策有数
         </div>
-        <div class="brand-tag-row">
-          <span class="brand-tag">用户管理</span>
-          <span class="brand-tag">商家审核</span>
-          <span class="brand-tag">订单总览</span>
-          <span class="brand-tag">运营管理</span>
-        </div>
       </div>
     </div>
 
@@ -78,7 +72,7 @@ import { Phone, Lock } from '@element-plus/icons-vue';
 import request from '../api/request';
 import { useUserStore } from '../stores/user';
 import MiaoPattern from '../components/MiaoPattern.vue';
-import bgSvg from '../assets/login-bg.svg';
+import bgSvg from '../assets/login-bg.jpg';
 
 const route = useRoute();
 const router = useRouter();
@@ -108,198 +102,357 @@ async function submit() {
 </script>
 
 <style scoped>
+/* 设计 Token - 与前端官网统一 */
+:root {
+  --indigo-darker: #0F1B2E;
+  --indigo-dark: #1B2A4A;
+  --indigo-medium: #24405E;
+  --silver-white: #F3F5F7;
+  --silver-grey: #C0C7D0;
+  --mist-white: #F7F4EE;
+  --cinnabar-red: #B33A2E;
+  --wood-brown: #6B4F3A;
+  --ink-black: #171512;
+}
+
 .login-page {
   display: flex;
   height: 100vh;
-  background: var(--bg-page);
+  background: linear-gradient(135deg, #1B2A4A 0%, #24405E 50%, #2D5270 100%);
 }
 
 /* --- 左侧品牌区 --- */
 .brand-side {
-  flex: 1.2;
+  flex: 0 0 60%;
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+/* 背景渐变遮罩 - 从左到右从深到透明 */
+.brand-side::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 200px;
+  background: linear-gradient(90deg, transparent 0%, #F7F4EE 100%);
+  z-index: 5;
+  pointer-events: none;
+}
+
 .bg-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  animation: kenburns 18s ease-in-out infinite alternate;
+  object-position: center;
+  opacity: 0.85;
 }
+
 .brand-content {
   position: relative;
   text-align: center;
-  color: #fff;
-  padding: 40px 44px;
-  max-width: 480px;
-  background: rgba(16, 34, 56, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 20px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-  animation: fadeInLeft 0.8s ease both;
+  color: var(--silver-white);
+  padding: 48px;
+  max-width: 500px;
+  z-index: 10;
 }
+
 .brand-icon {
-  color: rgba(255,255,255,0.9);
-  margin-bottom: 16px;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.35));
+  color: var(--silver-white);
+  margin-bottom: 24px;
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
+
 .brand-title {
-  font-size: 42px;
-  font-weight: 700;
+  font-family: "Noto Serif SC", Georgia, serif;
+  font-size: 48px;
+  font-weight: 600;
   margin: 0;
-  letter-spacing: 8px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  letter-spacing: 12px;
+  color: var(--silver-white);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
+
 .brand-subtitle {
-  font-size: 14px;
-  color: rgba(255,255,255,0.85);
-  margin-top: 8px;
-  letter-spacing: 3px;
-}
-.brand-desc {
   font-size: 16px;
-  line-height: 1.9;
-  color: rgba(255,255,255,0.92);
-  margin-top: 32px;
+  color: var(--silver-white);
+  opacity: 0.85;
+  margin-top: 16px;
   letter-spacing: 4px;
+  font-weight: 300;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
+
+.brand-desc {
+  font-size: 15px;
+  line-height: 2;
+  color: var(--silver-white);
+  opacity: 0.75;
+  margin-top: 32px;
+  letter-spacing: 2px;
+  font-weight: 300;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
 .brand-tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
   justify-content: center;
-  margin-top: 28px;
+  margin-top: 40px;
 }
+
 .brand-tag {
-  padding: 4px 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.3);
-  font-size: 12px;
-  color: #fff;
+  padding: 8px 20px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  color: var(--silver-white);
+  letter-spacing: 1px;
+  font-weight: 400;
+  transition: all 0.3s ease;
   backdrop-filter: blur(8px);
+}
+
+.brand-tag:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* --- 右侧表单区 --- */
 .form-side {
-  width: 480px;
+  flex: 0 0 40%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 60px 50px;
-  background: var(--bg-card);
+  padding: 48px;
+  background: var(--mist-white);
   position: relative;
 }
+
 .form-card {
   width: 100%;
-  animation: fadeInRight 0.7s ease 0.15s both;
+  max-width: 440px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid var(--silver-grey);
+  border-radius: 12px;
+  padding: 48px;
+  box-shadow: 0 4px 24px rgba(15, 27, 46, 0.08);
 }
+
 .form-head {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   text-align: center;
 }
+
 .form-badge {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  margin: 0 auto 20px;
-  box-shadow: 0 8px 20px rgba(14, 140, 126, 0.3);
-  animation: floaty 3s ease-in-out infinite;
+  color: var(--cinnabar-red);
+  margin: 0 auto 24px;
+  border: 2px solid var(--cinnabar-red);
+  opacity: 0.8;
+  position: relative;
 }
+
+.form-badge::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 1px solid var(--silver-grey);
+  opacity: 0.4;
+  border-radius: 10px;
+}
+
 .form-head h2 {
-  font-size: 26px;
-  margin: 0 0 8px;
-  color: var(--text-primary);
+  font-family: "Noto Serif SC", Georgia, serif;
+  font-size: 24px;
+  margin: 0 0 12px;
+  color: var(--indigo-dark);
   font-weight: 600;
+  letter-spacing: 2px;
 }
+
 .form-sub {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: 13px;
+  color: var(--wood-brown);
+  font-size: 14px;
+  letter-spacing: 0.5px;
 }
+
+/* Element Plus 表单样式覆盖 */
+:deep(.el-input__wrapper) {
+  background: var(--mist-white);
+  border: 1px solid var(--silver-grey);
+  border-radius: 8px;
+  box-shadow: none;
+  transition: all 0.3s ease;
+  padding: 12px 16px;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: var(--indigo-medium);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: var(--indigo-medium);
+  box-shadow: 0 0 0 3px rgba(192, 199, 208, 0.3);
+  background: #ffffff;
+}
+
+:deep(.el-input__inner) {
+  color: var(--ink-black);
+  font-size: 15px;
+}
+
+:deep(.el-input__inner::placeholder) {
+  color: var(--wood-brown);
+  opacity: 0.5;
+}
+
 .btn {
   width: 100%;
-  height: 46px;
-  font-size: 15px;
+  height: 48px;
+  font-size: 16px;
   letter-spacing: 4px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-  border: none !important;
-  box-shadow: 0 6px 16px rgba(14, 140, 126, 0.35);
+  font-weight: 500;
+  background: var(--cinnabar-red);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(179, 58, 46, 0.25);
 }
+
 .btn:hover {
-  background: linear-gradient(135deg, var(--color-primary-hover), #3a5a8c);
-  box-shadow: 0 10px 24px rgba(14, 140, 126, 0.45);
-  transform: translateY(-2px);
+  background: #9A2F24;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(179, 58, 46, 0.35);
 }
+
 .btn:active {
   transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(14, 140, 126, 0.3);
 }
+
+:deep(.el-divider__text) {
+  background: #ffffff;
+}
+
 .divider-text {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 13px;
+  color: var(--wood-brown);
   letter-spacing: 1px;
 }
+
 .tips {
   font-size: 13px;
-  color: var(--text-regular);
-  line-height: 1.9;
+  color: var(--wood-brown);
+  line-height: 1.8;
+  margin-top: 8px;
 }
+
 .tip-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 6px;
-  margin-bottom: 4px;
-  transition: background 0.15s ease;
+  margin-bottom: 6px;
+  transition: background 0.2s ease;
 }
+
 .tip-row:hover {
-  background: var(--bg-page);
+  background: var(--mist-white);
 }
+
 .tip-row.admin .tip-label {
-  color: var(--color-danger);
+  color: var(--cinnabar-red);
   font-weight: 600;
 }
+
 .tip-label {
   display: inline-block;
-  min-width: 70px;
-  color: var(--text-secondary);
-  font-size: 12px;
+  min-width: 80px;
+  color: var(--wood-brown);
+  font-size: 13px;
+  opacity: 0.8;
 }
+
 .tip-row code {
-  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace;
   font-size: 12px;
-  color: var(--color-secondary);
-  background: var(--color-secondary-soft);
-  padding: 2px 8px;
+  color: var(--indigo-dark);
+  background: rgba(27, 42, 74, 0.08);
+  padding: 4px 10px;
   border-radius: 4px;
+  letter-spacing: 0.5px;
 }
+
 .copyright {
   position: absolute;
-  bottom: 20px;
+  bottom: 24px;
   left: 0;
   right: 0;
   text-align: center;
   font-size: 12px;
-  color: var(--text-placeholder);
+  color: var(--wood-brown);
+  opacity: 0.6;
+  letter-spacing: 0.5px;
 }
 
-@media (max-width: 900px) {
-  .brand-side { display: none; }
-  .form-side { width: 100%; }
+@media (max-width: 1024px) {
+  .brand-side {
+    flex: 0 0 50%;
+  }
+  .form-side {
+    flex: 0 0 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-page {
+    flex-direction: column;
+  }
+  .brand-side {
+    flex: 0 0 200px;
+    padding: 24px;
+  }
+  .brand-side::after {
+    display: none;
+  }
+  .brand-title {
+    font-size: 36px;
+    letter-spacing: 8px;
+  }
+  .brand-subtitle {
+    font-size: 14px;
+  }
+  .brand-desc {
+    font-size: 13px;
+  }
+  .brand-tag-row {
+    display: none;
+  }
+  .form-side {
+    flex: 1;
+    padding: 24px;
+  }
+  .form-card {
+    padding: 32px 24px;
+  }
 }
 </style>

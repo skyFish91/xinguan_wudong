@@ -2,148 +2,129 @@
   <div>
     <TopNav />
     <div class="page">
-      <h2>个人中心</h2>
-      <el-tabs v-model="tab">
-        <!-- 资料 -->
-        <el-tab-pane label="我的资料" name="profile">
-          <el-form :model="profileForm" label-width="90px" class="form">
-            <el-form-item label="手机号">{{ profile.phone }}</el-form-item>
-            <el-form-item label="昵称">
-              <el-input v-model="profileForm.nickname" class="input" />
-            </el-form-item>
-            <el-form-item label="头像URL">
-              <el-input v-model="profileForm.avatar" placeholder="图片地址，选填" class="input" />
-            </el-form-item>
-            <el-form-item label="性别">
-              <el-radio-group v-model="profileForm.gender">
-                <el-radio :value="0">保密</el-radio>
-                <el-radio :value="1">男</el-radio>
-                <el-radio :value="2">女</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="地区">
-              <el-input v-model="profileForm.region" placeholder="如：贵州·乌东" class="input" />
-            </el-form-item>
-            <el-form-item label="简介">
-              <el-input v-model="profileForm.bio" type="textarea" :rows="3" maxlength="500" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="saveProfile">保存资料</el-button>
-              <span v-if="profile.role === 'merchant'" class="merchant-tag">
-                <el-tag type="warning">已入驻商家</el-tag>
-                <el-button link type="primary" @click="shopDialog = true; loadShop()">店铺信息</el-button>
-              </span>
-              <el-button v-else link type="primary" @click="$router.push('/user/apply-merchant')">申请成为商家</el-button>
-            </el-form-item>
-          </el-form>
+      <el-card class="profile-card">
+        <div class="profile-header">
+          <el-avatar :size="80" :src="userInfo.avatar" class="avatar">
+            {{ userInfo.nickname?.[0] || '用' }}
+          </el-avatar>
+          <div class="header-info">
+            <h2>{{ userInfo.nickname || '游客' }}</h2>
+            <div class="meta">手机号：{{ userInfo.phone }}</div>
+            <div class="meta">注册时间：{{ formatTime(userInfo.createdAt) }}</div>
+          </div>
+          <el-button type="primary" @click="showEditDialog = true">编辑资料</el-button>
+        </div>
 
-          <el-divider content-position="left">修改密码</el-divider>
-          <el-form :model="pwdForm" label-width="90px" class="form">
-            <el-form-item label="原密码">
-              <el-input v-model="pwdForm.oldPassword" type="password" class="input" />
-            </el-form-item>
-            <el-form-item label="新密码">
-              <el-input v-model="pwdForm.newPassword" type="password" placeholder="8-20位，含字母和数字" class="input" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="savePassword">修改密码</el-button>
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
+        <el-divider />
 
-        <!-- 地址 -->
-        <el-tab-pane label="收货地址" name="address">
-          <el-button type="primary" size="small" class="add-btn" @click="openAddress()">新增地址</el-button>
-          <div v-for="a in addresses" :key="a.id" class="addr">
-            <div>
-              {{ a.receiver }} {{ a.phone }} · {{ a.province }}{{ a.city }}{{ a.district }}{{ a.detail }}
-              <el-tag v-if="a.isDefault" size="small" type="danger">默认</el-tag>
+        <el-descriptions title="个人信息" :column="2" border>
+          <el-descriptions-item label="真实姓名">{{ userInfo.realName || '未设置' }}</el-descriptions-item>
+          <el-descriptions-item label="身份证号">{{ maskIdCard(userInfo.idCard) }}</el-descriptions-item>
+          <el-descriptions-item label="账户余额">
+            <span class="balance">¥0.00</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="积分">{{ userInfo.points || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="角色" :span="2">
+            <el-tag v-if="userInfo.role === 'admin'" type="danger">管理员</el-tag>
+            <el-tag v-else-if="userInfo.role === 'merchant'" type="warning">商家</el-tag>
+            <el-tag v-else type="info">普通用户</el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <el-divider />
+
+        <div class="actions-section">
+          <h3>快捷操作</h3>
+          <div class="action-grid">
+            <el-card shadow="hover" class="action-card" @click="$router.push('/orders')">
+              <div class="action-icon">📦</div>
+              <div class="action-title">我的订单</div>
+            </el-card>
+            <el-card shadow="hover" class="action-card" @click="$router.push('/travel/my-etickets')">
+              <div class="action-icon">🎫</div>
+              <div class="action-title">我的电子票</div>
+            </el-card>
+            <el-card shadow="hover" class="action-card" @click="$router.push('/cart')">
+              <div class="action-icon">🛒</div>
+              <div class="action-title">购物车</div>
+            </el-card>
+            <el-card shadow="hover" class="action-card" @click="$router.push('/community')">
+              <div class="action-icon">📝</div>
+              <div class="action-title">我的动态</div>
+            </el-card>
+            <el-card v-if="userInfo.role !== 'merchant'" shadow="hover" class="action-card" @click="$router.push('/user/apply-merchant')">
+              <div class="action-icon">🏪</div>
+              <div class="action-title">申请商家</div>
+            </el-card>
+          </div>
+        </div>
+
+        <el-divider />
+
+        <div class="address-section">
+          <div class="section-header">
+            <h3>收货地址</h3>
+            <el-button size="small" type="primary" @click="showAddressDialog = true">新增地址</el-button>
+          </div>
+          <div v-if="!addresses.length" class="empty-tip">暂无收货地址</div>
+          <div v-for="addr in addresses" :key="addr.id" class="address-item">
+            <div class="address-main">
+              <el-tag v-if="addr.isDefault" type="danger" size="small">默认</el-tag>
+              <span class="address-name">{{ addr.receiverName }}</span>
+              <span class="address-phone">{{ addr.receiverPhone }}</span>
+              <div class="address-detail">{{ addr.province }} {{ addr.city }} {{ addr.district }} {{ addr.detail }}</div>
             </div>
-            <div class="addr-ops">
-              <el-button link type="primary" size="small" @click="openAddress(a)">编辑</el-button>
-              <el-button link type="danger" size="small" @click="deleteAddress(a)">删除</el-button>
+            <div class="address-ops">
+              <el-button link @click="editAddress(addr)">编辑</el-button>
+              <el-button link type="danger" @click="deleteAddress(addr)">删除</el-button>
             </div>
           </div>
-          <el-empty v-if="!addresses.length" description="暂无收货地址" />
-        </el-tab-pane>
+        </div>
+      </el-card>
 
-        <!-- 消息 -->
-        <el-tab-pane label="消息通知" name="message">
-          <el-button link type="primary" size="small" @click="markAllRead">全部标为已读</el-button>
-          <div v-for="m in messages" :key="m.id" class="msg" :class="{ unread: !m.isRead }">
-            <div class="msg-head">
-              <span class="msg-title">{{ m.title }}</span>
-              <span class="msg-time">{{ formatTime(m.createdAt) }}</span>
-            </div>
-            <div class="msg-content">{{ m.content }}</div>
-          </div>
-          <el-empty v-if="!messages.length" description="暂无消息" />
-        </el-tab-pane>
-
-        <!-- 收藏 -->
-        <el-tab-pane label="我的收藏" name="favorite">
-          <h4>商品收藏</h4>
-          <div class="fav-grid">
-            <div v-for="f in favProducts" :key="f.id" class="fav-item" @click="$router.push(`/clothing/${f.id}`)">
-              <img :src="f.mainImage" class="fav-img" />
-              <div class="fav-title">{{ f.title }}</div>
-            </div>
-          </div>
-          <el-empty v-if="!favProducts.length" description="暂无商品收藏" />
-          <h4>游记收藏</h4>
-          <div class="fav-list">
-            <div v-for="p in favPosts" :key="p.id" class="fav-post" @click="$router.push(`/community/${p.id}`)">
-              {{ p.title }}
-            </div>
-          </div>
-          <el-empty v-if="!favPosts.length" description="暂无游记收藏" />
-        </el-tab-pane>
-
-        <!-- 我的游记 -->
-        <el-tab-pane label="我的游记" name="posts">
-          <div v-for="p in myPosts" :key="p.id" class="mypost">
-            <div class="mypost-title">
-              <el-tag v-if="p.status === 0" size="small" type="warning">待审核</el-tag>
-              <el-tag v-else-if="p.status === 2" size="small" type="danger">已驳回</el-tag>
-              <el-tag v-else size="small" type="success">已发布</el-tag>
-              {{ p.title }}
-            </div>
-            <div class="mypost-meta">
-              {{ formatTime(p.createdAt) }} · 赞 {{ p.likeCount }} · 评论 {{ p.commentCount }}
-              <el-button link type="danger" size="small" @click="deletePost(p)">删除</el-button>
-            </div>
-          </div>
-          <el-empty v-if="!myPosts.length" description="还没有发布过游记" />
-        </el-tab-pane>
-      </el-tabs>
-
-      <!-- 地址弹窗 -->
-      <el-dialog v-model="addressDialog" :title="addressForm.id ? '编辑地址' : '新增地址'" width="480px">
-        <el-form :model="addressForm" label-width="80px">
-          <el-form-item label="收货人"><el-input v-model="addressForm.receiver" /></el-form-item>
-          <el-form-item label="手机号"><el-input v-model="addressForm.phone" /></el-form-item>
-          <el-form-item label="省份"><el-input v-model="addressForm.province" /></el-form-item>
-          <el-form-item label="城市"><el-input v-model="addressForm.city" /></el-form-item>
-          <el-form-item label="区县"><el-input v-model="addressForm.district" /></el-form-item>
-          <el-form-item label="详细地址"><el-input v-model="addressForm.detail" /></el-form-item>
-          <el-form-item label="默认地址"><el-switch v-model="addressForm.isDefault" :active-value="1" :inactive-value="0" /></el-form-item>
+      <!-- 编辑资料弹窗 -->
+      <el-dialog v-model="showEditDialog" title="编辑资料" width="500px">
+        <el-form :model="editForm" label-width="80px">
+          <el-form-item label="昵称">
+            <el-input v-model="editForm.nickname" />
+          </el-form-item>
+          <el-form-item label="真实姓名">
+            <el-input v-model="editForm.realName" />
+          </el-form-item>
+          <el-form-item label="身份证号">
+            <el-input v-model="editForm.idCard" maxlength="18" />
+          </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="addressDialog = false">取消</el-button>
-          <el-button type="primary" @click="saveAddress">保存</el-button>
+          <el-button @click="showEditDialog = false">取消</el-button>
+          <el-button type="primary" @click="updateProfile">保存</el-button>
         </template>
       </el-dialog>
 
-      <!-- 店铺信息弹窗 -->
-      <el-dialog v-model="shopDialog" title="店铺信息" width="480px">
-        <el-form :model="shopForm" label-width="80px">
-          <el-form-item label="店铺名"><el-input v-model="shopForm.shopName" /></el-form-item>
-          <el-form-item label="联系人"><el-input v-model="shopForm.contact" /></el-form-item>
-          <el-form-item label="联系电话"><el-input v-model="shopForm.contactPhone" /></el-form-item>
+      <!-- 地址弹窗 -->
+      <el-dialog v-model="showAddressDialog" :title="addressForm.id ? '编辑地址' : '新增地址'" width="500px">
+        <el-form :model="addressForm" label-width="80px">
+          <el-form-item label="收货人">
+            <el-input v-model="addressForm.receiverName" />
+          </el-form-item>
+          <el-form-item label="手机号">
+            <el-input v-model="addressForm.receiverPhone" maxlength="11" />
+          </el-form-item>
+          <el-form-item label="省市区">
+            <el-input v-model="addressForm.province" placeholder="省" style="width: 30%" />
+            <el-input v-model="addressForm.city" placeholder="市" style="width: 34%; margin: 0 2%" />
+            <el-input v-model="addressForm.district" placeholder="区" style="width: 30%" />
+          </el-form-item>
+          <el-form-item label="详细地址">
+            <el-input v-model="addressForm.detail" type="textarea" :rows="2" />
+          </el-form-item>
+          <el-form-item label="设为默认">
+            <el-switch v-model="addressForm.isDefault" />
+          </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="shopDialog = false">取消</el-button>
-          <el-button type="primary" @click="saveShop">保存</el-button>
+          <el-button @click="showAddressDialog = false">取消</el-button>
+          <el-button type="primary" @click="saveAddress">保存</el-button>
         </template>
       </el-dialog>
     </div>
@@ -158,61 +139,40 @@ import request from '../../api/request';
 import { useUserStore } from '../../stores/user';
 
 const userStore = useUserStore();
-const tab = ref('profile');
-const profile = ref<any>({});
-const profileForm = reactive({ nickname: '', avatar: '', gender: 0, region: '', bio: '' });
-const pwdForm = reactive({ oldPassword: '', newPassword: '' });
-
+const userInfo = ref<any>({});
 const addresses = ref<any[]>([]);
-const addressDialog = ref(false);
-const addressForm = reactive<any>({ id: 0, receiver: '', phone: '', province: '', city: '', district: '', detail: '', isDefault: 0 });
-
-const messages = ref<any[]>([]);
-const favProducts = ref<any[]>([]);
-const favPosts = ref<any[]>([]);
-const myPosts = ref<any[]>([]);
-
-const shopDialog = ref(false);
-const shopForm = reactive({ shopName: '', contact: '', contactPhone: '' });
+const showEditDialog = ref(false);
+const showAddressDialog = ref(false);
+const editForm = reactive({ nickname: '', realName: '', idCard: '' });
+const addressForm = reactive({
+  id: 0,
+  receiverName: '',
+  receiverPhone: '',
+  province: '',
+  city: '',
+  district: '',
+  detail: '',
+  isDefault: false
+});
 
 function formatTime(t: string) {
-  return t ? String(t).replace('T', ' ').slice(0, 16) : '';
+  return t ? String(t).replace('T', ' ').slice(0, 10) : '';
+}
+
+function maskIdCard(s?: string) {
+  if (!s) return '未设置';
+  return s.slice(0, 6) + '****' + s.slice(-4);
 }
 
 async function loadProfile() {
   try {
-    profile.value = await request.get('/auth/profile');
-    profileForm.nickname = profile.value.nickname || '';
-    profileForm.avatar = profile.value.avatar || '';
-    profileForm.gender = profile.value.gender ?? 0;
-    profileForm.region = profile.value.region || '';
-    profileForm.bio = profile.value.bio || '';
-    userStore.setUserInfo(profile.value);
-  } catch {
-    // 已提示
-  }
-}
-
-async function saveProfile() {
-  try {
-    await request.put('/auth/profile', { ...profileForm });
-    ElMessage.success('资料已保存');
-    loadProfile();
-  } catch {
-    // 已提示
-  }
-}
-
-async function savePassword() {
-  if (!pwdForm.oldPassword || !pwdForm.newPassword) {
-    ElMessage.warning('请填写完整');
-    return;
-  }
-  try {
-    await request.put('/auth/password', { ...pwdForm });
-    ElMessage.success('密码已修改');
-    pwdForm.oldPassword = '';
-    pwdForm.newPassword = '';
+    userInfo.value = await request.get('/auth/profile');
+    userStore.setUserInfo(userInfo.value);
+    Object.assign(editForm, {
+      nickname: userInfo.value.nickname,
+      realName: userInfo.value.realName || '',
+      idCard: userInfo.value.idCard || ''
+    });
   } catch {
     // 已提示
   }
@@ -226,218 +186,151 @@ async function loadAddresses() {
   }
 }
 
-function openAddress(a?: any) {
-  Object.assign(addressForm, a || { id: 0, receiver: '', phone: '', province: '', city: '', district: '', detail: '', isDefault: 0 });
-  addressDialog.value = true;
+async function updateProfile() {
+  try {
+    await request.put('/auth/profile', editForm);
+    ElMessage.success('资料已更新');
+    showEditDialog.value = false;
+    loadProfile();
+  } catch {
+    // 已提示
+  }
+}
+
+function editAddress(addr: any) {
+  Object.assign(addressForm, addr);
+  showAddressDialog.value = true;
 }
 
 async function saveAddress() {
-  if (!addressForm.receiver || !addressForm.phone || !addressForm.province || !addressForm.city || !addressForm.district || !addressForm.detail) {
+  if (!addressForm.receiverName || !addressForm.receiverPhone || !addressForm.detail) {
     ElMessage.warning('请填写完整地址信息');
     return;
   }
   try {
     if (addressForm.id) {
-      await request.put(`/user/addresses/${addressForm.id}`, { ...addressForm });
+      await request.put(`/user/addresses/${addressForm.id}`, addressForm);
     } else {
-      await request.post('/user/addresses', { ...addressForm });
+      await request.post('/user/addresses', addressForm);
     }
-    ElMessage.success('已保存');
-    addressDialog.value = false;
+    ElMessage.success('地址已保存');
+    showAddressDialog.value = false;
     loadAddresses();
   } catch {
     // 已提示
   }
 }
 
-async function deleteAddress(a: any) {
+async function deleteAddress(addr: any) {
   try {
     await ElMessageBox.confirm('确定删除该地址？', '提示', { type: 'warning' });
-    await request.post(`/user/addresses/${a.id}/delete`);
+    await request.delete(`/user/addresses/${addr.id}`);
+    ElMessage.success('地址已删除');
     loadAddresses();
-  } catch (e: any) {
+  } catch {
     // 取消或已提示
-  }
-}
-
-async function loadMessages() {
-  try {
-    const data: any = await request.get('/messages/', { params: { page: 1, pageSize: 50 } });
-    messages.value = data.list || [];
-  } catch {
-    // 已提示
-  }
-}
-
-async function markAllRead() {
-  try {
-    await request.post('/messages/read');
-    ElMessage.success('已全部标为已读');
-    loadMessages();
-  } catch {
-    // 已提示
-  }
-}
-
-async function loadFavorites() {
-  try {
-    favProducts.value = await request.get('/clothing/favorites');
-  } catch {
-    // 已提示
-  }
-  try {
-    favPosts.value = await request.get('/community/my/favorites');
-  } catch {
-    // 已提示
-  }
-}
-
-async function loadMyPosts() {
-  try {
-    myPosts.value = await request.get('/community/my/posts');
-  } catch {
-    // 已提示
-  }
-}
-
-async function deletePost(p: any) {
-  try {
-    await ElMessageBox.confirm('确定删除该游记？', '提示', { type: 'warning' });
-    await request.post(`/community/my/posts/${p.id}/delete`);
-    ElMessage.success('已删除');
-    loadMyPosts();
-  } catch (e: any) {
-    // 取消或已提示
-  }
-}
-
-async function loadShop() {
-  try {
-    const shop: any = await request.get('/merchant/my-shop');
-    shopForm.shopName = shop.shopName || '';
-    shopForm.contact = shop.contact || '';
-    shopForm.contactPhone = shop.contactPhone || '';
-  } catch {
-    // 已提示
-  }
-}
-
-async function saveShop() {
-  try {
-    await request.put('/merchant/my-shop', { ...shopForm });
-    ElMessage.success('店铺信息已保存');
-    shopDialog.value = false;
-  } catch {
-    // 已提示
   }
 }
 
 onMounted(() => {
   loadProfile();
   loadAddresses();
-  loadMessages();
-  loadFavorites();
-  loadMyPosts();
 });
 </script>
 
 <style scoped>
 .page {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
 }
-.form {
-  max-width: 520px;
+.profile-card {
+  padding: 24px;
 }
-.input {
-  max-width: 320px;
-}
-.merchant-tag {
-  margin-left: 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.add-btn {
-  margin-bottom: 12px;
-}
-.addr {
+.profile-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  gap: 20px;
 }
-.addr-ops {
-  flex-shrink: 0;
-}
-.msg {
-  padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-.msg.unread .msg-title {
+.avatar {
+  background: #c0392b;
+  font-size: 32px;
   font-weight: bold;
 }
-.msg-head {
+.header-info {
+  flex: 1;
+}
+.meta {
+  color: #666;
+  font-size: 14px;
+  margin-top: 6px;
+}
+.balance {
+  color: #c0392b;
+  font-weight: bold;
+  font-size: 18px;
+}
+.actions-section h3,
+.section-header h3 {
+  margin-bottom: 16px;
+}
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.action-card {
+  text-align: center;
+  cursor: pointer;
+  padding: 20px;
+}
+.action-card:hover {
+  transform: translateY(-4px);
+  transition: transform 0.2s;
+}
+.action-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+.action-title {
+  font-weight: 600;
+}
+.section-header {
   display: flex;
   justify-content: space-between;
-}
-.msg-time {
-  color: #999;
-  font-size: 12px;
-}
-.msg-content {
-  margin-top: 6px;
-  color: #666;
-  font-size: 13px;
-}
-.fav-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.fav-item {
-  width: 140px;
-  cursor: pointer;
-}
-.fav-img {
-  width: 140px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-.fav-title {
-  font-size: 12px;
-  margin-top: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.fav-post {
-  padding: 8px 0;
-  border-bottom: 1px solid #f5f5f5;
-  cursor: pointer;
-  color: #444;
-}
-.fav-post:hover {
-  color: #c0392b;
-}
-.mypost {
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-.mypost-title {
-  font-weight: 600;
-  display: flex;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 16px;
 }
-.mypost-meta {
-  margin-top: 6px;
+.empty-tip {
   color: #999;
-  font-size: 12px;
+  text-align: center;
+  padding: 20px;
+}
+.address-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+.address-main {
+  flex: 1;
+}
+.address-name {
+  font-weight: 600;
+  margin: 0 12px;
+}
+.address-phone {
+  color: #666;
+}
+.address-detail {
+  margin-top: 6px;
+  color: #555;
+}
+.address-ops {
+  display: flex;
+  gap: 8px;
 }
 </style>

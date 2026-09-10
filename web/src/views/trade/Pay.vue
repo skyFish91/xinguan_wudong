@@ -1,30 +1,85 @@
 <template>
   <div>
     <TopNav />
-    <div class="page" v-if="payInfo">
-      <div class="pay-card">
-        <h3>收银台（模拟微信支付）</h3>
-        <div class="line">订单号：{{ payInfo.orderNo }}</div>
-        <div class="amount">应付金额 <span class="red">¥{{ payInfo.amount }}</span></div>
+    <div class="page">
+      <h2>订单支付</h2>
 
-        <!-- 模拟二维码 -->
-        <div class="qrcode">
-          <div class="qr-grid">
-            <div v-for="i in 144" :key="i" class="qr-cell" :class="{ dark: qrPattern[i % qrPattern.length] === '1' }" />
+      <el-card v-if="order.id" class="order-card">
+        <div class="order-info">
+          <div class="info-row">
+            <span class="label">订单号：</span>
+            <span>{{ order.orderNo }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">订单类型：</span>
+            <span>{{ orderTypeText }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">订单金额：</span>
+            <span class="amount">¥{{ order.totalAmount }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">实付金额：</span>
+            <span class="amount highlight">¥{{ order.payAmount }}</span>
           </div>
         </div>
-        <div class="qr-tip">微信扫码支付（演示环境，点击下方按钮模拟扫码）</div>
-        <div class="qr-content">{{ payInfo.qrcodeContent }}</div>
 
-        <el-button type="success" size="large" :loading="paying" @click="mockScan">模拟扫码支付</el-button>
-        <el-button size="large" @click="$router.push('/orders')">暂不支付</el-button>
-      </div>
+        <el-divider />
+
+        <div class="pay-methods">
+          <div class="method-title">选择支付方式</div>
+          <el-radio-group v-model="payMethod" class="method-group">
+            <el-radio :value="1" size="large">
+              <div class="method-item">
+                <span class="method-name">💳 微信支付</span>
+                <span class="method-desc">推荐使用微信支付</span>
+              </div>
+            </el-radio>
+            <el-radio :value="2" size="large">
+              <div class="method-item">
+                <span class="method-name">💰 支付宝</span>
+                <span class="method-desc">支持花呗分期</span>
+              </div>
+            </el-radio>
+            <el-radio :value="3" size="large">
+              <div class="method-item">
+                <span class="method-name">💵 余额支付</span>
+                <span class="method-desc">账户余额：¥0.00</span>
+              </div>
+            </el-radio>
+          </el-radio-group>
+        </div>
+
+        <div class="pay-actions">
+          <el-button size="large" @click="$router.back()">取消支付</el-button>
+          <el-button type="danger" size="large" :loading="paying" @click="doPay">
+            确认支付 ¥{{ order.payAmount }}
+          </el-button>
+        </div>
+      </el-card>
+
+      <el-card v-else class="loading-card">
+        <el-skeleton :rows="5" animated />
+      </el-card>
+
+      <!-- 支付成功弹窗 -->
+      <el-dialog v-model="showSuccess" title="支付成功" width="400px" :close-on-click-modal="false">
+        <div class="success-content">
+          <div class="success-icon">✓</div>
+          <div class="success-text">支付成功！</div>
+          <div class="success-desc">订单号：{{ order.orderNo }}</div>
+        </div>
+        <template #footer>
+          <el-button @click="$router.push('/')">返回首页</el-button>
+          <el-button type="primary" @click="$router.push('/orders')">查看订单</el-button>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import TopNav from '../../components/TopNav.vue';
@@ -32,101 +87,160 @@ import request from '../../api/request';
 
 const route = useRoute();
 const router = useRouter();
-const payInfo = ref<any>(null);
+const order = ref<any>({});
+const payMethod = ref(1);
 const paying = ref(false);
-// 固定伪随机二维码图案（仅装饰）
-const qrPattern = '1010011101010110010110100101101001011010010110100101101110010110100101101001011010010110100101101110010110100101101001011010010110100101';
+const showSuccess = ref(false);
 
-async function init() {
+const orderTypeText = computed(() => {
+  const typeMap: Record<string, string> = {
+    goods: '商品订单',
+    meal: '餐位预订',
+    hotel: '住宿预订',
+    ticket: '门票订单',
+    route: '路线套餐'
+  };
+  return typeMap[order.value.orderType] || '其他';
+});
+
+async function load() {
   try {
-    const st: any = await request.get('/pay/status', { params: { orderId: route.params.orderId } });
-    if (st.paid) {
-      ElMessage.info('该订单已支付');
-      router.replace('/orders');
-      return;
+    const userId = JSON.parse(localStorage.getItem('userInfo') || '{}').id;
+    order.value = await request.get(`/orders/${route.params.orderId}`, {
+      params: { userId }
+    });
+    if (order.value.status !== 0) {
+      ElMessage.warning('该订单不是待支付状态');
+      router.push('/orders');
     }
-    payInfo.value = await request.post('/pay/create', null, { params: { orderId: route.params.orderId } });
   } catch {
-    // 已提示，回订单页
-    router.replace('/orders');
+    router.push('/orders');
   }
 }
 
-async function mockScan() {
+async function doPay() {
   paying.value = true;
   try {
-    await request.post('/pay/mock-scan', null, { params: { payNo: payInfo.value.payNo } });
-    ElMessage.success('支付成功');
-    router.replace('/orders');
+    // 模拟支付流程
+    await request.post('/pay/unified', {
+      orderId: order.value.id,
+      payMethod: payMethod.value,
+      amount: order.value.payAmount
+    });
+
+    // 模拟支付成功回调
+    setTimeout(async () => {
+      try {
+        await request.post('/pay/callback', {
+          orderId: order.value.id,
+          tradeNo: 'MOCK' + Date.now(),
+          status: 1
+        });
+        showSuccess.value = true;
+        window.dispatchEvent(new Event('cart-changed'));
+      } catch {
+        // 已提示
+      }
+    }, 1500);
   } catch {
-    // 已提示
-  } finally {
     paying.value = false;
   }
 }
 
-onMounted(init);
+onMounted(load);
 </script>
 
 <style scoped>
 .page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.order-card {
+  margin-top: 20px;
+}
+.order-info {
   display: flex;
-  justify-content: center;
-  padding: 40px 20px;
+  flex-direction: column;
+  gap: 12px;
 }
-.pay-card {
-  width: 420px;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 28px;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+.info-row {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
 }
-.line {
+.label {
   color: #666;
-  margin-top: 10px;
-  font-size: 13px;
+  width: 100px;
 }
 .amount {
-  margin-top: 12px;
+  color: #c0392b;
+  font-weight: bold;
   font-size: 16px;
 }
-.red {
-  color: #c0392b;
-  font-size: 26px;
-  font-weight: bold;
+.amount.highlight {
+  font-size: 24px;
 }
-.qrcode {
-  width: 180px;
-  height: 180px;
-  margin: 20px auto 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 10px;
-  box-sizing: border-box;
+.pay-methods {
+  margin-top: 20px;
 }
-.qr-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 1px;
+.method-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.method-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
-  height: 100%;
 }
-.qr-cell {
-  background: #fff;
+.method-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
 }
-.qr-cell.dark {
-  background: #222;
+.method-name {
+  font-size: 15px;
+  font-weight: 600;
 }
-.qr-tip {
-  font-size: 12px;
+.method-desc {
+  font-size: 13px;
   color: #999;
 }
-.qr-content {
-  font-size: 11px;
-  color: #bbb;
-  margin: 6px 0 16px;
-  word-break: break-all;
+.pay-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.loading-card {
+  margin-top: 20px;
+  padding: 30px;
+}
+.success-content {
+  text-align: center;
+  padding: 20px;
+}
+.success-icon {
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #67c23a;
+  color: #fff;
+  font-size: 48px;
+  font-weight: bold;
+}
+.success-text {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.success-desc {
+  color: #666;
+  font-size: 14px;
 }
 </style>

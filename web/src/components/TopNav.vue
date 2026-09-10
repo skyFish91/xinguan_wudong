@@ -84,43 +84,130 @@ window.addEventListener('cart-changed', loadCartCount);
 
 <style scoped>
 .top-nav {
-  background: #fff;
-  border-bottom: 1px solid #eee;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
+  transition: all 0.3s ease;
 }
+
 .nav-inner {
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 24px;
-  height: 60px;
+  gap: 48px;
+  height: 64px;
+  padding: 0 24px;
 }
+
 .logo {
-  font-size: 22px;
-  font-weight: bold;
-  color: #c0392b;
+  font-size: 20px;
+  font-weight: 400;
+  color: #333;
   text-decoration: none;
   white-space: nowrap;
+  letter-spacing: 2px;
+  transition: opacity 0.2s ease;
 }
+
+.logo:hover {
+  opacity: 0.7;
+}
+
 .nav-menu {
   flex: 1;
   border-bottom: none;
+  background: transparent;
 }
+
+.nav-menu :deep(.el-menu-item) {
+  font-size: 14px;
+  font-weight: 400;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  height: 64px;
+  line-height: 64px;
+  padding: 0 20px;
+}
+
+.nav-menu :deep(.el-menu-item:hover) {
+  background: transparent;
+  color: #333;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  color: #333;
+  border-bottom-color: #8b7355;
+  background: transparent;
+  font-weight: 500;
+}
+
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
 }
+
 .icon-link {
-  color: #333;
+  color: #666;
   text-decoration: none;
   cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  transition: color 0.2s ease;
+  padding: 6px 12px;
 }
-.user-name {
-  cursor: pointer;
+
+.icon-link:hover {
   color: #333;
 }
+
+.user-name {
+  cursor: pointer;
+  color: #666;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 6px 12px;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.user-name:hover {
+  color: #333;
+}
+
+.user-name::after {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid currentColor;
+  margin-left: 2px;
+}
+
+:deep(.el-badge) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.el-badge__content) {
+  background: #8b7355;
+  border: none;
+  font-weight: 500;
+  font-size: 11px;
+  height: 16px;
+  line-height: 16px;
+  padding: 0 5px;
+  min-width: 16px;
+}
 </style>
+
