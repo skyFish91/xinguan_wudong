@@ -13,7 +13,6 @@ import { ReviewEntity } from '../../entity/interaction.entity';
 import { OrderEntity, OrderItemEntity, RefundRecordEntity } from '../../entity/order.entity';
 import { Auth, CurrentUserParam, CurrentUser } from '../../common/decorators';
 import { BizError } from '../../common/BizError';
-import { mustMerchantId } from '../../common/decorators';
 import { OrderStatus, OrderType } from '../../common/constants';
 
 /** 商品 DTO */
@@ -110,17 +109,23 @@ export class ClothingAdminService {
   }
 
   async saveProduct(merchantId: number, dto: ProductDTO & { id?: number }) {
+    const images = (dto.images || []).map(url => url.trim()).filter(Boolean);
+    const mainImage = dto.mainImage?.trim() || images[0];
+    if (!mainImage) {
+      throw BizError.param('请至少上传一张商品图片');
+    }
     let product: ProductEntity;
     if (dto.id) {
       product = await this.productRepo.findOneBy({ id: dto.id, merchantId });
       if (!product) {
         throw BizError.notFound('商品不存在');
       }
-      Object.assign(product, dto);
+      Object.assign(product, { ...dto, mainImage });
       await this.productRepo.save(product);
     } else {
       product = this.productRepo.create({
         ...dto,
+        mainImage,
         merchantId,
         stock: dto.skus?.reduce((s, k) => s + k.stock, 0) || 0,
         price: dto.skus?.length ? Math.min(...dto.skus.map(k => k.price)) : dto.price,
@@ -140,10 +145,10 @@ export class ClothingAdminService {
       await this.productRepo.update(product.id, { stock: total, price: minPrice });
     }
     // 图片
-    if (dto.images && dto.images.length > 0) {
+    if (dto.images) {
       await this.imageRepo.delete({ productId: product.id });
-      for (let i = 0; i < dto.images.length; i++) {
-        await this.imageRepo.save(this.imageRepo.create({ productId: product.id, imageUrl: dto.images[i], sort: i }));
+      for (let i = 0; i < images.length; i++) {
+        await this.imageRepo.save(this.imageRepo.create({ productId: product.id, imageUrl: images[i], sort: i }));
       }
     }
     return product;
@@ -172,9 +177,13 @@ export class ClothingAdminService {
   }
 
   async deleteProduct(merchantId: number, id: number) {
-    await this.productRepo.delete({ id, merchantId });
-    await this.skuRepo.delete({ productId: id });
-    await this.imageRepo.delete({ productId: id });
+    const product = await this.productRepo.findOneBy({ id, merchantId });
+    if (!product) {
+      throw BizError.notFound('商品不存在');
+    }
+    // 保留 SKU、图片与历史订单快照，避免破坏已成交订单的可追溯性。
+    product.status = 0;
+    await this.productRepo.save(product);
     return true;
   }
 

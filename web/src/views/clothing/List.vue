@@ -112,7 +112,8 @@ async function load(p = 1) {
 function onTopCat(c: any) {
   topCatId.value = c.id;
   subCats.value = c.children || [];
-  categoryId.value = undefined;
+  // 顶级分类需要传给后端；后端会自动包含其下的二级分类。
+  categoryId.value = c.id;
   load(1);
 }
 

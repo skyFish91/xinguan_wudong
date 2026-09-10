@@ -15,6 +15,9 @@
           </div>
           <el-table :data="products" border>
             <el-table-column prop="id" label="ID" width="70" />
+            <el-table-column label="封面" width="78">
+              <template #default="{ row }"><el-image :src="row.mainImage" fit="cover" class="cover-thumb" /></template>
+            </el-table-column>
             <el-table-column prop="title" label="商品名" />
             <el-table-column prop="price" label="售价" width="90" />
             <el-table-column prop="stock" label="库存" width="80" />
@@ -28,7 +31,7 @@
               <template #default="{ row }">
                 <el-button link type="primary" @click="openProduct(row)">编辑</el-button>
                 <el-button link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleProduct(row)">{{ row.status === 1 ? '下架' : '上架' }}</el-button>
-                <el-button link type="danger" @click="deleteProduct(row)">删除</el-button>
+                <el-button link type="danger" @click="deleteProduct(row)">删除（下架）</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -136,7 +139,32 @@
             <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="主图URL"><el-input v-model="form.mainImage" placeholder="http://..." /></el-form-item>
+        <el-form-item label="商品图片" required>
+          <div class="image-manager">
+            <el-upload
+              action="/api/upload/file"
+              :headers="uploadHeaders"
+              :show-file-list="false"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              :on-success="onUploadSuccess"
+              :on-error="onUploadError"
+            >
+              <el-button type="primary" plain>上传商品图片</el-button>
+            </el-upload>
+            <div class="upload-tip">支持 JPG、PNG、WebP，单张不超过 5MB；第一张为商品封面。</div>
+            <div v-if="imageUrls.length" class="image-list">
+              <div v-for="(url, index) in imageUrls" :key="url" class="image-item">
+                <el-image :src="url" fit="cover" class="product-image" />
+                <div class="image-actions">
+                  <el-button v-if="index !== 0" link type="primary" @click="setCover(index)">设为封面</el-button>
+                  <el-tag v-else size="small" type="success">封面</el-tag>
+                  <el-button link type="danger" @click="removeImage(index)">删除</el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-form-item>
         <el-form-item label="市场价"><el-input-number v-model="form.marketPrice" :min="0" :precision="2" controls-position="right" /></el-form-item>
         <el-form-item label="运费"><el-input-number v-model="form.freight" :min="0" :precision="2" controls-position="right" /></el-form-item>
         <el-form-item label="工艺介绍"><el-input v-model="form.craftIntro" type="textarea" :rows="2" /></el-form-item>
@@ -151,9 +179,6 @@
             </div>
             <el-button size="small" @click="form.skus.push({ specName: '', price: 0, stock: 0 })">添加规格</el-button>
           </div>
-        </el-form-item>
-        <el-form-item label="图片URL">
-          <el-input v-model="imagesStr" type="textarea" :rows="2" placeholder="多个图片 URL 用英文逗号分隔" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -184,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import request from '../../api/request';
 
@@ -217,7 +242,11 @@ const reviewPage = ref(1);
 const productDialog = ref(false);
 const categories = ref<any[]>([]);
 const form = reactive<any>({ skus: [] });
-const imagesStr = ref('');
+const imageUrls = ref<string[]>([]);
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+});
 
 const statusTexts: Record<number, string> = {
   0: '待支付', 1: '已支付', 2: '已确认', 3: '进行中', 4: '已完成', 5: '已取消', 6: '退款中', 7: '已退款',
@@ -259,12 +288,12 @@ async function openProduct(row?: any) {
   form.craftIntro = row?.craftIntro || '';
   form.detail = row?.detail || '';
   form.skus = [];
-  imagesStr.value = '';
+  imageUrls.value = [];
   if (row?.id) {
     try {
       const detail: any = await request.get(`/merchant/clothing/products/${row.id}`);
       form.skus = (detail.skus || []).map((s: any) => ({ specName: s.specName, price: Number(s.price), stock: s.stock }));
-      imagesStr.value = (detail.images || []).join(',');
+      imageUrls.value = detail.images || (detail.mainImage ? [detail.mainImage] : []);
     } catch {
       // 已提示
     }
@@ -278,11 +307,16 @@ async function saveProduct() {
     return;
   }
   const skus = (form.skus || []).filter((s: any) => s.specName);
+  if (!imageUrls.value.length) {
+    ElMessage.warning('请至少上传一张商品图片');
+    return;
+  }
   try {
     await request.post('/merchant/clothing/products/save', {
       ...form,
+      mainImage: imageUrls.value[0],
       skus: skus.length ? skus : undefined,
-      images: imagesStr.value ? imagesStr.value.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+      images: imageUrls.value,
     });
     ElMessage.success('已保存');
     productDialog.value = false;
@@ -290,6 +324,30 @@ async function saveProduct() {
   } catch {
     // 已提示
   }
+}
+
+function onUploadSuccess(response: any) {
+  const files = response?.data ?? response;
+  const urls = Array.isArray(files) ? files.map(file => file?.url).filter(Boolean) : [];
+  if (!urls.length) {
+    ElMessage.error(response?.message || '图片上传失败');
+    return;
+  }
+  imageUrls.value.push(...urls);
+  ElMessage.success('图片已上传');
+}
+
+function onUploadError() {
+  ElMessage.error('图片上传失败，请检查文件格式和大小');
+}
+
+function setCover(index: number) {
+  const [image] = imageUrls.value.splice(index, 1);
+  imageUrls.value.unshift(image);
+}
+
+function removeImage(index: number) {
+  imageUrls.value.splice(index, 1);
 }
 
 async function toggleProduct(row: any) {
@@ -304,9 +362,9 @@ async function toggleProduct(row: any) {
 
 async function deleteProduct(row: any) {
   try {
-    await ElMessageBox.confirm(`确定删除商品「${row.title}」？`, '提示', { type: 'warning' });
+    await ElMessageBox.confirm(`确定下架商品「${row.title}」？历史订单与图片会保留。`, '提示', { type: 'warning' });
     await request.post(`/merchant/clothing/products/${row.id}/delete`);
-    ElMessage.success('已删除');
+    ElMessage.success('商品已下架');
     loadProducts(page.value);
   } catch (e: any) {
     // 取消或已提示
@@ -440,6 +498,17 @@ onMounted(() => {
 .sku-num {
   width: 120px;
 }
+.cover-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 4px;
+}
+.image-manager { width: 100%; }
+.upload-tip { margin: 6px 0; color: #909399; font-size: 12px; }
+.image-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.image-item { width: 104px; }
+.product-image { width: 104px; height: 104px; border-radius: 4px; border: 1px solid #dcdfe6; }
+.image-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; }
 .items {
   margin-top: 8px;
 }

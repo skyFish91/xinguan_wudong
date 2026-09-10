@@ -60,7 +60,11 @@ export class UploadController {
     // 单张图片 ≤5MB，视频 ≤100MB
     for (const file of files) {
       const size = file.data ? require('fs').statSync(file.data).size : 0;
-      const isVideo = (file.filename || '').toLowerCase().endsWith('.mp4');
+      const extension = extname(file.filename || '').toLowerCase();
+      const isVideo = extension === '.mp4';
+      if (!['.jpg', '.jpeg', '.png', '.webp', '.mp4'].includes(extension)) {
+        throw BizError.param('仅支持 jpg、jpeg、png、webp 图片或 mp4 视频');
+      }
       if (isVideo && size > 100 * 1024 * 1024) {
         throw BizError.param('视频大小不能超过 100MB');
       }
