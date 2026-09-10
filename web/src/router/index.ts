@@ -36,6 +36,9 @@ const router = createRouter({
     // 个人中心
     { path: '/user', component: () => import('../views/user/Profile.vue'), meta: { requiresAuth: true } },
     { path: '/user/apply-merchant', component: () => import('../views/user/MerchantApply.vue'), meta: { requiresAuth: true } },
+    // AI 聊天助手
+    { path: '/ai', component: () => import('../views/ai/Chat.vue') },
+    { path: '/ai/chat', component: () => import('../views/ai/Chat.vue') },
   ],
 });
 

@@ -9,6 +9,7 @@
         <el-menu-item index="/hotel">民宿住宿</el-menu-item>
         <el-menu-item index="/travel">景区出行</el-menu-item>
         <el-menu-item index="/community">社区分享</el-menu-item>
+        <el-menu-item index="/ai">🤖 AI助手</el-menu-item>
       </el-menu>
       <div class="nav-right">
         <template v-if="userStore.isLogin">
@@ -50,7 +51,7 @@ const cartCount = ref(0);
 // 顶部菜单高亮：取路径第一段
 const activePath = computed(() => {
   const seg = '/' + route.path.split('/')[1];
-  return seg === '/' || seg === '/clothing' || seg === '/food' || seg === '/hotel' || seg === '/travel' || seg === '/community'
+  return seg === '/' || seg === '/clothing' || seg === '/food' || seg === '/hotel' || seg === '/travel' || seg === '/community' || seg === '/ai'
     ? seg
     : '/';
 });
