@@ -51,6 +51,28 @@ export class UserInfoService extends BaseService {
   }
 
   /**
+   * 获取用户资料（公开接口）
+   * @param id
+   * @returns
+   */
+  async getUserInfo(id: number) {
+    const info = await this.userInfoEntity.findOneBy({ id: Equal(id) });
+    if (!info) {
+      return null;
+    }
+    delete info.password;
+    // 确保返回前端需要的字段
+    return {
+      ...info,
+      id: info.id,
+      nickName: info.nickName,
+      avatarUrl: info.avatarUrl,
+      phone: info.phone,
+      description: info.description || '',
+    };
+  }
+
+  /**
    * 注销
    * @param userId
    */

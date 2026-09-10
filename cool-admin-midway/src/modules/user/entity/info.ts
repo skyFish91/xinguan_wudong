@@ -3,10 +3,6 @@ import { Column, Entity, Index } from 'typeorm';
 
 /**
  * 用户主表 —— 对齐设计文档 DDL `usr_user`
- *
- * 说明：本实体同时服务 Cool 生态（unionid / loginType / description 等属性名
- * 被 login service 与前端用户管理页依赖），因此用 @Column({ name }) 把属性名
- * 映射到 DDL 的 snake_case 列，两侧口径保持一致。
  */
 @Entity('usr_user')
 export class UserInfoEntity extends WudongBaseEntity {
@@ -24,22 +20,17 @@ export class UserInfoEntity extends WudongBaseEntity {
   @Column({ name: 'phone', comment: '手机号', length: 20, nullable: true })
   phone: string;
 
-  @Column({ name: 'gender', comment: '性别 0未知 1男 2女', default: 0 })
+  @Column({ name: 'password', comment: '密码（md5加密）', length: 100, nullable: true })
+  password: string;
+
+  @Column({ name: 'gender', comment: '性别 0未知/1男/2女', type: 'tinyint', default: 0 })
   gender: number;
 
-  @Column({ name: 'status', comment: '状态 1正常 2禁用', default: 1 })
+  @Column({ name: 'status', comment: '状态 0禁用/1启用', type: 'tinyint', default: 1 })
   status: number;
-
-  @Column({ name: 'login_type', comment: '登录方式 0小程序 1公众号 2H5', default: 0 })
-  loginType: number;
-
-  @Column({ name: 'password', comment: '密码', length: 100, nullable: true })
-  password: string;
 
   @Column({ name: 'bio', comment: '个人简介', length: 200, default: '' })
   description: string;
-
-  // ===== DDL 业务字段 =====
 
   @Index()
   @Column({ name: 'role', comment: '角色 USER/MERCHANT/ADMIN', length: 20, default: 'USER' })

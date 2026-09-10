@@ -7,41 +7,36 @@ import { SnakeNamingStrategy } from '../common/naming-strategy';
  * 本地开发 npm run dev 读取的配置文件
  */
 export default {
+  bodyParser: {
+    formLimit: '50mb',
+    jsonLimit: '50mb',
+    textLimit: '50mb',
+    limit: '50mb',
+  },
   typeorm: {
     dataSource: {
       default: {
         type: 'mysql',
         host: '127.0.0.1',
-        port: 3308,
+        port: 3307,
         username: 'root',
-        password: 'wudong2026',
+        password: 'Hhl123456',
         database: 'wudong',
-        // 统一 snake_case：与 DDL 对齐，避免 Cool 实体把 camelCase 列名写进业务表
         namingStrategy: new SnakeNamingStrategy(),
-        // 自动建表 注意：线上部署的时候不要使用，有可能导致数据丢失
-        // 已关闭：数据库以 docs/database/*.sql DDL 为唯一权威，实体只做映射不做建表
         synchronize: false,
-        // 打印日志
         logging: false,
-        // 字符集
         charset: 'utf8mb4',
-        // 是否开启缓存
+        collation: 'utf8mb4_unicode_ci',
         cache: true,
-        // 实体路径
         entities: ['**/modules/*/entity'],
-        // 订阅者
         subscribers: [TenantSubscriber],
       },
     },
   },
   cool: {
-    // 实体与路径，跟生成代码、前端请求、swagger文档相关 注意：线上不建议开启，以免暴露敏感信息
     eps: true,
-    // 是否自动导入模块数据库
     initDB: true,
-    // 判断是否初始化的方式
     initJudge: 'db',
-    // 是否自动导入模块菜单
     initMenu: true,
   } as CoolConfig,
 } as MidwayConfig;

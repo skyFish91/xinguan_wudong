@@ -1,15 +1,13 @@
-import { CoolController, BaseController } from '@cool-midway/core';
-import { Body, Get, Inject, Post } from '@midwayjs/core';
+import { CoolController, BaseController, CoolUrlTag } from '@cool-midway/core';
+import { Body, Get, Inject, Post, Provide } from '@midwayjs/core';
 import { UserInfoService } from '../../service/info';
-import { UserInfoEntity } from '../../entity/info';
 
 /**
  * 用户信息
  */
-@CoolController({
-  api: [],
-  entity: UserInfoEntity,
-})
+@Provide()
+@CoolUrlTag()
+@CoolController('/app/user')
 export class AppUserInfoController extends BaseController {
   @Inject()
   ctx;
@@ -20,6 +18,11 @@ export class AppUserInfoController extends BaseController {
   @Get('/person', { summary: '获取用户信息' })
   async person() {
     return this.ok(await this.userInfoService.person(this.ctx.user.id));
+  }
+
+  @Post('/info', { summary: '获取用户资料' })
+  async getUserInfo(@Body('id') id: number) {
+    return this.ok(await this.userInfoService.getUserInfo(id));
   }
 
   @Post('/updatePerson', { summary: '更新用户信息' })

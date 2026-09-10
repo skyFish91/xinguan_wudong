@@ -1,5 +1,5 @@
 import { Body, Inject, Post, Provide } from '@midwayjs/core';
-import { CoolController, BaseController, CoolUrlTag } from '@cool-midway/core';
+import { CoolController, BaseController, CoolUrlTag, TagTypes, CoolTag } from '@cool-midway/core';
 import { NoteTopicService } from '../../service/noteTopic';
 
 /**
@@ -7,7 +7,7 @@ import { NoteTopicService } from '../../service/noteTopic';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController()
+@CoolController('/app/noteTopic')
 export class AppNoteTopicController extends BaseController {
   @Inject()
   noteTopicService: NoteTopicService;
@@ -15,11 +15,13 @@ export class AppNoteTopicController extends BaseController {
   @Inject()
   ctx;
 
+  @CoolTag(TagTypes.IGNORE_TOKEN)
   @Post('/list', { summary: '话题列表' })
   async listTopics(@Body() query) {
     return this.ok(await this.noteTopicService.listTopics(query));
   }
 
+  @CoolTag(TagTypes.IGNORE_TOKEN)
   @Post('/detail', { summary: '话题详情' })
   async detail(@Body('id') id: number) {
     return this.ok(
@@ -39,5 +41,20 @@ export class AppNoteTopicController extends BaseController {
     return this.ok(
       await this.noteTopicService.postsByTopic(query.topicId, query)
     );
+  }
+
+  @Post('/following', { summary: '用户关注的话题列表' })
+  async followingTopics(@Body() query) {
+    return this.ok(
+      await this.noteTopicService.followingTopics(this.ctx.user.id, query)
+    );
+  }
+
+  @CoolTag(TagTypes.IGNORE_TOKEN)
+  @Post('/init', { summary: '初始化测试数据' })
+  async initTestData() {
+    // 插入测试话题
+    await this.noteTopicService.initTestData();
+    return this.ok({ message: '初始化成功' });
   }
 }

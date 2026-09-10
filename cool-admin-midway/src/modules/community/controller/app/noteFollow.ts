@@ -1,4 +1,4 @@
-import { Body, Inject, Post, Provide } from '@midwayjs/core';
+import { Body, Inject, Post, Provide, Query, Get } from '@midwayjs/core';
 import { CoolController, BaseController, CoolUrlTag } from '@cool-midway/core';
 import { NoteFollowService } from '../../service/noteFollow';
 
@@ -7,7 +7,7 @@ import { NoteFollowService } from '../../service/noteFollow';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController()
+@CoolController('/app/noteFollow')
 export class AppNoteFollowController extends BaseController {
   @Inject()
   noteFollowService: NoteFollowService;
@@ -22,17 +22,17 @@ export class AppNoteFollowController extends BaseController {
     );
   }
 
-  @Post('/following', { summary: '关注列表' })
-  async followingList(@Body() query) {
+  @Get('/following', { summary: '关注列表' })
+  async followingList(@Query('userId') userId: number, @Query('page') page?: number, @Query('pageSize') pageSize?: number) {
     return this.ok(
-      await this.noteFollowService.followingList(this.ctx.user.id, query)
+      await this.noteFollowService.followingList(userId, { page, pageSize })
     );
   }
 
-  @Post('/followers', { summary: '粉丝列表' })
-  async followerList(@Body() query) {
+  @Get('/followers', { summary: '粉丝列表' })
+  async followerList(@Query('userId') userId: number, @Query('page') page?: number, @Query('pageSize') pageSize?: number) {
     return this.ok(
-      await this.noteFollowService.followerList(this.ctx.user.id, query)
+      await this.noteFollowService.followerList(userId, { page, pageSize })
     );
   }
 }

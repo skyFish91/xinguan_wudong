@@ -93,13 +93,30 @@ export class NoteCommentService extends BaseService {
    * 评论列表（按游记ID查询，支持树形结构）
    */
   async listByPost(postId: number, query: any) {
-    const qb = this.commentEntity
-      .createQueryBuilder('c')
-      .where('c.postId = :postId', { postId })
-      .andWhere('c.status = 1')
-      .orderBy('c.createTime', 'DESC');
+    const page = query.page || 1;
+    const size = query.size || 15;
+    const skip = (page - 1) * size;
 
-    return this.entityRenderPage(qb, query);
+    const [list, total] = await this.commentEntity.findAndCount({
+      where: {
+        postId,
+        status: 1,
+      },
+      order: {
+        createTime: 'DESC',
+      },
+      skip,
+      take: size,
+    });
+
+    return {
+      list,
+      pagination: {
+        page,
+        size,
+        total,
+      },
+    };
   }
 
   /**

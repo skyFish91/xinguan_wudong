@@ -38,18 +38,31 @@ export class UserMiddleware implements IMiddleware<Context, NextFunction> {
       let { url } = ctx;
       url = url.replace(this.prefix, '').split('?')[0];
       if (_.startsWith(url, '/app/')) {
-        const token = ctx.get('Authorization');
-        try {
-          ctx.user = jwt.verify(token, this.jwtConfig.secret);
+        // 允许所有登录相关的端点无需认证
+        if (_.startsWith(url, '/app/login') || _.startsWith(url, '/app/user/login')) {
+          await next();
+          return;
+        }
 
-          if (ctx.user.isRefresh) {
-            throw new CoolCommException('登录失效~');
+        const token = ctx.get('Authorization');
+        if (token) {
+          try {
+            ctx.user = jwt.verify(token, this.jwtConfig.secret);
+
+            if (ctx.user.isRefresh) {
+              throw new CoolCommException('登录失效~');
+            }
+          } catch (error) {
+            console.log('JWT verification failed:', error.message);
+            ctx.user = null;
           }
-        } catch (error) {}
+        }
+
         // 使用matchUrl方法来检查URL是否应该被忽略
         const isIgnored = this.ignoreUrls.some(pattern =>
           this.utils.matchUrl(pattern, url)
         );
+
         if (isIgnored) {
           await next();
           return;

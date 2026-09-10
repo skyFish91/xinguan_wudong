@@ -7,6 +7,8 @@ import { NotePostEntity } from '../entity/notePost';
 import { NotePostImageEntity } from '../entity/notePostImage';
 import { NoteLikeEntity } from '../entity/noteLike';
 import { NoteCommentEntity } from '../entity/noteComment';
+import { NoteTopicEntity } from '../entity/noteTopic';
+import { UserInfoEntity } from '../../user/entity/info';
 import { SensitiveService } from '../../sensitive/service/sensitive';
 import { MessageService } from '../../message/service/message';
 import { SearchService } from '../../search/service/search';
@@ -31,6 +33,12 @@ export class NotePostService extends BaseService {
 
   @InjectEntityModel(NoteCommentEntity)
   commentEntity: Repository<NoteCommentEntity>;
+
+  @InjectEntityModel(NoteTopicEntity)
+  topicEntity: Repository<NoteTopicEntity>;
+
+  @InjectEntityModel(UserInfoEntity)
+  userEntity: Repository<UserInfoEntity>;
 
   @Inject()
   sensitiveService: SensitiveService;
@@ -114,17 +122,37 @@ export class NotePostService extends BaseService {
    * 信息流（推荐/最新排序，设计文档 §26.2）
    */
   async feed(query: any) {
-    const qb = this.postEntity
-      .createQueryBuilder('p')
-      .where('p.status = 1');
+    const page = query.page || 1;
+    const size = query.size || 15;
+    const skip = (page - 1) * size;
 
-    if (query.sort === 'hot') {
-      qb.orderBy('p.likeCount', 'DESC').addOrderBy('p.createTime', 'DESC');
-    } else {
-      qb.orderBy('p.createTime', 'DESC');
+    const where: any = {
+      status: 1,
+    };
+
+    // 如果指定了userId，只返回该用户的游记
+    if (query.userId) {
+      where.userId = query.userId;
     }
 
-    return this.entityRenderPage(qb, query);
+    const [list, total] = await this.postEntity.findAndCount({
+      where,
+      order: {
+        likeCount: query.sort === 'hot' ? 'DESC' : undefined,
+        createTime: 'DESC',
+      },
+      skip,
+      take: size,
+    });
+
+    return {
+      list,
+      pagination: {
+        page,
+        size,
+        total,
+      },
+    };
   }
 
   /**
@@ -156,22 +184,106 @@ export class NotePostService extends BaseService {
     // 浏览数 +1
     await this.postEntity.increment({ id }, 'viewCount', 1);
 
+    // 获取作者信息
+    let userName = '用户';
+    let userAvatar = '';
+    try {
+      const userInfo = await this.userEntity.findOne({ where: { id: post.userId } });
+      if (userInfo) {
+        userName = userInfo.nickName || userInfo.phone || '用户';
+        userAvatar = userInfo.avatarUrl || '';
+      }
+    } catch (err) {
+      console.error('查询用户信息失败:', err);
+    }
+
+    // 获取关联的话题信息和话题名列表
+    let topics = [];
+    let topicNames = [];
+    if (post.topicIds && Array.isArray(post.topicIds) && post.topicIds.length > 0) {
+      topics = await this.topicEntity.find({
+        where: { id: In(post.topicIds) },
+      });
+      topicNames = topics.map(t => t.name);
+    }
+
     return {
       ...post,
+      userId: post.userId,
       images,
+      topics,
+      topicNames,
+      userName,
+      userAvatar,
       liked: !!liked,
       favorited: !!favorited,
     };
   }
 
   /**
+   * 我的游记列表
+   */
+  async myPosts(userId: number, query: any) {
+    const page = query.page || 1;
+    const size = query.size || 15;
+    const skip = (page - 1) * size;
+
+    const [list, total] = await this.postEntity.findAndCount({
+      where: { userId, status: 1 },
+      order: { createTime: 'DESC' },
+      skip,
+      take: size,
+    });
+
+    return { list, pagination: { page, size, total } };
+  }
+
+  /**
+   * 我点赞的游记列表
+   */
+  async myLikes(userId: number, query: any) {
+    const page = query.page || 1;
+    const size = query.size || 15;
+    const skip = (page - 1) * size;
+
+    const [likes, total] = await this.likeEntity.findAndCount({
+      where: { userId, targetType: 'POST' },
+      order: { createTime: 'DESC' },
+      skip,
+      take: size,
+    });
+
+    const postIds = likes.map((l: any) => l.targetId);
+    if (postIds.length === 0) {
+      return { list: [], pagination: { page, size, total: 0 } };
+    }
+
+    const list = await this.postEntity.find({
+      where: { id: In(postIds), status: 1 },
+      order: { createTime: 'DESC' },
+    });
+
+    return { list, pagination: { page, size, total } };
+  }
+
+  /**
    * 删除游记
    */
-  async deletePost(id: number, userId: number) {
+  async deletePost(id: number, userId: number, role?: string) {
     const post = await this.postEntity.findOne({ where: { id } });
-    if (!post || post.userId !== userId) {
-      throw bizError(ErrorCode.NOT_FOUND, '游记不存在或无权操作');
+
+    if (!post) {
+      throw bizError(ErrorCode.NOT_FOUND, '游记不存在');
     }
+
+    // ADMIN可以删除任意游记，普通用户只能删自己的
+    const postUserId = Number(post.userId);
+    const currentUserId = Number(userId);
+
+    if (role !== 'ADMIN' && postUserId !== currentUserId) {
+      throw bizError(ErrorCode.NOT_FOUND, '无权删除他人游记');
+    }
+
     await this.postEntity.update(id, { status: 4 });
   }
 
@@ -255,5 +367,89 @@ export class NotePostService extends BaseService {
    */
   async offShelf(ids: number[], adminId: number) {
     await this.postEntity.update({ id: In(ids) }, { status: 3 });
+  }
+
+  /**
+   * 搜索（支持游记/话题/用户）
+   */
+  async search(query: any) {
+    const keyword = query.keyword?.trim() || '';
+    const type = query.type || 'post';
+    const page = query.page || 1;
+    const pageSize = query.pageSize || 20;
+    const skip = (page - 1) * pageSize;
+
+    if (!keyword) {
+      return { list: [], total: 0 };
+    }
+
+    switch (type) {
+      case 'post':
+        return this.searchPosts(keyword, skip, pageSize);
+      case 'topic':
+        return this.searchTopics(keyword, skip, pageSize);
+      case 'user':
+        return this.searchUsers(keyword, skip, pageSize);
+      default:
+        return { list: [], total: 0 };
+    }
+  }
+
+  private async searchPosts(keyword: string, skip: number, pageSize: number) {
+    const qb = this.postEntity.createQueryBuilder('p')
+      .where('p.status = 1')
+      .andWhere('(p.title LIKE :keyword OR p.content LIKE :keyword)', { keyword: `%${keyword}%` })
+      .orderBy('p.createTime', 'DESC');
+
+    const [list, total] = await qb.skip(skip).take(pageSize).getManyAndCount();
+
+    return {
+      list: list.map(p => ({
+        id: p.id,
+        title: p.title,
+        content: p.content.substring(0, 100),
+        cover: p.cover || '',
+        likeCount: p.likeCount || 0,
+        commentCount: p.commentCount || 0,
+        viewCount: p.viewCount || 0
+      })),
+      total
+    };
+  }
+
+  private async searchTopics(keyword: string, skip: number, pageSize: number) {
+    const qb = this.topicEntity.createQueryBuilder('t')
+      .where('t.name LIKE :keyword OR t.intro LIKE :keyword', { keyword: `%${keyword}%` })
+      .orderBy('t.createTime', 'DESC');
+
+    const [list, total] = await qb.skip(skip).take(pageSize).getManyAndCount();
+
+    return {
+      list: list.map(t => ({
+        id: t.id,
+        name: t.name,
+        intro: t.intro,
+        postCount: t.postCount || 0
+      })),
+      total
+    };
+  }
+
+  private async searchUsers(keyword: string, skip: number, pageSize: number) {
+    const qb = this.userEntity.createQueryBuilder('u')
+      .where('u.nickName LIKE :keyword', { keyword: `%${keyword}%` })
+      .orderBy('u.createTime', 'DESC');
+
+    const [list, total] = await qb.skip(skip).take(pageSize).getManyAndCount();
+
+    return {
+      list: list.map(u => ({
+        id: u.id,
+        nickName: u.nickName,
+        avatarUrl: u.avatarUrl,
+        description: u.description || ''
+      })),
+      total
+    };
   }
 }

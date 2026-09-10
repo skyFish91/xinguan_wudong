@@ -46,6 +46,7 @@ export abstract class BaseEntity extends CoolBaseEntity {
   @Index()
   @Column({
     comment: '创建时间',
+    name: 'create_time',
     type: 'varchar',
     transformer: transformerTime,
   })
@@ -54,6 +55,7 @@ export abstract class BaseEntity extends CoolBaseEntity {
   @Index()
   @Column({
     comment: '更新时间',
+    name: 'update_time',
     type: 'varchar',
     transformer: transformerTime,
   })

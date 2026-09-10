@@ -13,16 +13,16 @@ export class NotePostEntity extends BaseEntity {
   @Column({ comment: '作者用户ID' })
   userId: number;
 
-  @Column({ comment: '标题', length: 200 })
+  @Column({ comment: '标题', type: 'longtext' })
   title: string;
 
-  @Column({ comment: '正文', type: 'text' })
+  @Column({ comment: '正文', type: 'longtext' })
   content: string;
 
-  @Column({ comment: '视频URL', length: 500, nullable: true })
+  @Column({ comment: '视频URL', type: 'longtext', nullable: true })
   videoUrl: string;
 
-  @Column({ comment: '封面图', length: 500, nullable: true })
+  @Column({ comment: '封面图', type: 'longtext', nullable: true })
   cover: string;
 
   @Column({ comment: '关联地点类型 RESTAURANT/STAY/SCENIC', length: 32, nullable: true })

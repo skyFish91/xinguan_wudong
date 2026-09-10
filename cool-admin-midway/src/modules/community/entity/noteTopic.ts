@@ -10,7 +10,7 @@ export class NoteTopicEntity extends BaseEntity {
   @Column({ comment: '话题名', length: 100 })
   name: string;
 
-  @Column({ comment: '话题头图', length: 500, nullable: true })
+  @Column({ comment: '话题头图', type: 'longtext', nullable: true })
   cover: string;
 
   @Column({ comment: '话题简介', type: 'text', nullable: true })

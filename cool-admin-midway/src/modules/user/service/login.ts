@@ -264,8 +264,18 @@ export class UserLoginService extends BaseService {
    */
   async password(phone, password) {
     const user = await this.userInfoEntity.findOneBy({ phone });
+    const inputMd5 = md5(password);
 
-    if (user && user.password == md5(password)) {
+    console.log('=== 密码登录调试信息 ===');
+    console.log('输入手机号:', phone);
+    console.log('输入密码:', password);
+    console.log('输入密码MD5:', inputMd5);
+    console.log('数据库中查到的用户:', user ? { id: user.id, phone: user.phone, nickName: user.nickName } : null);
+    console.log('数据库中的密码:', user?.password);
+    console.log('密码是否匹配:', user && user.password == inputMd5);
+    console.log('========================');
+
+    if (user && user.password == inputMd5) {
       return this.token({
         id: user.id,
       });

@@ -3,6 +3,7 @@ import { BaseService } from '@cool-midway/core';
 import { InjectEntityModel } from '@midwayjs/typeorm';
 import { Repository } from 'typeorm';
 import { NoteFollowEntity } from '../entity/noteFollow';
+import { UserInfoEntity } from '../../user/entity/info';
 import { MessageService } from '../../message/service/message';
 import { bizError } from '../../../common/biz-error';
 
@@ -13,6 +14,9 @@ import { bizError } from '../../../common/biz-error';
 export class NoteFollowService extends BaseService {
   @InjectEntityModel(NoteFollowEntity)
   followEntity: Repository<NoteFollowEntity>;
+
+  @InjectEntityModel(UserInfoEntity)
+  userInfoEntity: Repository<UserInfoEntity>;
 
   @Inject()
   messageService: MessageService;
@@ -26,14 +30,14 @@ export class NoteFollowService extends BaseService {
     }
 
     const exist = await this.followEntity.findOne({
-      where: { followerId, userId },
+      where: { userId: followerId, followUserId: userId },
     });
 
     if (exist) {
       await this.followEntity.delete(exist.id);
       return { followed: false };
     } else {
-      await this.followEntity.save({ followerId, userId });
+      await this.followEntity.save({ userId: followerId, followUserId: userId });
 
       // 发送关注通知
       await this.messageService.send(userId, {
@@ -48,27 +52,49 @@ export class NoteFollowService extends BaseService {
   }
 
   /**
-   * 关注列表
+   * 关注列表（我关注的人）
    */
   async followingList(followerId: number, query: any) {
-    const qb = this.followEntity
-      .createQueryBuilder('f')
-      .where('f.followerId = :followerId', { followerId })
-      .orderBy('f.createTime', 'DESC');
+    const list = await this.followEntity.query(`
+      SELECT u.id, u.nickname as nickName, u.avatar as avatarUrl
+      FROM note_follow f
+      LEFT JOIN usr_user u ON f.follow_user_id = u.id
+      WHERE f.user_id = ?
+      ORDER BY f.create_time DESC
+      LIMIT ?, ?
+    `, [followerId, (query.page - 1) * (query.pageSize || 20), query.pageSize || 20]);
 
-    return this.entityRenderPage(qb, query);
+    const countResult = await this.followEntity.query(`
+      SELECT COUNT(*) as total FROM note_follow WHERE user_id = ?
+    `, [followerId]);
+
+    return {
+      list: list || [],
+      pagination: { total: countResult[0]?.total || 0, page: query.page || 1, pageSize: query.pageSize || 20 }
+    };
   }
 
   /**
-   * 粉丝列表
+   * 粉丝列表（关注我的人）
    */
   async followerList(userId: number, query: any) {
-    const qb = this.followEntity
-      .createQueryBuilder('f')
-      .where('f.userId = :userId', { userId })
-      .orderBy('f.createTime', 'DESC');
+    const list = await this.followEntity.query(`
+      SELECT u.id, u.nickname as nickName, u.avatar as avatarUrl
+      FROM note_follow f
+      LEFT JOIN usr_user u ON f.user_id = u.id
+      WHERE f.follow_user_id = ?
+      ORDER BY f.create_time DESC
+      LIMIT ?, ?
+    `, [userId, (query.page - 1) * (query.pageSize || 20), query.pageSize || 20]);
 
-    return this.entityRenderPage(qb, query);
+    const countResult = await this.followEntity.query(`
+      SELECT COUNT(*) as total FROM note_follow WHERE follow_user_id = ?
+    `, [userId]);
+
+    return {
+      list: list || [],
+      pagination: { total: countResult[0]?.total || 0, page: query.page || 1, pageSize: query.pageSize || 20 }
+    };
   }
 
   /**
@@ -76,7 +102,7 @@ export class NoteFollowService extends BaseService {
    */
   async isFollowing(followerId: number, userId: number): Promise<boolean> {
     const exist = await this.followEntity.findOne({
-      where: { followerId, userId },
+      where: { userId: followerId, followUserId: userId },
     });
     return !!exist;
   }

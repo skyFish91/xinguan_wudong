@@ -6,10 +6,10 @@ import { Column, Entity } from 'typeorm';
  */
 @Entity('task_info')
 export class TaskInfoEntity extends BaseEntity {
-  @Column({ comment: '任务ID', nullable: true })
+  @Column({ comment: '任务ID', nullable: true, name: 'job_id' })
   jobId: string;
 
-  @Column({ comment: '任务配置', nullable: true, length: 1000 })
+  @Column({ comment: '任务配置', nullable: true, length: 1000, name: 'repeat_conf' })
   repeatConf: string;
 
   @Column({ comment: '名称' })

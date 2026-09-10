@@ -10,7 +10,7 @@ export class NotePostImageEntity extends BaseEntity {
   @Column({ comment: '游记ID' })
   postId: number;
 
-  @Column({ comment: '图片URL', length: 500 })
+  @Column({ comment: '图片URL', type: 'longtext' })
   imageUrl: string;
 
   @Column({ comment: '排序', default: 0 })

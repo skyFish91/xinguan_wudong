@@ -1,3 +1,5 @@
+import { OrderStatus } from '../order-status';
+
 /**
  * 业务类型常量（设计文档 §8.2、§9、§12）。
  * 用枚举保证全项目「只有一种写法」。
@@ -39,18 +41,8 @@ export enum ClientType {
   ADMIN = 'ADMIN',
 }
 
-/** 订单状态（设计文档 §7.3 状态机） */
-export enum OrderStatus {
-  PENDING = 'PENDING', // 待支付
-  PAID = 'PAID', // 已支付，待确认
-  CONFIRMED = 'CONFIRMED', // 商家已确认
-  ONGOING = 'ONGOING', // 进行中（已发货 / 已入住 / 已到店）
-  FINISHED = 'FINISHED', // 已完成
-  REVIEWED = 'REVIEWED', // 已评价
-  CANCELLED = 'CANCELLED', // 用户取消
-  CLOSED = 'CLOSED', // 超时未支付关闭
-  REFUNDED = 'REFUNDED', // 已退款
-}
+export { OrderStatus };
+
 
 /** 支付状态 */
 export enum PayStatus {

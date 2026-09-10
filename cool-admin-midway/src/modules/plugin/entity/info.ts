@@ -13,7 +13,7 @@ export class PluginInfoEntity extends BaseEntity {
   description: string;
 
   @Index()
-  @Column({ comment: 'Key名' })
+  @Column({ comment: 'Key名', name: 'key_name' })
   keyName: string;
 
   @Column({ comment: 'Hook' })
