@@ -7,7 +7,7 @@ import { NoteFollowService } from '../../service/noteFollow';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController('/app/noteFollow')
+@CoolController()
 export class AppNoteFollowController extends BaseController {
   @Inject()
   noteFollowService: NoteFollowService;

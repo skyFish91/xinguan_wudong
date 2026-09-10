@@ -30,7 +30,7 @@ export class HotelBookingDTO {
 
 @Provide()
 @CoolUrlTag()
-@CoolController('/app/stay')
+@CoolController()
 export class StayController extends BaseController {
   @InjectEntityModel('t_homestay')
   homestayRepo: Repository<any>;

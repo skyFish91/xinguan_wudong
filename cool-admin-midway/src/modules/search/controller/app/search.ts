@@ -7,7 +7,7 @@ import { SearchService } from '../../service/search';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController('/app/search')
+@CoolController()
 export class AppSearchController extends BaseController {
   @Inject()
   searchService: SearchService;

@@ -7,7 +7,7 @@ import { UserInfoService } from '../../service/info';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController('/app/user')
+@CoolController()
 export class AppUserInfoController extends BaseController {
   @Inject()
   ctx;
