@@ -23,9 +23,10 @@ async function initializeTestDB() {
     await connection.execute('CREATE DATABASE IF NOT EXISTS wudong_test');
     console.log('数据库 wudong_test 已创建');
 
-    // 授予权限（支持从 Docker 网络连接）
-    await connection.execute("GRANT ALL PRIVILEGES ON wudong_test.* TO 'root'@'%' IDENTIFIED BY 'root'");
-    await connection.execute("GRANT ALL PRIVILEGES ON wudong_test.* TO 'root'@'127.0.0.1' IDENTIFIED BY 'root'");
+    // MySQL 8.0+ 授予权限（不使用 IDENTIFIED BY）
+    // CI 环境中 root 用户已存在，只需授予权限
+    await connection.execute("GRANT ALL PRIVILEGES ON wudong_test.* TO 'root'@'%'");
+    await connection.execute("GRANT ALL PRIVILEGES ON wudong_test.* TO 'root'@'127.0.0.1'");
     await connection.execute('FLUSH PRIVILEGES');
     console.log('权限已授予');
 
