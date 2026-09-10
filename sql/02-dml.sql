@@ -59,7 +59,7 @@ INSERT INTO t_inheritor (id, name, title, craft, story) VALUES
 
 -- ---------- 商品（衣） ----------
 INSERT INTO t_product (id, title, subtitle, category_id, merchant_id, main_image, price, market_price, stock, sales, rating, craft_intro, detail, inheritor_id, freight, status) VALUES
-(1, '手工錾花银手镯（中号）', '纯手工锻打 錾花工艺', 11, 1, '/uploads/seeds/product-photos/miao-silver-jewelry.jpg', 680.00, 880.00, 50, 126, 4.8,
+(1, '手工錾花银手镯（中号）', '纯手工锻打 錾花工艺', 11, 1, '/uploads/seeds/product-photos/miao-silver-bracelet.jpg', 680.00, 880.00, 50, 126, 4.8,
 '采用传统錾花工艺，在银条上手工錾刻苗族传统纹样。历经熔银、锻打、拉丝、錾花、焊接、洗银等十二道工序，每件纹样皆有细微差异，独一无二。',
 '<h3>工艺特色</h3><p>苗族银饰锻制技艺是国家级非物质文化遗产。錾花手镯以纯银为材（S990），纹样取自枫树图腾与蝴蝶妈妈传说。</p><h3>佩戴与保养</h3><p>银饰接触硫化物会变黑，可用擦银布轻拭；不佩戴时密封存放。</p>', 1, 0, 1),
 (2, '枫树图腾银项圈', '苗族盛装标志 拉丝工艺', 12, 1, '/uploads/seeds/product-photos/miao-silver-jewelry.jpg', 1280.00, 1580.00, 20, 58, 4.9,
@@ -74,7 +74,7 @@ INSERT INTO t_product (id, title, subtitle, category_id, merchant_id, main_image
 (5, '苗族刺绣女装上衣', '盛装改良 日常可穿', 41, 1, '/uploads/seeds/product-photos/miao-clothing.jpg', 468.00, 588.00, 30, 45, 4.6,
 '改良苗族女装，保留交领、刺绣、银饰点缀等传统元素，版型适合日常穿着。',
 '<h3>穿着场景</h3><p>节日、旅拍、日常皆宜。提供 S/M/L 码。</p>', 3, 0, 1),
-(6, '蜡染布艺挂画', '梯田人家 装饰布艺', 21, 1, '/uploads/seeds/product-photos/miao-batik.jpg', 268.00, 328.00, 40, 67, 4.5,
+(6, '蜡染布艺挂画', '梯田人家 装饰布艺', 21, 1, '/uploads/seeds/product-batik-2.svg', 268.00, 328.00, 40, 67, 4.5,
 '大幅蜡染挂画《梯田人家》，描绘乌东苗寨吊脚楼与层叠梯田，适合民宿、书房装饰。',
 '<h3>规格</h3><p>尺寸 60cm x 90cm，附挂绳，可挂可展。</p>', 2, 10, 1);
 
@@ -90,12 +90,12 @@ INSERT INTO t_product_sku (product_id, spec_name, price, stock, image) VALUES
 (6, '蜡染-挂画-标准', 268.00, 40, '/uploads/seeds/product-batik-2.svg');
 
 INSERT INTO t_product_image (product_id, image_url, sort) VALUES
-(1, '/uploads/seeds/product-photos/miao-silver-jewelry.jpg', 1),
+(1, '/uploads/seeds/product-photos/miao-silver-bracelet.jpg', 1),
 (2, '/uploads/seeds/product-photos/miao-silver-jewelry.jpg', 1),
 (3, '/uploads/seeds/product-photos/miao-batik.jpg', 1),
 (4, '/uploads/seeds/product-photos/miao-embroidery.jpg', 1),
 (5, '/uploads/seeds/product-photos/miao-clothing.jpg', 1),
-(6, '/uploads/seeds/product-photos/miao-batik.jpg', 1);
+(6, '/uploads/seeds/product-batik-2.svg', 1);
 
 -- ---------- 农产品（食） ----------
 INSERT INTO t_farm_category (id, name, icon, sort) VALUES
