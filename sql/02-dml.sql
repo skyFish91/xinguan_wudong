@@ -74,7 +74,7 @@ INSERT INTO t_product (id, title, subtitle, category_id, merchant_id, main_image
 (5, '苗族刺绣女装上衣', '盛装改良 日常可穿', 41, 1, '/uploads/seeds/product-photos/miao-clothing.jpg', 468.00, 588.00, 30, 45, 4.6,
 '改良苗族女装，保留交领、刺绣、银饰点缀等传统元素，版型适合日常穿着。',
 '<h3>穿着场景</h3><p>节日、旅拍、日常皆宜。提供 S/M/L 码。</p>', 3, 0, 1),
-(6, '蜡染布艺挂画', '梯田人家 装饰布艺', 21, 1, '/uploads/seeds/product-photos/miao-batik-hanging.jpg', 268.00, 328.00, 40, 67, 4.5,
+(6, '蜡染布艺挂画', '梯田人家 装饰布艺', 21, 1, '/uploads/seeds/product-photos/miao-batik-hanging-v2.jpg', 268.00, 328.00, 40, 67, 4.5,
 '大幅蜡染挂画《梯田人家》，描绘乌东苗寨吊脚楼与层叠梯田，适合民宿、书房装饰。',
 '<h3>规格</h3><p>尺寸 60cm x 90cm，附挂绳，可挂可展。</p>', 2, 10, 1);
 
@@ -95,7 +95,7 @@ INSERT INTO t_product_image (product_id, image_url, sort) VALUES
 (3, '/uploads/seeds/product-photos/miao-batik.jpg', 1),
 (4, '/uploads/seeds/product-photos/miao-embroidery.jpg', 1),
 (5, '/uploads/seeds/product-photos/miao-clothing.jpg', 1),
-(6, '/uploads/seeds/product-photos/miao-batik-hanging.jpg', 1);
+(6, '/uploads/seeds/product-photos/miao-batik-hanging-v2.jpg', 1);
 
 -- ---------- 农产品（食） ----------
 INSERT INTO t_farm_category (id, name, icon, sort) VALUES
