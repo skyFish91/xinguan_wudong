@@ -6,6 +6,9 @@ import * as Icons from '@element-plus/icons-vue';
 import App from './App.vue';
 import router from './router';
 
+// 全局样式（苗韵国风主题 + 工具类 + 动画）
+import './styles/index.css';
+
 const app = createApp(App);
 app.use(createPinia());
 app.use(router);

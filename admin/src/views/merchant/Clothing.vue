@@ -413,7 +413,10 @@ onMounted(() => {
 .toolbar {
   display: flex;
   gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border-light);
 }
 .search {
   width: 200px;
@@ -422,7 +425,7 @@ onMounted(() => {
   width: 130px;
 }
 .pager {
-  margin-top: 14px;
+  margin-top: 18px;
   justify-content: flex-end;
 }
 .sku-box {

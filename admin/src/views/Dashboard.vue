@@ -2,31 +2,88 @@
   <div>
     <!-- 平台管理员 -->
     <template v-if="userStore.role === 'admin'">
-      <div class="cards">
-        <el-card v-for="c in adminCards" :key="c.label" class="card">
-          <div class="card-num">{{ c.value }}</div>
-          <div class="card-label">{{ c.label }}</div>
+      <!-- 顶部 4 张渐变数据卡 -->
+      <div class="gradient-row">
+        <div class="gradient-card g1">
+          <div class="g-icon">
+            <el-icon :size="24"><User /></el-icon>
+          </div>
+          <div class="g-num">{{ adminData.userCount ?? 0 }}</div>
+          <div class="g-label">注册用户</div>
+          <div class="g-trend">今日 +{{ adminData.todayUsers ?? 0 }}</div>
+        </div>
+        <div class="gradient-card g2">
+          <div class="g-icon">
+            <el-icon :size="24"><Shop /></el-icon>
+          </div>
+          <div class="g-num">{{ adminData.merchantCount ?? 0 }}</div>
+          <div class="g-label">入驻商家</div>
+          <div class="g-trend">待审核 {{ adminData.pendingApplies ?? 0 }}</div>
+        </div>
+        <div class="gradient-card g3">
+          <div class="g-icon">
+            <el-icon :size="24"><List /></el-icon>
+          </div>
+          <div class="g-num">{{ adminData.orderCount ?? 0 }}</div>
+          <div class="g-label">订单总数</div>
+          <div class="g-trend">今日 +{{ adminData.todayOrders ?? 0 }}</div>
+        </div>
+        <div class="gradient-card g4">
+          <div class="g-icon">
+            <el-icon :size="24"><Coin /></el-icon>
+          </div>
+          <div class="g-num">¥{{ adminData.gmv?.total ?? 0 }}</div>
+          <div class="g-label">成交总额 GMV</div>
+          <div class="g-trend">UV {{ adminData.uv ?? 0 }} · PV {{ adminData.pv ?? 0 }}</div>
+        </div>
+      </div>
+
+      <!-- 图表区 -->
+      <div class="chart-row">
+        <el-card class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">GMV / 订单趋势</span>
+              <el-tag size="small" type="success" effect="plain">近 7 日</el-tag>
+            </div>
+          </template>
+          <DashboardChart :option="trendOption" />
+        </el-card>
+        <el-card class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">订单状态分布</span>
+            </div>
+          </template>
+          <DashboardChart :option="statusOption" />
         </el-card>
       </div>
-      <el-card class="panel">
-        <template #header>订单状态分布</template>
-        <div class="status-row">
-          <el-tag v-for="s in statusList" :key="s.status" :type="s.status === 0 ? 'warning' : 'info'" class="status-tag">
-            {{ statusText(s.status) }}：{{ s.count }}
-          </el-tag>
+
+      <!-- 详细状态列表 -->
+      <el-card class="mt-16">
+        <template #header>
+          <div class="card-header">
+            <span class="card-title">订单状态明细</span>
+          </div>
+        </template>
+        <div class="status-grid">
+          <div v-for="s in statusList" :key="s.status" class="status-cell">
+            <el-tag :type="statusTagType(s.status)" size="large" effect="dark">{{ statusText(s.status) }}</el-tag>
+            <div class="status-count">{{ s.count }}</div>
+          </div>
         </div>
       </el-card>
     </template>
 
     <!-- 商家 -->
     <template v-else>
-      <div class="cards">
-        <el-card v-for="(v, k) in merchantStats" :key="k" class="card">
-          <div class="card-num">{{ v }}</div>
-          <div class="card-label">{{ k }}</div>
-        </el-card>
-      </div>
       <el-empty v-if="!Object.keys(merchantStats).length" description="暂无统计数据" />
+      <div v-else class="gradient-row">
+        <div v-for="(v, k) in merchantStats" :key="k" class="gradient-card g1">
+          <div class="g-num">{{ v }}</div>
+          <div class="g-label">{{ k }}</div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -35,6 +92,7 @@
 import { computed, onMounted, ref } from 'vue';
 import request from '../api/request';
 import { useUserStore } from '../stores/user';
+import DashboardChart from '../components/DashboardChart.vue';
 
 const userStore = useUserStore();
 const adminData = ref<any>({});
@@ -43,23 +101,96 @@ const merchantStats = ref<Record<string, any>>({});
 const statusTexts: Record<number, string> = {
   0: '待支付', 1: '已支付', 2: '已确认', 3: '进行中', 4: '已完成', 5: '已取消', 6: '退款中', 7: '已退款',
 };
+const statusTagTypes: Record<number, 'warning' | 'primary' | 'success' | 'info' | 'danger'> = {
+  0: 'warning', 1: 'primary', 2: 'primary', 3: 'info', 4: 'success', 5: 'info', 6: 'danger', 7: 'danger',
+};
 
 function statusText(s: number) {
   return statusTexts[s] ?? `状态${s}`;
 }
-
-const adminCards = computed(() => [
-  { label: '注册用户', value: adminData.value.userCount ?? 0 },
-  { label: '今日新增用户', value: adminData.value.todayUsers ?? 0 },
-  { label: '订单总数', value: adminData.value.orderCount ?? 0 },
-  { label: '今日订单', value: adminData.value.todayOrders ?? 0 },
-  { label: '成交总额 GMV', value: `¥${adminData.value.gmv?.total ?? 0}` },
-  { label: '入驻商家', value: adminData.value.merchantCount ?? 0 },
-  { label: '待审商家申请', value: adminData.value.pendingApplies ?? 0 },
-  { label: '浏览量 PV', value: adminData.value.pv ?? 0 },
-]);
+function statusTagType(s: number) {
+  return statusTagTypes[s] ?? 'info';
+}
 
 const statusList = computed(() => adminData.value.byStatus || []);
+
+const trendOption = computed(() => {
+  const trend = adminData.value.trend || [];
+  return {
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,0.95)', textStyle: { color: '#1f2a3a' } },
+    legend: { data: ['订单数', 'GMV (元)'], top: 0, right: 0 },
+    grid: { left: 50, right: 50, top: 40, bottom: 30 },
+    xAxis: {
+      type: 'category',
+      data: trend.map((t: any) => t.date),
+      axisLine: { lineStyle: { color: '#aab5c5' } },
+      axisLabel: { color: '#7c8da6' },
+    },
+    yAxis: [
+      { type: 'value', name: '订单数', axisLine: { show: false }, axisLabel: { color: '#7c8da6' }, splitLine: { lineStyle: { color: '#ede7d7' } } },
+      { type: 'value', name: 'GMV(元)', axisLine: { show: false }, axisLabel: { color: '#7c8da6' }, splitLine: { show: false } },
+    ],
+    series: [
+      {
+        name: '订单数',
+        type: 'bar',
+        data: trend.map((t: any) => t.count),
+        itemStyle: { color: '#0e8c7e', borderRadius: [4, 4, 0, 0] },
+        barWidth: '32%',
+      },
+      {
+        name: 'GMV (元)',
+        type: 'line',
+        yAxisIndex: 1,
+        smooth: true,
+        data: trend.map((t: any) => Number(t.amount)),
+        itemStyle: { color: '#c08a3e' },
+        lineStyle: { width: 3 },
+        symbol: { size: 8 },
+        areaStyle: {
+          color: {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(192,138,62,0.25)' },
+              { offset: 1, color: 'rgba(192,138,62,0)' },
+            ],
+          },
+        },
+      },
+    ],
+  };
+});
+
+const statusOption = computed(() => {
+  const list = statusList.value;
+  const data = list.map((s: any) => ({
+    name: statusText(s.status),
+    value: s.count,
+    itemStyle: {
+      color:
+        s.status === 4 ? '#4ea76b' :
+        s.status === 0 ? '#e0a44b' :
+        s.status === 6 || s.status === 7 ? '#c0514c' :
+        '#0e8c7e',
+    },
+  }));
+  return {
+    tooltip: { trigger: 'item' },
+    legend: { orient: 'vertical', right: 20, top: 'center', textStyle: { color: '#4a5566' } },
+    series: [
+      {
+        name: '订单状态',
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['38%', '50%'],
+        avoidLabelOverlap: true,
+        itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+        label: { show: true, formatter: '{b}\n{c}', fontSize: 12, color: '#4a5566' },
+        data: data.length ? data : [{ name: '暂无', value: 0, itemStyle: { color: '#ede7d7' } }],
+      },
+    ],
+  };
+});
 
 onMounted(async () => {
   if (userStore.role === 'admin') {
@@ -85,33 +216,102 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.cards {
+.gradient-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 16px;
 }
-.card {
-  text-align: center;
+.gradient-card {
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-base);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
-.card-num {
-  font-size: 26px;
-  font-weight: bold;
-  color: #2b3a4a;
+.gradient-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
-.card-label {
-  color: #999;
-  margin-top: 6px;
-  font-size: 13px;
+.gradient-card.g1 {
+  background: linear-gradient(135deg, #0e8c7e 0%, #14a89a 100%);
 }
-.panel {
+.gradient-card.g2 {
+  background: linear-gradient(135deg, #2d4a7c 0%, #4a6ba8 100%);
+}
+.gradient-card.g3 {
+  background: linear-gradient(135deg, #c08a3e 0%, #d4a262 100%);
+}
+.gradient-card.g4 {
+  background: linear-gradient(135deg, #c0514c 0%, #d97872 100%);
+}
+.g-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.g-num {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.g-label {
+  font-size: 14px;
+  opacity: 0.92;
+  margin-top: 4px;
+}
+.g-trend {
+  font-size: 12px;
+  opacity: 0.75;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.18);
+}
+
+/* 图表区 */
+.chart-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
   margin-top: 16px;
 }
-.status-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.chart-card {
+  height: 380px;
 }
-.status-tag {
-  font-size: 13px;
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* 状态明细 */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 8px;
+  background: var(--bg-page);
+  border-radius: var(--radius-base);
+}
+.status-count {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 </style>

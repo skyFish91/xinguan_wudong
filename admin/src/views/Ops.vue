@@ -348,14 +348,21 @@ onMounted(() => {
 .toolbar {
   display: flex;
   gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border-light);
 }
 .thumb {
   width: 70px;
   height: 40px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 .kw-input {
   width: 200px;
+}
+.pager {
+  margin-top: 18px;
+  justify-content: flex-end;
 }
 </style>

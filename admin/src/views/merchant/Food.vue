@@ -475,7 +475,10 @@ onMounted(() => {
 .toolbar {
   display: flex;
   gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border-light);
 }
 .search {
   width: 200px;
@@ -484,11 +487,11 @@ onMounted(() => {
   width: 140px;
 }
 .pager {
-  margin-top: 14px;
+  margin-top: 18px;
   justify-content: flex-end;
 }
 .muted {
-  color: #999;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 .rest-form {
