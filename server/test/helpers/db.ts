@@ -21,20 +21,22 @@ import {
 } from '../../src/entity/platform.entity';
 import { OrderService } from '../../src/module/order/order.module';
 
-/** 测试数据源：连接独立的 wudong_test 库 */
+/** 测试数据源：连接独立的 wudong_test 库（连接参数走环境变量，缺省与 CI 保持一致） */
 export const dataSource = new DataSource({
   type: 'mysql',
-  host: '127.0.0.1',
-  port: 3306,
-  username: 'root',
-  password: 'root',
-  database: 'wudong_test',
+  host: process.env.TEST_DB_HOST || '127.0.0.1',
+  port: Number(process.env.TEST_DB_PORT || 3306),
+  username: process.env.TEST_DB_USER || 'root',
+  password: process.env.TEST_DB_PASSWORD || 'ws764766',
+  database: process.env.TEST_DB_NAME || 'wudong_test',
   synchronize: false,
   logging: false,
   timezone: '+08:00',
   extra: {
     supportBigNumbers: true,
     bigNumberStrings: false,
+    // 与 src/config/config.default.ts 保持一致：date 列按字符串返回，避免日期偏移
+    dateStrings: ['DATE'],
   },
   entities: [
     UserEntity, UserAddressEntity, MerchantEntity, MerchantApplyEntity, RoleEntity, OperationLogEntity,

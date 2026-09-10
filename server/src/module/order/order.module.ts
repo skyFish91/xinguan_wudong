@@ -22,6 +22,7 @@ import { Auth, CurrentUserParam, CurrentUser } from '../../common/decorators';
 import { BizError } from '../../common/BizError';
 import { OrderStatus, OrderType } from '../../common/constants';
 import { PageResult } from '../../common/response';
+import { normalizeDateToYMD } from '../../common/date';
 import dayjs from 'dayjs';
 
 /** 创建订单入参（各业务模块调用） */
@@ -487,7 +488,11 @@ export class OrderService {
     const ticket = await this.ticketOrderRepo.findOneBy({ orderId });
     const pay = await this.payRepo.findOneBy({ orderId, status: 1 });
     const refund = await this.refundRepo.findOneBy({ orderId });
-    return { ...order, items, mealBooking: meal, hotelBooking: hotel, ticketOrder: ticket, pay, refund };
+    // 归一化票务扩展的 useDate 为 'YYYY-MM-DD'，避免 date 列经时区转换后变成 Date 对象/偏移一天
+    const ticketOrder = ticket
+      ? { ...ticket, useDate: normalizeDateToYMD(ticket.useDate) }
+      : ticket;
+    return { ...order, items, mealBooking: meal, hotelBooking: hotel, ticketOrder, pay, refund };
   }
 
   /** 商家确认订单 */
