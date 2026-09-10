@@ -23,18 +23,8 @@ async function initializeTestDB() {
     await connection.execute('CREATE DATABASE IF NOT EXISTS wudong_test');
     console.log('数据库 wudong_test 已创建');
 
-    // MySQL 8.0+ 兼容：先尝试创建用户（如果不存在），再授予权限
-    try {
-      await connection.execute("CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'root'");
-    } catch (err) {
-      // 用户可能已存在，忽略错误
-      console.log('用户已存在，跳过创建');
-    }
-
-    await connection.execute("GRANT ALL PRIVILEGES ON wudong_test.* TO 'root'@'%'");
-    await connection.execute("GRANT ALL PRIVILEGES ON wudong_test.* TO 'root'@'127.0.0.1'");
-    await connection.execute('FLUSH PRIVILEGES');
-    console.log('权限已授予');
+    // MySQL 8.0+ 兼容：root 用户已有最高权限，无需额外授权
+    console.log('权限已就绪（root 用户默认拥有所有权限）');
 
     // 切换到测试数据库
     await connection.execute('USE wudong_test');
