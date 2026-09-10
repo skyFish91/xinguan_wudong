@@ -16,9 +16,7 @@
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column label="头像" width="70">
         <template #default="{ row }">
-          <el-avatar :size="36" class="user-avatar">
-            {{ (row.nickname || 'U').charAt(0) }}
-          </el-avatar>
+          <CartoonAvatar :size="36" :variant="avatarVariant(row)" />
         </template>
       </el-table-column>
       <el-table-column prop="phone" label="手机号" width="140" />
@@ -74,6 +72,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search } from '@element-plus/icons-vue';
 import request from '../api/request';
 import EmptyState from '../components/EmptyState.vue';
+import CartoonAvatar from '../components/CartoonAvatar.vue';
 
 const keyword = ref('');
 const role = ref('');
@@ -91,6 +90,11 @@ function roleText(r: string) {
 }
 function roleTagType(r: string): 'danger' | 'warning' | 'info' {
   return r === 'admin' ? 'danger' : r === 'merchant' ? 'warning' : 'info';
+}
+function avatarVariant(row: any) {
+  if (row.role === 'admin') return 'admin';
+  if (row.role === 'merchant') return 'food';
+  return 'user';
 }
 
 async function load(p = 1) {
@@ -139,11 +143,6 @@ onMounted(() => load(1));
 }
 .select {
   width: 140px;
-}
-.user-avatar {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-  color: #fff;
-  font-weight: 600;
 }
 .text-placeholder {
   color: var(--text-placeholder);

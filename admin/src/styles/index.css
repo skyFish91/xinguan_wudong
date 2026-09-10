@@ -106,6 +106,57 @@ html.dark {
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
   --shadow-base: 0 4px 12px rgba(0,0,0,0.4);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+
+  /* --- Element Plus 深色补全（覆盖官方 dark css-vars，保持苗韵风格） --- */
+  --el-color-primary: var(--color-primary);
+  --el-color-primary-light-3: #4cb1a3;
+  --el-color-primary-light-5: #2a9c8e;
+  --el-color-primary-light-7: rgba(20, 168, 154, 0.35);
+  --el-color-primary-light-9: var(--color-primary-soft);
+  --el-color-primary-dark-2: var(--color-primary-active);
+
+  --el-bg-color: #0e1825;
+  --el-bg-color-page: #0e1825;
+  --el-bg-color-overlay: #1a2738;
+
+  --el-fill-color: #233246;
+  --el-fill-color-blank: #1a2738;
+  --el-fill-color-light: #233246;
+  --el-fill-color-lighter: #1e2a3e;
+  --el-fill-color-extra-light: #1a2738;
+  --el-fill-color-dark: #2c3a52;
+  --el-fill-color-darker: #3a4a64;
+
+  --el-border-color: #2c3a52;
+  --el-border-color-light: #1e2a3e;
+  --el-border-color-lighter: #233246;
+  --el-border-color-extra-light: #1e2a3e;
+  --el-border-color-dark: #3a4a64;
+  --el-border-color-darker: #4a5a74;
+
+  --el-text-color-primary: #e6edf6;
+  --el-text-color-regular: #b8c5d4;
+  --el-text-color-secondary: #8d9bb0;
+  --el-text-color-placeholder: #5f6e85;
+  --el-text-color-disabled: #5f6e85;
+
+  --el-mask-color: rgba(0, 0, 0, 0.72);
+  --el-box-shadow: 0 12px 32px 4px rgba(0,0,0,0.5);
+  --el-box-shadow-light: 0 4px 12px rgba(0,0,0,0.4);
+
+  /* 表格深色 */
+  --el-table-bg-color: #1a2738;
+  --el-table-tr-bg-color: #1a2738;
+  --el-table-header-bg-color: #233246;
+  --el-table-header-text-color: #e6edf6;
+  --el-table-border-color: #1e2a3e;
+  --el-table-row-hover-bg-color: rgba(20, 168, 154, 0.12);
+  --el-table-striped-bg-color: #1e2a3e;
+
+  /* 分页深色 */
+  --el-pagination-bg-color: transparent;
+  --el-pagination-button-bg-color: #233246;
+  --el-pagination-hover-color: var(--color-primary);
 }
 
 /* ============================================================
@@ -231,3 +282,75 @@ html.dark .el-table th.el-table__cell {
 .fade-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
 .fade-enter-from { opacity: 0; transform: translateY(8px); }
 .fade-leave-to { opacity: 0; transform: translateY(-8px); }
+
+/* ============================================================
+   全局动态效果
+   ============================================================ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* 卡片入场动画 */
+.el-card {
+  animation: fadeInUp 0.4s ease both;
+}
+
+/* 按钮 hover 平滑过渡 */
+.el-button {
+  transition: all 0.25s ease;
+}
+.el-button:not(.is-disabled):hover {
+  transform: translateY(-1px);
+}
+
+/* 表格行 hover 平滑过渡 */
+.el-table .el-table__row {
+  transition: background-color 0.2s ease;
+}
+
+/* 表格容器入场 */
+.el-table {
+  animation: fadeInUp 0.45s ease both;
+}
+
+/* 菜单项平滑过渡 */
+.el-menu-item {
+  transition: background-color 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
+}
+.el-menu-item:hover {
+  padding-left: 24px !important;
+}
+
+/* 标签悬浮微动 */
+.el-tag {
+  transition: transform 0.2s ease;
+}
+.el-tag:hover {
+  transform: translateY(-1px);
+}
+
+/* 减少动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

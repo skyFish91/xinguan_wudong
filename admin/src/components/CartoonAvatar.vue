@@ -106,6 +106,7 @@ const PALETTES: Record<string, { bg1: string; bg2: string; clothes: string; clot
   food:     { bg1: '#c08a3e', bg2: '#9c6b28', clothes: '#d99a4e', clothesDark: '#b87b33', hair: '#2b2018' },
   hotel:    { bg1: '#4a6ba8', bg2: '#2d4a7c', clothes: '#5b7fc0', clothesDark: '#46649d', hair: '#2b2018' },
   travel:   { bg1: '#7a5a9e', bg2: '#5a3d7d', clothes: '#8d6bb5', clothesDark: '#6e4f93', hair: '#2b2018' },
+  user:     { bg1: '#8d9bb0', bg2: '#64748b', clothes: '#7c8da6', clothesDark: '#5f6e85', hair: '#2b2018' },
 };
 
 const palette = computed(() => PALETTES[props.variant] ?? PALETTES.admin);
