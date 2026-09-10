@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
+  <!-- 中心对称花纹 -->
+  <circle cx="100" cy="100" r="40" />
+  <circle cx="100" cy="100" r="28" />
+  <circle cx="100" cy="100" r="6" fill="currentColor" />
+
+  <!-- 8 片花瓣 -->
+  <g stroke-linecap="round">
+    <path d="M100 60 C 92 70, 92 90, 100 100" />
+    <path d="M100 140 C 108 130, 108 110, 100 100" />
+    <path d="M60 100 C 70 92, 90 92, 100 100" />
+    <path d="M140 100 C 130 108, 110 108, 100 100" />
+    <path d="M72 72 C 84 78, 92 92, 100 100" />
+    <path d="M128 128 C 116 122, 108 108, 100 100" />
+    <path d="M72 128 C 78 116, 92 108, 100 100" />
+    <path d="M128 72 C 122 84, 108 92, 100 100" />
+  </g>
+
+  <!-- 装饰点 -->
+  <circle cx="100" cy="55" r="2" fill="currentColor" />
+  <circle cx="100" cy="145" r="2" fill="currentColor" />
+  <circle cx="55" cy="100" r="2" fill="currentColor" />
+  <circle cx="145" cy="100" r="2" fill="currentColor" />
+
+  <!-- 外圈装饰 -->
+  <circle cx="100" cy="100" r="55" stroke-dasharray="2 4" opacity="0.6" />
+</svg>
