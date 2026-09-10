@@ -1,5 +1,7 @@
 <template>
-  <v-chart class="chart" :option="option" :autoresize="true" />
+  <div class="chart-wrap">
+    <v-chart class="chart" :option="option" :autoresize="true" />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -15,8 +17,14 @@ defineProps<{ option: any }>();
 </script>
 
 <style scoped>
-.chart {
-  height: 320px;
+.chart-wrap {
   width: 100%;
+  height: 100%;
+  min-height: 320px;
+}
+.chart {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
 }
 </style>

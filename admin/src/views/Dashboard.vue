@@ -32,7 +32,7 @@
           <div class="g-icon">
             <el-icon :size="24"><Coin /></el-icon>
           </div>
-          <div class="g-num">¥{{ adminData.gmv?.total ?? 0 }}</div>
+          <div class="g-num">¥{{ adminData.gmv ?? 0 }}</div>
           <div class="g-label">成交总额 GMV</div>
           <div class="g-trend">UV {{ adminData.uv ?? 0 }} · PV {{ adminData.pv ?? 0 }}</div>
         </div>
@@ -47,15 +47,17 @@
               <el-tag size="small" type="success" effect="plain">近 7 日</el-tag>
             </div>
           </template>
-          <DashboardChart :option="trendOption" />
+          <DashboardChart v-if="dashboardLoaded" :option="trendOption" />
         </el-card>
         <el-card class="chart-card">
           <template #header>
             <div class="card-header">
               <span class="card-title">订单状态分布</span>
+              <el-tag size="small" effect="plain">{{ statusList.length }} 种状态</el-tag>
             </div>
           </template>
-          <DashboardChart :option="statusOption" />
+          <EmptyState v-if="statusList.length === 0" type="data" description="暂无订单数据" />
+          <DashboardChart v-else-if="dashboardLoaded" :option="statusOption" />
         </el-card>
       </div>
 
@@ -89,14 +91,40 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import request from '../api/request';
 import { useUserStore } from '../stores/user';
 import DashboardChart from '../components/DashboardChart.vue';
+import EmptyState from '../components/EmptyState.vue';
 
 const userStore = useUserStore();
 const adminData = ref<any>({});
 const merchantStats = ref<Record<string, any>>({});
+
+const dashboardLoaded = computed(() => !!adminData.value.userCount);
+
+// 监听深色模式，图表文字/网格颜色随主题变化
+const isDark = ref(false);
+function syncTheme() {
+  isDark.value = document.documentElement.classList.contains('dark');
+}
+let observer: MutationObserver | null = null;
+onMounted(() => {
+  syncTheme();
+  observer = new MutationObserver((muts) => {
+    if (muts.some(m => m.attributeName === 'class')) syncTheme();
+  });
+  observer.observe(document.documentElement, { attributes: true });
+});
+onUnmounted(() => {
+  observer?.disconnect();
+});
+
+const chartText = computed(() => (isDark.value ? '#e2e8f0' : '#4a5566'));
+const chartAxis = computed(() => (isDark.value ? '#94a3b8' : '#7c8da6'));
+const chartGrid = computed(() => (isDark.value ? 'rgba(148,163,184,0.15)' : '#ede7d7'));
+const chartTooltipBg = computed(() => (isDark.value ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.95)'));
+const chartTooltipText = computed(() => (isDark.value ? '#e2e8f0' : '#1f2a3a'));
 
 const statusTexts: Record<number, string> = {
   0: '待支付', 1: '已支付', 2: '已确认', 3: '进行中', 4: '已完成', 5: '已取消', 6: '退款中', 7: '已退款',
@@ -117,18 +145,18 @@ const statusList = computed(() => adminData.value.byStatus || []);
 const trendOption = computed(() => {
   const trend = adminData.value.trend || [];
   return {
-    tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,0.95)', textStyle: { color: '#1f2a3a' } },
-    legend: { data: ['订单数', 'GMV (元)'], top: 0, right: 0 },
+    tooltip: { trigger: 'axis', backgroundColor: chartTooltipBg.value, textStyle: { color: chartTooltipText.value } },
+    legend: { top: 0, right: 0, icon: 'roundRect', textStyle: { color: chartText.value } },
     grid: { left: 50, right: 50, top: 40, bottom: 30 },
     xAxis: {
       type: 'category',
       data: trend.map((t: any) => t.date),
-      axisLine: { lineStyle: { color: '#aab5c5' } },
-      axisLabel: { color: '#7c8da6' },
+      axisLine: { lineStyle: { color: chartAxis.value } },
+      axisLabel: { color: chartAxis.value },
     },
     yAxis: [
-      { type: 'value', name: '订单数', axisLine: { show: false }, axisLabel: { color: '#7c8da6' }, splitLine: { lineStyle: { color: '#ede7d7' } } },
-      { type: 'value', name: 'GMV(元)', axisLine: { show: false }, axisLabel: { color: '#7c8da6' }, splitLine: { show: false } },
+      { type: 'value', name: '订单数', axisLine: { show: false }, axisLabel: { color: chartAxis.value }, splitLine: { lineStyle: { color: chartGrid.value } } },
+      { type: 'value', name: 'GMV(元)', axisLine: { show: false }, axisLabel: { color: chartAxis.value }, splitLine: { show: false } },
     ],
     series: [
       {
@@ -146,7 +174,8 @@ const trendOption = computed(() => {
         data: trend.map((t: any) => Number(t.amount)),
         itemStyle: { color: '#c08a3e' },
         lineStyle: { width: 3 },
-        symbol: { size: 8 },
+        symbol: 'circle',
+        symbolSize: 8,
         areaStyle: {
           color: {
             type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
@@ -163,30 +192,45 @@ const trendOption = computed(() => {
 
 const statusOption = computed(() => {
   const list = statusList.value;
+  const palette: Record<number, string> = {
+    0: '#e0a44b', 1: '#4a6ba8', 2: '#5b8cc7', 3: '#7da9c9',
+    4: '#4ea76b', 5: '#aab5c5', 6: '#c0514c', 7: '#8c3d3a',
+  };
   const data = list.map((s: any) => ({
     name: statusText(s.status),
     value: s.count,
-    itemStyle: {
-      color:
-        s.status === 4 ? '#4ea76b' :
-        s.status === 0 ? '#e0a44b' :
-        s.status === 6 || s.status === 7 ? '#c0514c' :
-        '#0e8c7e',
-    },
+    itemStyle: { color: palette[s.status] ?? '#0e8c7e' },
   }));
   return {
-    tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', right: 20, top: 'center', textStyle: { color: '#4a5566' } },
+    tooltip: { trigger: 'item', backgroundColor: chartTooltipBg.value, textStyle: { color: chartTooltipText.value } },
+    legend: {
+      orient: 'horizontal',
+      bottom: 8,
+      left: 'center',
+      textStyle: { color: chartText.value, fontSize: 12 },
+      itemWidth: 10,
+      itemHeight: 10,
+      itemGap: 14,
+      icon: 'roundRect',
+    },
     series: [
       {
         name: '订单状态',
         type: 'pie',
-        radius: ['45%', '70%'],
-        center: ['38%', '50%'],
-        avoidLabelOverlap: true,
-        itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
-        label: { show: true, formatter: '{b}\n{c}', fontSize: 12, color: '#4a5566' },
-        data: data.length ? data : [{ name: '暂无', value: 0, itemStyle: { color: '#ede7d7' } }],
+        radius: ['38%', '62%'],
+        center: ['50%', '45%'],
+        avoidLabelOverlap: false,
+        itemStyle: { borderRadius: 6, borderColor: isDark.value ? '#1a2738' : '#fff', borderWidth: 2 },
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: '{b}\n{c}',
+          fontSize: 12,
+          color: chartText.value,
+          lineHeight: 16,
+        },
+        labelLine: { show: true, length: 8, length2: 8, lineStyle: { color: chartAxis.value } },
+        data: data.length ? data : [{ name: '暂无', value: 1, itemStyle: { color: '#ede7d7' } }],
       },
     ],
   };
@@ -277,12 +321,18 @@ onMounted(async () => {
 /* 图表区 */
 .chart-row {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 16px;
   margin-top: 16px;
 }
 .chart-card {
-  height: 380px;
+  height: 420px;
+}
+.chart-card :deep(.el-card__body) {
+  height: calc(100% - 56px);
+  padding: 12px 16px 8px;
+  display: flex;
+  flex-direction: column;
 }
 .card-header {
   display: flex;
