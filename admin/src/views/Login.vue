@@ -131,12 +131,19 @@ async function submit() {
   position: relative;
   text-align: center;
   color: #fff;
-  padding: 40px;
+  padding: 40px 44px;
   max-width: 480px;
+  background: rgba(16, 34, 56, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 .brand-icon {
-  color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.9);
   margin-bottom: 16px;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.35));
 }
 .brand-title {
   font-size: 42px;

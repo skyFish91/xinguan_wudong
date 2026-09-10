@@ -1,39 +1,176 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 960" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <pattern id="miao" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-      <!-- 简化苗族蝴蝶纹/几何纹 -->
-      <path d="M30 10 L30 50 M10 30 L50 30" stroke="#fff" stroke-width="0.8" opacity="0.25" fill="none" />
-      <circle cx="30" cy="30" r="6" stroke="#fff" stroke-width="0.8" fill="none" opacity="0.4" />
-      <circle cx="30" cy="30" r="2" fill="#fff" opacity="0.4" />
-      <path d="M22 22 L30 30 L38 22 M22 38 L30 30 L38 38" stroke="#fff" stroke-width="0.6" fill="none" opacity="0.3" />
-    </pattern>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1f3a5f" />
-      <stop offset="50%" stop-color="#2d4a7c" />
+    <!-- 夜空背景渐变 -->
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#16284a" />
+      <stop offset="45%" stop-color="#2d4a7c" />
+      <stop offset="78%" stop-color="#1f6b63" />
       <stop offset="100%" stop-color="#0e8c7e" />
     </linearGradient>
+    <!-- 月亮光晕 -->
+    <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#fff8e1" stop-opacity="0.9" />
+      <stop offset="40%" stop-color="#ffe9a8" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#ffe9a8" stop-opacity="0" />
+    </radialGradient>
+    <!-- 远山渐变 -->
+    <linearGradient id="farMountain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a5a8c" />
+      <stop offset="100%" stop-color="#2d4a7c" />
+    </linearGradient>
+    <!-- 中景山渐变 -->
+    <linearGradient id="midMountain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#24524f" />
+      <stop offset="100%" stop-color="#1a3f3c" />
+    </linearGradient>
+    <!-- 苗族银饰几何纹 -->
+    <pattern id="silverPattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#ffffff" stroke-opacity="0.14">
+        <rect x="4" y="4" width="72" height="72" stroke-width="1" />
+        <path d="M40 4 L40 76 M4 40 L76 40" stroke-width="0.7" />
+        <path d="M16 16 L64 64 M64 16 L16 64" stroke-width="0.5" />
+        <circle cx="40" cy="40" r="12" stroke-width="0.9" />
+        <circle cx="40" cy="40" r="5" stroke-width="0.7" />
+        <circle cx="40" cy="40" r="1.6" fill="#ffffff" fill-opacity="0.3" stroke="none" />
+      </g>
+    </pattern>
   </defs>
-  <rect width="400" height="300" fill="url(#bg)" />
-  <rect width="400" height="300" fill="url(#miao)" />
 
-  <!-- 远山轮廓 -->
-  <path d="M0 220 Q 80 180, 160 210 T 320 200 T 400 220 L 400 300 L 0 300 Z" fill="rgba(255,255,255,0.08)" />
-  <path d="M0 240 Q 100 220, 200 240 T 400 240 L 400 300 L 0 300 Z" fill="rgba(255,255,255,0.05)" />
+  <!-- 夜空 -->
+  <rect width="720" height="960" fill="url(#sky)" />
 
-  <!-- 中央银饰纹样 -->
-  <g transform="translate(200, 150)" stroke="#fff" stroke-width="1.4" fill="none" opacity="0.85">
-    <circle cx="0" cy="0" r="60" />
-    <circle cx="0" cy="0" r="42" />
-    <circle cx="0" cy="0" r="10" fill="#fff" opacity="0.5" />
-    <g stroke-linecap="round">
-      <path d="M0 -60 C -10 0, -10 0, 0 60" />
-      <path d="M0 -60 C 10 0, 10 0, 0 60" />
-      <path d="M-60 0 C 0 -10, 0 -10, 60 0" />
-      <path d="M-60 0 C 0 10, 0 10, 60 0" />
-      <path d="M-42 -42 C -10 -10, -10 -10, 0 0" />
-      <path d="M42 -42 C 10 -10, 10 -10, 0 0" />
-      <path d="M-42 42 C -10 10, -10 10, 0 0" />
-      <path d="M42 42 C 10 10, 10 10, 0 0" />
+  <!-- 星点 -->
+  <g fill="#ffffff">
+    <circle cx="90" cy="120" r="1.6" opacity="0.8" />
+    <circle cx="200" cy="80" r="1.2" opacity="0.6" />
+    <circle cx="320" cy="150" r="1.8" opacity="0.9" />
+    <circle cx="460" cy="90" r="1.2" opacity="0.5" />
+    <circle cx="560" cy="170" r="1.5" opacity="0.7" />
+    <circle cx="640" cy="110" r="1.1" opacity="0.6" />
+    <circle cx="150" cy="220" r="1.1" opacity="0.5" />
+    <circle cx="380" cy="70" r="1.4" opacity="0.7" />
+    <circle cx="680" cy="260" r="1.3" opacity="0.55" />
+    <circle cx="60" cy="300" r="1.1" opacity="0.5" />
+    <circle cx="510" cy="240" r="1.2" opacity="0.6" />
+  </g>
+
+  <!-- 月亮 + 光晕 -->
+  <circle cx="560" cy="210" r="120" fill="url(#moonGlow)" />
+  <circle cx="560" cy="210" r="46" fill="#fff4d6" />
+  <circle cx="560" cy="210" r="46" fill="none" stroke="#ffe9a8" stroke-opacity="0.5" stroke-width="1" />
+  <circle cx="548" cy="202" r="8" fill="#f0e3c0" opacity="0.55" />
+  <circle cx="572" cy="222" r="6" fill="#f0e3c0" opacity="0.45" />
+  <circle cx="566" cy="194" r="4" fill="#f0e3c0" opacity="0.5" />
+
+  <!-- 远山 -->
+  <path d="M0 560 L80 470 L150 520 L240 440 L330 510 L420 450 L520 530 L600 470 L720 540 L720 700 L0 700 Z" fill="url(#farMountain)" opacity="0.85" />
+
+  <!-- 中景山 -->
+  <path d="M0 660 L120 560 L230 630 L360 560 L470 640 L580 570 L720 650 L720 800 L0 800 Z" fill="url(#midMountain)" />
+
+  <!-- 云雾 -->
+  <g fill="#ffffff" opacity="0.10">
+    <ellipse cx="180" cy="620" rx="220" ry="26" />
+    <ellipse cx="520" cy="660" rx="260" ry="30" />
+    <ellipse cx="300" cy="700" rx="200" ry="22" />
+  </g>
+
+  <!-- 吊脚楼群剪影 -->
+  <g fill="#14253a">
+    <!-- 左一：矮楼 -->
+    <path d="M40 760 L100 720 L160 760 L150 900 L50 900 Z" />
+    <!-- 左二：主楼（两层 + 坡顶） -->
+    <path d="M150 740 L240 680 L330 740 L320 820 L160 820 Z" />
+    <!-- 中：高塔式吊脚楼 -->
+    <path d="M300 730 L400 660 L500 730 L488 840 L312 840 Z" />
+    <!-- 右一：主楼 -->
+    <path d="M480 735 L570 675 L660 735 L650 830 L490 830 Z" />
+    <!-- 右二：矮楼 -->
+    <path d="M640 750 L700 720 L760 750 L750 900 L650 900 Z" />
+  </g>
+
+  <!-- 吊脚楼屋顶深色强调 -->
+  <g fill="#0d1a2b">
+    <path d="M150 740 L240 680 L330 740 L322 748 L240 692 L158 748 Z" />
+    <path d="M300 730 L400 660 L500 730 L490 738 L400 670 L310 738 Z" />
+    <path d="M480 735 L570 675 L660 735 L652 742 L570 686 L488 742 Z" />
+  </g>
+
+  <!-- 吊脚柱 -->
+  <g stroke="#0d1a2b" stroke-width="6" stroke-linecap="round">
+    <path d="M170 900 L180 830" />
+    <path d="M310 900 L320 830" />
+    <path d="M430 900 L440 830" />
+    <path d="M500 900 L490 830" />
+    <path d="M610 900 L600 830" />
+  </g>
+
+  <!-- 窗户暖光 -->
+  <g fill="#ffd98a">
+    <rect x="205" y="710" width="14" height="20" rx="2" />
+    <rect x="245" y="710" width="14" height="20" rx="2" />
+    <rect x="280" y="770" width="14" height="20" rx="2" />
+    <rect x="355" y="700" width="16" height="22" rx="2" />
+    <rect x="425" y="700" width="16" height="22" rx="2" />
+    <rect x="390" y="770" width="14" height="20" rx="2" />
+    <rect x="530" y="705" width="14" height="20" rx="2" />
+    <rect x="570" y="705" width="14" height="20" rx="2" />
+    <rect x="555" y="770" width="14" height="20" rx="2" />
+  </g>
+  <!-- 窗户光晕 -->
+  <g fill="#ffd98a" opacity="0.35">
+    <rect x="203" y="708" width="18" height="24" rx="3" />
+    <rect x="353" y="698" width="20" height="26" rx="3" />
+    <rect x="423" y="698" width="20" height="26" rx="3" />
+    <rect x="528" y="703" width="18" height="24" rx="3" />
+    <rect x="568" y="703" width="18" height="24" rx="3" />
+  </g>
+
+  <!-- 红灯笼 -->
+  <g>
+    <!-- 灯笼线 -->
+    <path d="M240 640 L240 676 M400 620 L400 660 M570 640 L570 676" stroke="#5a3320" stroke-width="1.4" />
+    <!-- 灯笼主体 -->
+    <g fill="#c0392b">
+      <ellipse cx="240" cy="690" rx="12" ry="15" />
+      <ellipse cx="400" cy="674" rx="14" ry="17" />
+      <ellipse cx="570" cy="690" rx="12" ry="15" />
+    </g>
+    <!-- 灯笼高光 -->
+    <g fill="#e0706a" opacity="0.7">
+      <ellipse cx="237" cy="686" rx="4" ry="8" />
+      <ellipse cx="396" cy="670" rx="5" ry="9" />
+      <ellipse cx="567" cy="686" rx="4" ry="8" />
+    </g>
+    <!-- 灯笼上下盖 -->
+    <g fill="#8c2b22">
+      <rect x="235" y="674" width="10" height="4" rx="1" />
+      <rect x="235" y="702" width="10" height="4" rx="1" />
+      <rect x="394" y="656" width="12" height="4" rx="1" />
+      <rect x="394" y="688" width="12" height="4" rx="1" />
+      <rect x="565" y="674" width="10" height="4" rx="1" />
+      <rect x="565" y="702" width="10" height="4" rx="1" />
+    </g>
+    <!-- 灯笼穗 -->
+    <g stroke="#e8b04a" stroke-width="1.6" fill="none">
+      <path d="M240 706 L240 718 M238 714 L240 720 L242 714" />
+      <path d="M400 692 L400 706 M397 700 L400 708 L403 700" />
+      <path d="M570 706 L570 718 M568 714 L570 720 L572 714" />
+    </g>
+    <!-- 灯笼光晕 -->
+    <g fill="#ff8a4a" opacity="0.22">
+      <circle cx="240" cy="690" r="26" />
+      <circle cx="400" cy="674" r="30" />
+      <circle cx="570" cy="690" r="26" />
     </g>
   </g>
+
+  <!-- 底部银饰纹样带 -->
+  <rect x="0" y="720" width="720" height="240" fill="url(#silverPattern)" opacity="0.5" />
+
+  <!-- 前景山丘 -->
+  <path d="M0 900 C 120 860, 200 880, 320 870 C 460 858, 560 878, 720 862 L720 960 L0 960 Z" fill="#0b4f48" />
+
+  <!-- 顶部与底部渐变压暗 -->
+  <rect width="720" height="960" fill="#0a1a30" opacity="0.12" />
 </svg>

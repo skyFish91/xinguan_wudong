@@ -90,9 +90,7 @@
           </el-tag>
           <el-dropdown @command="onCommand" trigger="click">
             <div class="user-btn">
-              <el-avatar :size="32" class="user-avatar">
-                {{ (userStore.userInfo?.nickname || 'U').charAt(0) }}
-              </el-avatar>
+              <CartoonAvatar :size="32" :variant="avatarVariant" />
               <span class="user-name">{{ userStore.userInfo?.nickname || '用户' }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
@@ -118,17 +116,23 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import request from '../api/request';
 import { useUserStore } from '../stores/user';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import ThemeSwitch from '../components/ThemeSwitch.vue';
 import MiaoPattern from '../components/MiaoPattern.vue';
+import CartoonAvatar from '../components/CartoonAvatar.vue';
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+
+const avatarVariant = computed(() => {
+  if (userStore.role === 'merchant') return userStore.moduleType || 'clothing';
+  return 'admin';
+});
 
 function onCommand(cmd: string) {
   if (cmd === 'logout') {
@@ -274,11 +278,6 @@ onMounted(async () => {
 }
 .user-btn:hover {
   background: var(--bg-page);
-}
-.user-avatar {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-  color: #fff;
-  font-weight: 600;
 }
 .user-name {
   font-size: 14px;
