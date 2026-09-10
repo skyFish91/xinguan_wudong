@@ -99,8 +99,14 @@ const routes = [
       {
         path: '/stay',
         name: 'Stay',
-        component: () => import('../views/stay/Index.vue'),
+        component: () => import('../views/stay/List.vue'),
         meta: { title: '住宿预订' }
+      },
+      {
+        path: '/stay/:id',
+        name: 'StayDetail',
+        component: () => import('../views/stay/Detail.vue'),
+        meta: { title: '民宿详情' }
       },
       {
         path: '/user',

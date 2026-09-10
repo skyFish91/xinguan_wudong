@@ -239,6 +239,7 @@ export * from './modules/space/service/info';
 export * from './modules/space/controller/admin/info';
 export * from './modules/space/service/type';
 export * from './modules/space/controller/admin/type';
+export * from './modules/stay/controller/app/homestay';
 export * from './modules/swagger/builder';
 export * from './modules/swagger/config';
 export * from './modules/swagger/controller/index';

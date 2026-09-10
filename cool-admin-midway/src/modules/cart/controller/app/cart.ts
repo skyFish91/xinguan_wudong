@@ -7,7 +7,7 @@ import { CartService } from '../../service/cart';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController()
+@CoolController('/app/cart')
 export class AppCartController extends BaseController {
   @Inject()
   cartService: CartService;

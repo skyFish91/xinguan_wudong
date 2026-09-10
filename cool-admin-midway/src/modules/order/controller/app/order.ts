@@ -7,7 +7,7 @@ import { OrderService } from '../../service/order';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController()
+@CoolController('/app/order')
 export class AppOrderController extends BaseController {
   @Inject()
   orderService: OrderService;
