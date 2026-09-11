@@ -607,10 +607,12 @@ export class OrderService {
 
   /** 超时订单自动关闭（定时任务调用） */
   async closeTimeoutOrders(timeoutMinutes = 30) {
-    const deadline = dayjs().subtract(timeoutMinutes, 'minute').toDate();
+    // 使用数据库时钟计算超时边界，避免应用服务器与 MySQL 时区不同导致新订单被误关。
+    const minutes = Math.max(1, Math.floor(Number(timeoutMinutes) || 30));
     const orders = await this.orderRepo
       .createQueryBuilder('o')
-      .where('o.status = 0 AND o.created_at < :deadline', { deadline })
+      .where('o.status = :status', { status: OrderStatus.PENDING_PAY })
+      .andWhere('o.created_at < DATE_SUB(NOW(), INTERVAL :minutes MINUTE)', { minutes })
       .getMany();
     for (const order of orders) {
       order.status = OrderStatus.CANCELLED;
