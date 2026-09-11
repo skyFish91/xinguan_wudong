@@ -7,6 +7,7 @@
           <router-link to="/">首页</router-link>
           <router-link to="/scenic">景区</router-link>
           <router-link to="/route">路线</router-link>
+          <router-link to="/community">社区</router-link>
           <router-link
             v-if="userStore.userInfo?.role === 'merchant'"
             to="/merchant/dashboard"

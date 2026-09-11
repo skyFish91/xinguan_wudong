@@ -101,6 +101,49 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
 
+    // 社区路由
+    {
+      path: '/community',
+      name: 'community',
+      component: () => import('../views/community/Index.vue')
+    },
+    {
+      path: '/community/feed',
+      name: 'community-feed',
+      component: () => import('../views/community/Feed.vue')
+    },
+    {
+      path: '/community/topic/:id',
+      name: 'community-topic-detail',
+      component: () => import('../views/community/TopicDetail.vue')
+    },
+    {
+      path: '/community/topics',
+      name: 'community-topics',
+      component: () => import('../views/community/TopicList.vue')
+    },
+    {
+      path: '/community/post/:id',
+      name: 'community-post-detail',
+      component: () => import('../views/community/PostDetail.vue')
+    },
+    {
+      path: '/community/publish',
+      name: 'community-publish',
+      component: () => import('../views/community/PublishPost.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/community/search',
+      name: 'community-search',
+      component: () => import('../views/community/Search.vue')
+    },
+    {
+      path: '/community/user/:id',
+      name: 'community-user-profile',
+      component: () => import('../views/community/UserProfile.vue')
+    },
+
     // 商家端路由
     {
       path: '/merchant/login',
