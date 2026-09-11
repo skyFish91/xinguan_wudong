@@ -244,14 +244,19 @@ onMounted(async () => {
       // 已提示
     }
   } else {
+    // 商家看自己的经营数据，必须走商家域 /api/merchant/<模块>/*
+    // （原来的 /<模块>/admin/stats 属运营域管理员接口，商家访问会被鉴权拦成 403）
     const apiMap: Record<string, string> = {
-      clothing: '/clothing/admin/stats',
-      food: '/food/admin/stats',
-      hotel: '/hotel/admin/stats',
-      travel: '/travel/admin/stats',
+      clothing: '/merchant/clothing/stats',
+      food: '/merchant/food/stats',
+      hotel: '/merchant/hotel/stats',
+      travel: '/merchant/travel/stats',
     };
     try {
-      merchantStats.value = await request.get(apiMap[userStore.moduleType]);
+      const path = apiMap[userStore.moduleType];
+      if (path) {
+        merchantStats.value = await request.get(path);
+      }
     } catch {
       // 已提示
     }
