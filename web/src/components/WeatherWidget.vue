@@ -44,7 +44,7 @@
             <span class="value">{{ currentWeather.precipitation }}%</span>
           </div>
           <div class="weather-item">
-            <el-icon><Wind /></el-icon>
+            <el-icon><WindPower /></el-icon>
             <span class="label">风速</span>
             <span class="value">{{ currentWeather.windSpeed }} km/h</span>
           </div>
@@ -113,7 +113,7 @@
               {{ day.rain }}%
             </div>
             <div class="day-wind">
-              <el-icon><Wind /></el-icon>
+              <el-icon><WindPower /></el-icon>
               {{ day.wind }}
             </div>
           </div>
@@ -140,7 +140,7 @@
             <div class="suggestion-value">{{ suggestions.travel }}</div>
           </div>
           <div class="suggestion-item" :class="getSuggestionClass('clothing')">
-            <el-icon><Shirt /></el-icon>
+            <el-icon><Goods /></el-icon>
             <div class="suggestion-label">穿衣建议</div>
             <div class="suggestion-value">{{ suggestions.clothing }}</div>
           </div>
@@ -157,12 +157,12 @@ import {
   ArrowRight,
   Sunny,
   Umbrella,
-  Wind,
+  WindPower,
   View,
   Cherry,
   Compass,
   Guide,
-  Shirt
+  Goods
 } from '@element-plus/icons-vue'
 
 interface Props {

@@ -1,0 +1,33 @@
+:root {
+  --wd-primary: #c0392b;
+  --wd-primary-light: #fdf1ef;
+  --wd-text: #2d3748;
+  --wd-text-secondary: #718096;
+  --wd-surface: #ffffff;
+  --wd-page: #f5f7fa;
+  --wd-radius: 12px;
+  --wd-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  color: var(--wd-text);
+  background: var(--wd-page);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}

@@ -472,6 +472,14 @@ const reviewStats = computed(() => {
   return reviewStore.getTargetStats('scenic', scenic.value.id)
 })
 
+// 没有评价时使用景区初始评分，避免详情页出现未定义字段。
+const avgRating = computed(() => {
+  return reviewStats.value.total > 0
+    ? reviewStats.value.avgRating
+    : Number(scenic.value.rating || 0)
+})
+const reviewCount = computed(() => reviewStats.value.total)
+
 const images = computed(() => {
   if (!scenic.value.images) return [scenic.value.main_image]
   if (typeof scenic.value.images === 'string') {

@@ -8,6 +8,8 @@ export const useUserStore = defineStore('user', {
   }),
   getters: {
     isLogin: (state) => !!state.token,
+    // 旅游模块沿用了 isLoggedIn 命名，保留别名以兼容已有页面。
+    isLoggedIn: (state) => !!state.token,
   },
   actions: {
     setLogin(token: string, userInfo: any) {
