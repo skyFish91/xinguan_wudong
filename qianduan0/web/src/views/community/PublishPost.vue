@@ -67,7 +67,9 @@
           <el-form-item label="图片">
             <el-upload
               v-model:file-list="fileList"
-              action="/app/comm/upload"
+              action="/api/upload/file"
+              :headers="uploadHeaders"
+              name="file"
               list-type="picture-card"
               :on-preview="handlePreview"
               :on-remove="handleRemove"
@@ -99,11 +101,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { communityApi } from '@/api/community'
 
 const router = useRouter()
 
@@ -126,14 +128,8 @@ const previewImageUrl = ref('')
 
 const loadTopics = async () => {
   try {
-    const res = await axios.post('/app/noteTopic/list', {
-      page: 1,
-      pageSize: 100
-    })
-    if (res.data && res.data.code === 1000) {
-      topics.value = res.data.data?.list || res.data.data || []
-      console.log('topics 赋值后:', topics.value)
-    }
+    const data = await communityApi.getTopics()
+    topics.value = data.list || []
   } catch (err) {
     console.error('加载话题失败:', err)
   }
@@ -151,34 +147,19 @@ const handlePublish = async () => {
 
   publishing.value = true
   try {
-    const token = localStorage.getItem('token')
-    const images = fileList.value
-      .map(f => f.url || f.response?.data || '')
-      .filter(url => url)
+    // 只取上传成功后由服务端返回的地址，避免把本地预览 blob: 地址发出去
+    const images = fileList.value.map(f => f.serverUrl || '').filter(url => url)
 
-    const data = {
+    await communityApi.publish({
       title: formData.value.title,
       content: formData.value.content,
       topicIds: formData.value.topicIds,
-      images
-    }
-
-    const res = await axios({
-      method: 'POST',
-      url: '/app/notePost/publish',
-      data,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token
-      }
+      images,
+      linkedName: formData.value.location || ''
     })
 
-    if (res.data && res.data.code === 1000) {
-      ElMessage.success('发布成功')
-      router.push('/community')
-    } else {
-      ElMessage.error(res.data?.message || '发布失败')
-    }
+    ElMessage.success('发布成功')
+    router.push('/community')
   } catch (err) {
     ElMessage.error(err.message || '发布失败')
   } finally {
@@ -199,9 +180,20 @@ const handleRemove = (file) => {
   fileList.value = fileList.value.filter(f => f !== file)
 }
 
+/** 上传需要登录态，统一从本地取 token */
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem('token')
+  return token ? { Authorization: 'Bearer ' + token } : {}
+})
+
 const handleUploadSuccess = (response, uploadFile) => {
-  if (response && response.data) {
-    uploadFile.url = response.data
+  // 后端返回 [{ url, name }]（无 code 信封）
+  const first = Array.isArray(response) ? response[0] : response
+  const url = (first && (first.url || first.path)) || ''
+  if (url) {
+    uploadFile.serverUrl = url
+  } else {
+    ElMessage.error('图片上传失败')
   }
 }
 

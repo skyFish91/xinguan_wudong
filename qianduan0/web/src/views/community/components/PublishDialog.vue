@@ -131,7 +131,6 @@ import { ref, computed, watch } from 'vue'
 import { Plus, VideoCamera } from '@element-plus/icons-vue'
 import { communityApi, uploadApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
-import axios from 'axios'
 
 const props = defineProps({
   modelValue: {
@@ -205,26 +204,9 @@ const loadTopics = async () => {
 // 加载地点
 const loadPois = async () => {
   try {
-    const token = localStorage.getItem('token')
-    const res = await axios({
-      method: 'POST',
-      url: '/app/poi/list',
-      data: { page: 1, pageSize: 100 },
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token
-      }
-    })
-
-    if (res.data && res.data.code === 1000) {
-      // 将后端返回的字段映射
-      pois.value = (res.data.data.list || []).map(item => ({
-        id: item.id,
-        name: item.name
-      }))
-    }
+    pois.value = await communityApi.getPois();
   } catch (error) {
-    console.error('加载地点失败', error)
+    console.error('加载地点失败', error);
     // 备用地点列表
     pois.value = [
       { id: 1, name: '乌东古城' },
@@ -237,14 +219,14 @@ const loadPois = async () => {
 // 图片上传前校验
 const beforeUpload = (file) => {
   const isImage = file.type.startsWith('image/')
-  const isLt10M = file.size / 1024 / 1024 < 10
+  const isLt5M = file.size / 1024 / 1024 < 5
 
   if (!isImage) {
     ElMessage.error('只能上传图片文件')
     return false
   }
-  if (!isLt10M) {
-    ElMessage.error('图片大小不能超过 10MB')
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过 5MB')
     return false
   }
   return true

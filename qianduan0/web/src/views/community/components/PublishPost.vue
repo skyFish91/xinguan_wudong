@@ -110,7 +110,7 @@
 import { ref, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Close, Location } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { communityApi, uploadApi } from '@/api/community'
 
 const props = defineProps({
   modelValue: {
@@ -162,44 +162,36 @@ const loadTopics = async () => {
     const token = localStorage.getItem('token')
     if (!token) return
 
-    const res = await axios({
-      method: 'POST',
-      url: '/app/noteTopic/list',
-      data: { page: 1, size: 50 },
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token
-      }
-    })
-
-    if (res.data && res.data.code === 1000 && res.data.data) {
-      topics.value = res.data.data.list || []
-    }
+    const data = await communityApi.getTopics()
+    topics.value = data.list || []
   } catch (err) {
     console.error('加载话题失败:', err)
   }
 }
 
-// 处理图片选择 - 直接使用本地预览，不上传
+// 处理图片选择 - 上传到服务端，取回可访问地址
 const handleImageChange = async (file) => {
   if (form.images.length >= 9) {
     ElMessage.warning('最多只能上传9张图片')
     return
   }
 
-  // 检查文件大小（限制10MB）
-  if (file.raw.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过 10MB')
+  // 检查文件大小（限制5MB，与后端一致）
+  if (file.raw.size > 5 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 5MB')
     return
   }
 
-  // 使用本地预览
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    form.images.push(e.target.result)
+  try {
+    const url = await uploadApi.uploadImage(file.raw)
+    if (!url) {
+      throw new Error('上传未返回地址')
+    }
+    form.images.push(url)
     ElMessage.success('图片已添加')
+  } catch (err) {
+    ElMessage.error(err.message || '图片上传失败')
   }
-  reader.readAsDataURL(file.raw)
 }
 
 // 删除图片
@@ -220,33 +212,18 @@ const handlePublish = async () => {
 
     publishing.value = true
 
-    const token = localStorage.getItem('token')
-
-    const res = await axios({
-      method: 'POST',
-      url: '/app/notePost/publish',
-      data: {
-        title: form.title,
-        content: form.content,
-        cover: form.images[0],
-        images: form.images,
-        topicIds: form.topicIds.length > 0 ? form.topicIds : null,
-        location: form.location || null
-      },
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token
-      }
+    await communityApi.publish({
+      title: form.title,
+      content: form.content,
+      images: form.images,
+      topicIds: form.topicIds.length > 0 ? form.topicIds : [],
+      linkedName: form.location || '',
     })
 
-    if (res.data && res.data.code === 1000) {
-      ElMessage.success('发布成功！')
-      emit('success')
-      handleClose()
-      resetForm()
-    } else {
-      throw new Error(res.data?.message || '发布失败')
-    }
+    ElMessage.success('发布成功！')
+    emit('success')
+    handleClose()
+    resetForm()
   } catch (err) {
     if (!err.errors) {
       ElMessage.error(err.message || '发布失败')
