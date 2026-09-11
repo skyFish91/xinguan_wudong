@@ -317,7 +317,6 @@ onMounted(async () => {
     font-size: 14px;
   }
 }
-</style>
 
 .slide-description {
   font-size: 18px;

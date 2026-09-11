@@ -27,7 +27,7 @@ export const dataSource = new DataSource({
   host: process.env.TEST_DB_HOST || '127.0.0.1',
   port: Number(process.env.TEST_DB_PORT || 3306),
   username: process.env.TEST_DB_USER || 'root',
-  password: process.env.TEST_DB_PASSWORD || 'ws764766',
+  password: process.env.TEST_DB_PASSWORD || 'root',
   database: process.env.TEST_DB_NAME || 'wudong_test',
   synchronize: false,
   logging: false,
@@ -60,7 +60,8 @@ export function repo<E>(entity: new () => E) {
 /** 清空测试库全部表（外键约束关闭状态下 TRUNCATE） */
 export async function truncateAll() {
   const tables: Array<{ TABLE_NAME: string }> = await dataSource.query(
-    "SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema = 'wudong_test'"
+    'SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema = ?',
+    [process.env.TEST_DB_NAME || 'wudong_test']
   );
   await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
   try {

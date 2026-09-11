@@ -105,12 +105,14 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted, watch, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { ChatDotRound, Minus, Close } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useChat } from '@/stores/chat'
 
 const userStore = useUserStore()
-const { chatOpen } = useChat()
+const chatStore = useChat()
+const { chatOpen } = storeToRefs(chatStore)
 
 const showChat = ref(false)
 
