@@ -111,7 +111,7 @@ export const useUserStore = defineStore('user', () => {
   // 获取用户信息
   const getUserInfo = async () => {
     try {
-      const data = await request.get('/app/user/person')
+      const data = await request.get('/app/user/info/person')
       userInfo.value = data
       localStorage.setItem('userInfo', JSON.stringify(data))
       return data
