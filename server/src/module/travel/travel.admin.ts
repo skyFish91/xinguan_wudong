@@ -262,6 +262,96 @@ export class TravelAdminService {
     const unverified = await this.eticketRepo.countBy({ status: 0 });
     return { byType: agg, topRoutes, verified, unverified };
   }
+
+  // ---------- 商家仪表盘 ----------
+  async dashboard(merchantId: number) {
+    // 1. 商品总数（景区+路线） - travel模块由平台统一管理，统计所有数据
+    const scenicCount = await this.scenicRepo.count();
+    const routeCount = await this.routeRepo.count();
+    const productCount = scenicCount + routeCount;
+    const onlineScenicCount = await this.scenicRepo.countBy({ status: 1 });
+    const onlineRouteCount = await this.routeRepo.countBy({ status: 1 });
+    const onlineProducts = onlineScenicCount + onlineRouteCount;
+
+    // 2. 订单总量和今日订单
+    const orderCount = await this.orderRepo.countBy({ merchantId, orderType: OrderType.TICKET });
+    const today = dayjs().format('YYYY-MM-DD');
+    const todayOrders = await this.orderRepo
+      .createQueryBuilder('o')
+      .where('o.merchant_id = :mid AND o.order_type = :type AND DATE(o.created_at) = :today', {
+        mid: merchantId,
+        type: OrderType.TICKET,
+        today,
+      })
+      .getCount();
+
+    // 3. 销售总额和今日收入
+    const revenueResult = await this.orderRepo
+      .createQueryBuilder('o')
+      .select('COALESCE(SUM(o.pay_amount), 0)', 'total')
+      .where('o.merchant_id = :mid AND o.order_type = :type AND o.status >= 1 AND o.status NOT IN (5,7)', {
+        mid: merchantId,
+        type: OrderType.TICKET,
+      })
+      .getRawOne();
+    const totalRevenue = parseFloat(revenueResult?.total || '0');
+
+    const todayRevenueResult = await this.orderRepo
+      .createQueryBuilder('o')
+      .select('COALESCE(SUM(o.pay_amount), 0)', 'total')
+      .where('o.merchant_id = :mid AND o.order_type = :type AND o.status >= 1 AND o.status NOT IN (5,7) AND DATE(o.created_at) = :today', {
+        mid: merchantId,
+        type: OrderType.TICKET,
+        today,
+      })
+      .getRawOne();
+    const todayRevenue = parseFloat(todayRevenueResult?.total || '0');
+
+    // 4. 评价总数和待回复（暂时用0）
+    const reviewCount = 0;
+    const pendingReviews = 0;
+
+    // 5. 销售趋势（近7天）
+    const revenueTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
+      const dayRevenue = await this.orderRepo
+        .createQueryBuilder('o')
+        .select('COALESCE(SUM(o.pay_amount), 0)', 'revenue')
+        .where('o.merchant_id = :mid AND o.order_type = :type AND o.status >= 1 AND o.status NOT IN (5,7) AND DATE(o.created_at) = :date', {
+          mid: merchantId,
+          type: OrderType.TICKET,
+          date,
+        })
+        .getRawOne();
+      revenueTrend.push({
+        date: dayjs(date).format('MM-DD'),
+        revenue: parseFloat(dayRevenue?.revenue || '0'),
+      });
+    }
+
+    // 6. 订单状态分布
+    const orderStatus = {
+      pending: await this.orderRepo.countBy({ merchantId, orderType: OrderType.TICKET, status: 0 }),
+      paid: await this.orderRepo.countBy({ merchantId, orderType: OrderType.TICKET, status: 1 }),
+      shipped: await this.orderRepo.countBy({ merchantId, orderType: OrderType.TICKET, status: 2 }),
+      completed: await this.orderRepo.countBy({ merchantId, orderType: OrderType.TICKET, status: 3 }),
+      cancelled: await this.orderRepo.countBy({ merchantId, orderType: OrderType.TICKET, status: 5 }),
+    };
+
+    return {
+      productCount,
+      onlineProducts,
+      orderCount,
+      todayOrders,
+      totalRevenue,
+      todayRevenue,
+      reviewCount,
+      pendingReviews,
+      revenueTrend,
+      orderStatus,
+    };
+  }
 }
 
 @ApiTags(['商家后台-行'])
@@ -398,5 +488,12 @@ export class TravelAdminController {
   @Get('/stats')
   async stats(@CurrentUserParam() user: CurrentUser) {
     return this.travelAdminService.stats(user.merchantId);
+  }
+
+  @ApiOperation({ summary: '商家仪表盘数据' })
+  @Auth('merchant')
+  @Get('/dashboard')
+  async dashboard(@CurrentUserParam() user: CurrentUser) {
+    return this.travelAdminService.dashboard(user.merchantId);
   }
 }
