@@ -105,9 +105,14 @@ export class ClothingService {
   /** 商品详情（Redis 缓存 10 分钟） */
   async productDetail(id: number) {
     const cacheKey = `product:detail:${id}`;
-    const cached = await this.redis.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
+    // 缓存是加速手段而非详情页的前置依赖：本地未配置 Redis 密码时仍应可浏览商品。
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch {
+      // Redis 不可用时回退到 MySQL，避免游客端显示“系统繁忙”。
     }
     const product = await this.productRepo.findOneBy({ id, status: 1 });
     if (!product) {
@@ -131,7 +136,11 @@ export class ClothingService {
       reviews,
       reviewCount: reviews.length,
     };
-    await this.redis.set(cacheKey, JSON.stringify(data), 'EX', 600);
+    try {
+      await this.redis.set(cacheKey, JSON.stringify(data), 'EX', 600);
+    } catch {
+      // 缓存写入失败不影响商品详情返回。
+    }
     return data;
   }
 

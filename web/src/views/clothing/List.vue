@@ -1,104 +1,70 @@
 <template>
-  <div class="clothing-list-page">
+  <div>
     <TopNav />
-
-    <div class="page-container">
-      <!-- 页面标题 -->
-      <div class="page-header">
-        <h1 class="page-title">非遗好物</h1>
-        <p class="page-description">传承千年技艺的苗族手工艺品</p>
-      </div>
-
-      <!-- 搜索与筛选 -->
+    <div class="page">
+      <!-- 搜索与排序 -->
       <div class="toolbar">
-        <div class="toolbar-left">
-          <el-input
-            v-model="keyword"
-            placeholder="搜索商品"
-            class="search-input"
-            clearable
-            @keyup.enter="load(1)"
-          />
-          <el-button type="primary" @click="load(1)">搜索</el-button>
-        </div>
-        <div class="toolbar-right">
-          <el-radio-group v-model="sort" size="small" @change="load(1)">
-            <el-radio-button value="default">默认</el-radio-button>
-            <el-radio-button value="sales">销量</el-radio-button>
-            <el-radio-button value="price_asc">价格升序</el-radio-button>
-            <el-radio-button value="price_desc">价格降序</el-radio-button>
-          </el-radio-group>
-        </div>
+        <el-input v-model="keyword" placeholder="搜索非遗好物" class="search" clearable @keyup.enter="load(1)" />
+        <el-button type="primary" @click="load(1)">搜索</el-button>
+        <el-radio-group v-model="sort" class="sorts" @change="load(1)">
+          <el-radio-button value="default">综合</el-radio-button>
+          <el-radio-button value="sales">销量</el-radio-button>
+          <el-radio-button value="price_asc">价格升序</el-radio-button>
+          <el-radio-button value="price_desc">价格降序</el-radio-button>
+        </el-radio-group>
       </div>
 
-      <div class="content-wrapper">
-        <!-- 左侧分类 -->
-        <aside class="sidebar">
-          <div class="category-section">
-            <h3 class="section-title">分类</h3>
-            <div class="category-list">
-              <div
-                v-for="c in categories"
-                :key="c.id"
-                class="category-item"
-                :class="{ active: topCatId === c.id }"
-                @click="onTopCat(c)"
-              >
-                {{ c.name }}
-              </div>
-            </div>
+      <div class="body">
+        <!-- 分类树 -->
+        <div class="side">
+          <div
+            v-for="c in categories"
+            :key="c.id"
+            class="cat"
+            :class="{ active: topCatId === c.id }"
+            @click="onTopCat(c)"
+          >
+            {{ c.name }}
           </div>
+        </div>
 
-          <!-- 子分类 -->
-          <div v-if="subCats.length" class="subcategory-section">
-            <div
+        <!-- 商品 -->
+        <div class="main">
+          <div v-if="subCats.length" class="sub-cats">
+            <el-tag
               v-for="s in subCats"
               :key="s.id"
-              class="subcategory-item"
-              :class="{ active: categoryId === s.id }"
+              :effect="categoryId === s.id ? 'dark' : 'plain'"
+              class="sub-tag"
               @click="onSubCat(s)"
             >
               {{ s.name }}
-            </div>
+            </el-tag>
           </div>
-        </aside>
 
-        <!-- 商品列表 -->
-        <main class="main-content">
           <el-empty v-if="!loading && !list.length" description="暂无商品" />
-
-          <div v-else class="product-grid">
-            <div
-              v-for="p in list"
-              :key="p.id"
-              class="product-item"
-              @click="$router.push(`/clothing/${p.id}`)"
-            >
-              <div class="product-image">
-                <img :src="p.mainImage" />
+          <TransitionGroup name="product-card" tag="div" class="grid">
+            <el-card v-for="p in list" :key="p.id" class="item" shadow="hover" @click="$router.push(`/clothing/${p.id}`)">
+              <img :src="p.mainImage" class="item-img" />
+              <div class="item-title">{{ p.title }}</div>
+              <div class="item-sub">{{ p.subtitle }}</div>
+              <div class="item-bottom">
+                <span class="price">¥{{ p.price }}</span>
+                <span class="sales">已售 {{ p.sales }}</span>
               </div>
-              <div class="product-info">
-                <h3 class="product-name">{{ p.title }}</h3>
-                <p class="product-subtitle">{{ p.subtitle }}</p>
-                <div class="product-footer">
-                  <span class="product-price">¥{{ p.price }}</span>
-                  <span class="product-sales">{{ p.sales }} 已售</span>
-                </div>
-              </div>
-            </div>
-          </div>
+            </el-card>
+          </TransitionGroup>
 
-          <!-- 分页 -->
-          <div v-if="total > pageSize" class="pagination">
-            <el-pagination
-              layout="prev, pager, next"
-              :total="total"
-              :page-size="pageSize"
-              :current-page="page"
-              @current-change="load"
-            />
-          </div>
-        </main>
+          <el-pagination
+            v-if="total > pageSize"
+            layout="prev, pager, next"
+            :total="total"
+            :page-size="pageSize"
+            :current-page="page"
+            class="pager"
+            @current-change="load"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -146,7 +112,8 @@ async function load(p = 1) {
 function onTopCat(c: any) {
   topCatId.value = c.id;
   subCats.value = c.children || [];
-  categoryId.value = undefined;
+  // 顶级分类需要传给后端；后端会自动包含其下的二级分类。
+  categoryId.value = c.id;
   load(1);
 }
 
@@ -166,291 +133,128 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.clothing-list-page {
-  background: #ffffff;
-  min-height: 100vh;
-}
-
-.page-container {
+.page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 24px;
+  padding: 20px;
 }
-
-/* 页面标题 */
-.page-header {
-  margin-bottom: 40px;
-}
-
-.page-title {
-  font-size: 32px;
-  font-weight: 400;
-  color: #333;
-  margin-bottom: 8px;
-  letter-spacing: 1px;
-}
-
-.page-description {
-  font-size: 14px;
-  color: #999;
-  font-weight: 300;
-}
-
-/* 工具栏 */
 .toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.search {
+  width: 300px;
+}
+.sorts {
+  margin-left: auto;
+}
+.body {
+  display: flex;
+  gap: 20px;
+}
+.side {
+  width: 160px;
+  flex-shrink: 0;
+  border-right: 1px solid #eee;
+}
+.cat {
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #333;
+  border-radius: 4px;
+}
+.cat:hover {
+  background: #f5f5f5;
+}
+.cat.active {
+  background: #c0392b;
+  color: #fff;
+}
+.main {
+  flex: 1;
+}
+.sub-cats {
+  margin-bottom: 12px;
+}
+.sub-tag {
+  margin-right: 8px;
+  cursor: pointer;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.item {
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+.item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 24px rgba(66, 44, 28, 0.14);
+}
+.item-img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+  transition: transform 0.35s ease;
+}
+.item:hover .item-img {
+  transform: scale(1.045);
+}
+.item-title {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-sub {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #e5e5e5;
+  margin-top: 8px;
 }
-
-.toolbar-left {
-  display: flex;
-  gap: 12px;
+.price {
+  color: #c0392b;
+  font-weight: bold;
 }
-
-.search-input {
-  width: 280px;
-}
-
-.search-input :deep(.el-input__wrapper) {
-  border-radius: 4px;
-  box-shadow: 0 0 0 1px #e5e5e5 inset;
-}
-
-.search-input :deep(.el-input__wrapper:focus) {
-  box-shadow: 0 0 0 1px #8b7355 inset;
-}
-
-:deep(.el-button--primary) {
-  background: #8b7355;
-  border-color: #8b7355;
-  border-radius: 4px;
-}
-
-:deep(.el-button--primary:hover) {
-  background: #6d5a42;
-  border-color: #6d5a42;
-}
-
-.toolbar-right :deep(.el-radio-button__inner) {
-  border-radius: 0;
-  border-color: #e5e5e5;
-  padding: 8px 16px;
-  font-size: 13px;
-}
-
-.toolbar-right :deep(.el-radio-button:first-child .el-radio-button__inner) {
-  border-radius: 4px 0 0 4px;
-}
-
-.toolbar-right :deep(.el-radio-button:last-child .el-radio-button__inner) {
-  border-radius: 0 4px 4px 0;
-}
-
-.toolbar-right :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background: #8b7355;
-  border-color: #8b7355;
-  color: #fff;
-}
-
-/* 内容布局 */
-.content-wrapper {
-  display: flex;
-  gap: 32px;
-}
-
-/* 侧边栏 */
-.sidebar {
-  width: 180px;
-  flex-shrink: 0;
-}
-
-.category-section,
-.subcategory-section {
-  margin-bottom: 32px;
-}
-
-.section-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.category-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.category-item,
-.subcategory-item {
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.category-item:hover,
-.subcategory-item:hover {
-  background: #f9f9f9;
-  color: #333;
-}
-
-.category-item.active,
-.subcategory-item.active {
-  background: #8b7355;
-  color: #fff;
-}
-
-/* 主内容区 */
-.main-content {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 商品网格 */
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin-bottom: 48px;
-}
-
-.product-item {
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.product-item:hover {
-  transform: translateY(-4px);
-}
-
-.product-image {
-  position: relative;
-  width: 100%;
-  padding-bottom: 100%;
-  overflow: hidden;
-  background: #f9f9f9;
-  border-radius: 4px;
-  margin-bottom: 12px;
-}
-
-.product-image img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.product-item:hover .product-image img {
-  transform: scale(1.05);
-}
-
-.product-info {
-  padding: 0 4px;
-}
-
-.product-name {
-  font-size: 14px;
-  font-weight: 400;
-  color: #333;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.product-subtitle {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.product-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.product-price {
-  font-size: 16px;
-  font-weight: 500;
-  color: #8b7355;
-}
-
-.product-sales {
+.sales {
   font-size: 12px;
   color: #999;
 }
-
-/* 分页 */
-.pagination {
-  display: flex;
+.pager {
+  margin-top: 20px;
   justify-content: center;
-  margin-top: 48px;
 }
-
-:deep(.el-pagination .el-pager li) {
-  border-radius: 4px;
-  margin: 0 4px;
-  min-width: 32px;
+.product-card-enter-active,
+.product-card-move {
+  transition: opacity 0.32s ease, transform 0.32s ease;
 }
-
-:deep(.el-pagination .el-pager li.is-active) {
-  background: #8b7355;
-  color: #fff;
+.product-card-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
 }
-
-:deep(.el-pagination button) {
-  border-radius: 4px;
-}
-
-/* 响应式 */
-@media (max-width: 1024px) {
-  .product-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .content-wrapper {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-  }
-
-  .toolbar {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .toolbar-left {
-    flex-direction: column;
-  }
-
-  .search-input {
-    width: 100%;
-  }
-
-  .product-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .item-img,
+  .product-card-enter-active,
+  .product-card-move {
+    transition: none;
   }
 }
 </style>
