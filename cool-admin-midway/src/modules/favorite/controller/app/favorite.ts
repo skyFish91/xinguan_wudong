@@ -7,7 +7,7 @@ import { FavoriteService } from '../../service/favorite';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController()
+@CoolController('favorite')
 export class AppFavoriteController extends BaseController {
   @Inject()
   favoriteService: FavoriteService;

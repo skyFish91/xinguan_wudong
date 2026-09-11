@@ -13,7 +13,7 @@ import { BaseSysLoginService } from '../../../base/service/sys/login';
  * 登录
  */
 @CoolUrlTag()
-@CoolController()
+@CoolController('login')
 export class AppUserLoginController extends BaseController {
   @Inject()
   userLoginService: UserLoginService;

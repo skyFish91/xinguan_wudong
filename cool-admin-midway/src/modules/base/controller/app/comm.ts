@@ -16,7 +16,7 @@ import { PluginService } from '../../../plugin/service/info';
  */
 @CoolUrlTag()
 @Provide()
-@CoolController()
+@CoolController('comm')
 export class BaseAppCommController extends BaseController {
   @Inject()
   pluginService: PluginService;
