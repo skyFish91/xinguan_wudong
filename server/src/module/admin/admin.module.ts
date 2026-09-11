@@ -785,6 +785,13 @@ export class AdminController {
     return this.adminService.deleteHotKeyword(Number(id));
   }
 
+  @ApiOperation({ summary: '删除热搜词（别名，兼容后台前端 /keywords/:id/delete）' })
+  @Auth('admin')
+  @Post('/keywords/:id/delete')
+  async deleteHotKeywordAlias(@Param('id') id: number) {
+    return this.adminService.deleteHotKeyword(Number(id));
+  }
+
   // ----- 消息中心 -----
   @ApiOperation({ summary: '群发消息（all/role/user）' })
   @Auth('admin')

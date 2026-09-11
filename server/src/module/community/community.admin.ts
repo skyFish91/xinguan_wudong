@@ -67,13 +67,17 @@ export class CommunityAdminService {
     return this.postRepo.save(post);
   }
 
-  /** 热门加精 toggle */
-  async toggleHot(id: number) {
+  /** 热门加精：传 isHot 则按指定值设置，否则取反 */
+  async toggleHot(id: number, isHot?: boolean | number) {
     const post = await this.postRepo.findOneBy({ id });
     if (!post) {
       throw BizError.notFound('游记不存在');
     }
-    post.isHot = post.isHot === 1 ? 0 : 1;
+    if (isHot === undefined || isHot === null) {
+      post.isHot = post.isHot === 1 ? 0 : 1;
+    } else {
+      post.isHot = isHot ? 1 : 0;
+    }
     return this.postRepo.save(post);
   }
 
@@ -224,22 +228,27 @@ export class CommunityAdminController {
     );
   }
 
-  @ApiOperation({ summary: '审核游记（pass/reject）' })
+  @ApiOperation({ summary: '审核游记（pass/approve 均可）' })
   @Auth('admin')
   @Post('/posts/:id/audit')
-  async audit(
-    @Param('id') id: number,
-    @Body('pass') pass: boolean,
-    @Body('reason') reason: string
-  ) {
-    return this.communityAdminService.auditPost(Number(id), !!pass, reason);
+  async audit(@Param('id') id: number, @Body() body: any) {
+    // 兼容两种字段命名：pass（后端契约） / approve（后台前端）
+    const pass = body?.pass !== undefined ? body.pass : body?.approve;
+    return this.communityAdminService.auditPost(Number(id), !!pass, body?.reason);
   }
 
   @ApiOperation({ summary: '热门加精 toggle' })
   @Auth('admin')
   @Post('/posts/:id/toggle-hot')
-  async toggleHot(@Param('id') id: number) {
-    return this.communityAdminService.toggleHot(Number(id));
+  async toggleHot(@Param('id') id: number, @Body() body: any) {
+    return this.communityAdminService.toggleHot(Number(id), body?.isHot);
+  }
+
+  @ApiOperation({ summary: '热门加精 toggle（别名，兼容后台前端 /hot）' })
+  @Auth('admin')
+  @Post('/posts/:id/hot')
+  async setHot(@Param('id') id: number, @Body() body: any) {
+    return this.communityAdminService.toggleHot(Number(id), body?.isHot);
   }
 
   @ApiOperation({ summary: '下架游记' })
@@ -288,15 +297,13 @@ export class CommunityAdminController {
     );
   }
 
-  @ApiOperation({ summary: '处理举报（下架/忽略）' })
+  @ApiOperation({ summary: '处理举报（下架/忽略，takeDown/accept 均可）' })
   @Auth('admin')
   @Post('/reports/:id/handle')
-  async handleReport(
-    @Param('id') id: number,
-    @Body('takeDown') takeDown: boolean,
-    @Body('note') note: string
-  ) {
-    return this.communityAdminService.handleReport(Number(id), !!takeDown, note);
+  async handleReport(@Param('id') id: number, @Body() body: any) {
+    // 兼容两种字段命名：takeDown（后端契约） / accept（后台前端）
+    const takeDown = body?.takeDown !== undefined ? body.takeDown : body?.accept;
+    return this.communityAdminService.handleReport(Number(id), !!takeDown, body?.note);
   }
 
   @ApiOperation({ summary: '保存话题' })
