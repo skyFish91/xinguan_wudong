@@ -1,336 +1,297 @@
 <template>
-  <div>
-    <TopNav />
-    <div class="page">
-      <el-card class="profile-card">
-        <div class="profile-header">
-          <el-avatar :size="80" :src="userInfo.avatar" class="avatar">
-            {{ userInfo.nickname?.[0] || '用' }}
-          </el-avatar>
-          <div class="header-info">
-            <h2>{{ userInfo.nickname || '游客' }}</h2>
-            <div class="meta">手机号：{{ userInfo.phone }}</div>
-            <div class="meta">注册时间：{{ formatTime(userInfo.createdAt) }}</div>
-          </div>
-          <el-button type="primary" @click="showEditDialog = true">编辑资料</el-button>
-        </div>
-
-        <el-divider />
-
-        <el-descriptions title="个人信息" :column="2" border>
-          <el-descriptions-item label="真实姓名">{{ userInfo.realName || '未设置' }}</el-descriptions-item>
-          <el-descriptions-item label="身份证号">{{ maskIdCard(userInfo.idCard) }}</el-descriptions-item>
-          <el-descriptions-item label="账户余额">
-            <span class="balance">¥0.00</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="积分">{{ userInfo.points || 0 }}</el-descriptions-item>
-          <el-descriptions-item label="角色" :span="2">
-            <el-tag v-if="userInfo.role === 'admin'" type="danger">管理员</el-tag>
-            <el-tag v-else-if="userInfo.role === 'merchant'" type="warning">商家</el-tag>
-            <el-tag v-else type="info">普通用户</el-tag>
-          </el-descriptions-item>
-        </el-descriptions>
-
-        <el-divider />
-
-        <div class="actions-section">
-          <h3>快捷操作</h3>
-          <div class="action-grid">
-            <el-card shadow="hover" class="action-card" @click="$router.push('/orders')">
-              <div class="action-icon">📦</div>
-              <div class="action-title">我的订单</div>
-            </el-card>
-            <el-card shadow="hover" class="action-card" @click="$router.push('/travel/my-etickets')">
-              <div class="action-icon">🎫</div>
-              <div class="action-title">我的电子票</div>
-            </el-card>
-            <el-card shadow="hover" class="action-card" @click="$router.push('/cart')">
-              <div class="action-icon">🛒</div>
-              <div class="action-title">购物车</div>
-            </el-card>
-            <el-card shadow="hover" class="action-card" @click="$router.push('/community')">
-              <div class="action-icon">📝</div>
-              <div class="action-title">我的动态</div>
-            </el-card>
-            <el-card v-if="userInfo.role !== 'merchant'" shadow="hover" class="action-card" @click="$router.push('/user/apply-merchant')">
-              <div class="action-icon">🏪</div>
-              <div class="action-title">申请商家</div>
-            </el-card>
-          </div>
-        </div>
-
-        <el-divider />
-
-        <div class="address-section">
-          <div class="section-header">
-            <h3>收货地址</h3>
-            <el-button size="small" type="primary" @click="showAddressDialog = true">新增地址</el-button>
-          </div>
-          <div v-if="!addresses.length" class="empty-tip">暂无收货地址</div>
-          <div v-for="addr in addresses" :key="addr.id" class="address-item">
-            <div class="address-main">
-              <el-tag v-if="addr.isDefault" type="danger" size="small">默认</el-tag>
-              <span class="address-name">{{ addr.receiverName }}</span>
-              <span class="address-phone">{{ addr.receiverPhone }}</span>
-              <div class="address-detail">{{ addr.province }} {{ addr.city }} {{ addr.district }} {{ addr.detail }}</div>
-            </div>
-            <div class="address-ops">
-              <el-button link @click="editAddress(addr)">编辑</el-button>
-              <el-button link type="danger" @click="deleteAddress(addr)">删除</el-button>
+  <div class="user-profile-page">
+    <div class="container">
+      <!-- 用户信息头部 -->
+      <div class="user-header card">
+        <div class="user-info">
+          <el-avatar :size="100" :src="userInfo.avatarUrl" />
+          <div class="info-text">
+            <h2>{{ userInfo.nickName || '用户' }}</h2>
+            <p class="description">{{ userInfo.description || '暂无介绍' }}</p>
+            <div class="stats">
+              <div class="stat">
+                <span class="number">{{ stats.postCount }}</span>
+                <span class="label">游记</span>
+              </div>
+              <div class="stat">
+                <span class="number">{{ stats.followerCount }}</span>
+                <span class="label">粉丝</span>
+              </div>
+              <div class="stat">
+                <span class="number">{{ stats.followingCount }}</span>
+                <span class="label">关注</span>
+              </div>
             </div>
           </div>
         </div>
-      </el-card>
+        <el-button
+          v-if="!isMyProfile"
+          :type="isFollowed ? '' : 'primary'"
+          size="large"
+          round
+          @click="handleFollow"
+        >
+          <el-icon v-if="!isFollowed"><Plus /></el-icon>
+          {{ isFollowed ? '已关注' : '关注' }}
+        </el-button>
+      </div>
 
-      <!-- 编辑资料弹窗 -->
-      <el-dialog v-model="showEditDialog" title="编辑资料" width="500px">
-        <el-form :model="editForm" label-width="80px">
-          <el-form-item label="昵称">
-            <el-input v-model="editForm.nickname" />
-          </el-form-item>
-          <el-form-item label="真实姓名">
-            <el-input v-model="editForm.realName" />
-          </el-form-item>
-          <el-form-item label="身份证号">
-            <el-input v-model="editForm.idCard" maxlength="18" />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="showEditDialog = false">取消</el-button>
-          <el-button type="primary" @click="updateProfile">保存</el-button>
-        </template>
-      </el-dialog>
-
-      <!-- 地址弹窗 -->
-      <el-dialog v-model="showAddressDialog" :title="addressForm.id ? '编辑地址' : '新增地址'" width="500px">
-        <el-form :model="addressForm" label-width="80px">
-          <el-form-item label="收货人">
-            <el-input v-model="addressForm.receiverName" />
-          </el-form-item>
-          <el-form-item label="手机号">
-            <el-input v-model="addressForm.receiverPhone" maxlength="11" />
-          </el-form-item>
-          <el-form-item label="省市区">
-            <el-input v-model="addressForm.province" placeholder="省" style="width: 30%" />
-            <el-input v-model="addressForm.city" placeholder="市" style="width: 34%; margin: 0 2%" />
-            <el-input v-model="addressForm.district" placeholder="区" style="width: 30%" />
-          </el-form-item>
-          <el-form-item label="详细地址">
-            <el-input v-model="addressForm.detail" type="textarea" :rows="2" />
-          </el-form-item>
-          <el-form-item label="设为默认">
-            <el-switch v-model="addressForm.isDefault" />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="showAddressDialog = false">取消</el-button>
-          <el-button type="primary" @click="saveAddress">保存</el-button>
-        </template>
-      </el-dialog>
+      <!-- 用户游记列表 -->
+      <div class="posts-section">
+        <h3>用户游记</h3>
+        <div v-if="loading" class="loading">
+          <el-icon class="is-loading"><Loading /></el-icon>
+        </div>
+        <div v-else-if="posts.length" class="post-grid">
+          <el-card
+            v-for="post in posts"
+            :key="post.id"
+            shadow="hover"
+            :body-style="{ padding: '0' }"
+            class="post-card"
+            @click="$router.push(`/community/post/${post.id}`)"
+          >
+            <img
+              v-if="post.cover"
+              :src="post.cover"
+              @error="handleImageError"
+              style="width: 100%; height: 200px; object-fit: cover"
+            />
+            <div style="padding: 15px">
+              <h3>{{ post.title || '无标题' }}</h3>
+              <div class="stats">
+                <span><el-icon><View /></el-icon> {{ post.viewCount }}</span>
+                <span><el-icon><Star /></el-icon> {{ post.likeCount }}</span>
+              </div>
+            </div>
+          </el-card>
+        </div>
+        <el-empty v-else description="暂无游记" />
+      </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import TopNav from '../../components/TopNav.vue';
-import request from '../../api/request';
-import { useUserStore } from '../../stores/user';
+<script setup>
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { Plus, View, Star, Loading } from '@element-plus/icons-vue'
+import axios from 'axios'
 
-const userStore = useUserStore();
-const userInfo = ref<any>({});
-const addresses = ref<any[]>([]);
-const showEditDialog = ref(false);
-const showAddressDialog = ref(false);
-const editForm = reactive({ nickname: '', realName: '', idCard: '' });
-const addressForm = reactive({
-  id: 0,
-  receiverName: '',
-  receiverPhone: '',
-  province: '',
-  city: '',
-  district: '',
-  detail: '',
-  isDefault: false
-});
+const route = useRoute()
+const userId = computed(() => parseInt(route.params.id))
 
-function formatTime(t: string) {
-  return t ? String(t).replace('T', ' ').slice(0, 10) : '';
-}
+const loading = ref(false)
+const userInfo = ref({
+  nickName: '用户',
+  avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
+  description: ''
+})
 
-function maskIdCard(s?: string) {
-  if (!s) return '未设置';
-  return s.slice(0, 6) + '****' + s.slice(-4);
-}
+const stats = ref({
+  postCount: 0,
+  followerCount: 0,
+  followingCount: 0
+})
 
-async function loadProfile() {
+const posts = ref([])
+const isFollowed = ref(false)
+
+const currentUserId = computed(() => {
   try {
-    userInfo.value = await request.get('/auth/profile');
-    userStore.setUserInfo(userInfo.value);
-    Object.assign(editForm, {
-      nickname: userInfo.value.nickname,
-      realName: userInfo.value.realName || '',
-      idCard: userInfo.value.idCard || ''
-    });
+    return JSON.parse(localStorage.getItem('userInfo'))?.id
   } catch {
-    // 已提示
+    return null
   }
-}
+})
 
-async function loadAddresses() {
+const isMyProfile = computed(() => userId.value === currentUserId.value)
+
+// 监听userId变化，重新加载数据
+watch(() => userId.value, () => {
+  loadUserInfo()
+  loadUserPosts()
+})
+
+const loadUserInfo = async () => {
   try {
-    addresses.value = await request.get('/user/addresses');
-  } catch {
-    // 已提示
-  }
-}
+    const token = localStorage.getItem('token')
+    const res = await axios({
+      method: 'POST',
+      url: '/app/user/info',
+      data: { id: userId.value },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token
+      }
+    })
 
-async function updateProfile() {
-  try {
-    await request.put('/auth/profile', editForm);
-    ElMessage.success('资料已更新');
-    showEditDialog.value = false;
-    loadProfile();
-  } catch {
-    // 已提示
-  }
-}
+    console.log('接口返回:', res.data)
 
-function editAddress(addr: any) {
-  Object.assign(addressForm, addr);
-  showAddressDialog.value = true;
-}
-
-async function saveAddress() {
-  if (!addressForm.receiverName || !addressForm.receiverPhone || !addressForm.detail) {
-    ElMessage.warning('请填写完整地址信息');
-    return;
-  }
-  try {
-    if (addressForm.id) {
-      await request.put(`/user/addresses/${addressForm.id}`, addressForm);
-    } else {
-      await request.post('/user/addresses', addressForm);
+    if (res.data && res.data.code === 1000) {
+      const userData = res.data.data || {}
+      userInfo.value = {
+        nickName: userData.nickName || '用户',
+        avatarUrl: userData.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
+        description: userData.description || ''
+      }
     }
-    ElMessage.success('地址已保存');
-    showAddressDialog.value = false;
-    loadAddresses();
-  } catch {
-    // 已提示
+  } catch (err) {
+    console.error('加载用户信息失败:', err)
   }
 }
 
-async function deleteAddress(addr: any) {
+const loadUserPosts = async () => {
+  loading.value = true
   try {
-    await ElMessageBox.confirm('确定删除该地址？', '提示', { type: 'warning' });
-    await request.delete(`/user/addresses/${addr.id}`);
-    ElMessage.success('地址已删除');
-    loadAddresses();
-  } catch {
-    // 取消或已提示
+    const token = localStorage.getItem('token')
+    const res = await axios({
+      method: 'POST',
+      url: '/app/notePost/feed',
+      data: { userId: userId.value, page: 1, size: 20 },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token
+      }
+    })
+    console.log('接口返回:', res.data)
+    if (res.data && res.data.code === 1000) {
+      console.log('用户信息接口返回:', res.data)
+      posts.value = res.data.data.list || []
+      stats.value.postCount = res.data.data.pagination?.total || posts.value.length
+    }
+  } catch (err) {
+    console.error('加载用户游记失败:', err)
+  } finally {
+    loading.value = false
   }
+}
+
+const handleFollow = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    await axios({
+      method: 'POST',
+      url: '/app/noteFollow/toggle',
+      data: { userId: userId.value },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token
+      }
+    })
+    isFollowed.value = !isFollowed.value
+  } catch (err) {
+    console.error('关注失败:', err)
+  }
+}
+
+const handleImageError = (e) => {
+  e.target.src = 'https://picsum.photos/800/600?random=default'
 }
 
 onMounted(() => {
-  loadProfile();
-  loadAddresses();
-});
+  console.log('onMounted, userId =', userId.value)
+  loadUserInfo()
+  loadUserPosts()
+})
 </script>
 
-<style scoped>
-.page {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
-}
-.profile-card {
-  padding: 24px;
-}
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.avatar {
-  background: #c0392b;
-  font-size: 32px;
-  font-weight: bold;
-}
-.header-info {
-  flex: 1;
-}
-.meta {
-  color: #666;
-  font-size: 14px;
-  margin-top: 6px;
-}
-.balance {
-  color: #c0392b;
-  font-weight: bold;
-  font-size: 18px;
-}
-.actions-section h3,
-.section-header h3 {
-  margin-bottom: 16px;
-}
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-}
-.action-card {
-  text-align: center;
-  cursor: pointer;
-  padding: 20px;
-}
-.action-card:hover {
-  transform: translateY(-4px);
-  transition: transform 0.2s;
-}
-.action-icon {
-  font-size: 36px;
-  margin-bottom: 8px;
-}
-.action-title {
-  font-weight: 600;
-}
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.empty-tip {
-  color: #999;
-  text-align: center;
-  padding: 20px;
-}
-.address-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  margin-bottom: 12px;
-}
-.address-main {
-  flex: 1;
-}
-.address-name {
-  font-weight: 600;
-  margin: 0 12px;
-}
-.address-phone {
-  color: #666;
-}
-.address-detail {
-  margin-top: 6px;
-  color: #555;
-}
-.address-ops {
-  display: flex;
-  gap: 8px;
+<style lang="scss" scoped>
+.user-profile-page {
+  background: #f5f7fa;
+  padding: 40px 0;
+  min-height: calc(100vh - 60px);
+
+  .user-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px;
+    margin-bottom: 32px;
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex: 1;
+
+      .info-text {
+        h2 {
+          margin: 0 0 8px 0;
+          font-size: 24px;
+          font-weight: 600;
+        }
+
+        .description {
+          color: #666;
+          margin: 0 0 16px 0;
+        }
+
+        .stats {
+          display: flex;
+          gap: 32px;
+
+          .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            .number {
+              font-size: 18px;
+              font-weight: 600;
+            }
+
+            .label {
+              font-size: 12px;
+              color: #999;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .posts-section {
+    h3 {
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .post-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+
+      .post-card {
+        cursor: pointer;
+        transition: transform 0.2s;
+
+        &:hover {
+          transform: translateY(-4px);
+        }
+
+        h3 {
+          font-size: 14px;
+          margin: 0 0 10px 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .stats {
+          font-size: 12px;
+          color: #999;
+          display: flex;
+          gap: 10px;
+        }
+      }
+    }
+  }
 }
 </style>

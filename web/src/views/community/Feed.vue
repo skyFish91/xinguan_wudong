@@ -1,490 +1,359 @@
 <template>
-  <div class="community-page">
-    <TopNav />
-
-    <div class="page-container">
-      <!-- 页面标题 -->
-      <div class="page-header">
-        <h1 class="page-title">社区分享</h1>
-        <p class="page-description">记录旅行故事 · 分享旅途见闻</p>
-      </div>
-
-      <!-- 话题标签 -->
-      <div class="topics-section" v-if="topics.length">
-        <div class="topics-list">
+  <div class="community-feed">
+    <div class="container">
+      <!-- 顶部操作栏 -->
+      <div class="header-bar">
+        <div class="tabs">
           <div
-            v-for="t in topics"
-            :key="t.id"
-            class="topic-tag"
-            :class="{ active: currentTopic === t.id }"
-            @click="onTopic(t)"
+            v-for="tab in tabs"
+            :key="tab.value"
+            :class="['tab-item', { active: currentTab === tab.value }]"
+            @click="switchTab(tab.value)"
           >
-            {{ t.name }}
+            {{ tab.label }}
           </div>
         </div>
-      </div>
-
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <div class="tab-buttons">
-          <div
-            class="tab-button"
-            :class="{ active: tab === 'all' }"
-            @click="tab = 'all'; load(1)"
-          >
-            最新
-          </div>
-          <div
-            class="tab-button"
-            :class="{ active: tab === 'hot' }"
-            @click="tab = 'hot'; load(1)"
-          >
-            热门
-          </div>
-          <div
-            class="tab-button"
-            :class="{ active: tab === 'follow' }"
-            @click="tab = 'follow'; load(1)"
-          >
-            关注
-          </div>
-        </div>
-        <el-button type="primary" class="publish-btn" @click="$router.push('/community/publish')">
+        <el-button type="primary" @click="$router.push('/community/publish')">
+          <el-icon><Edit /></el-icon>
           发布游记
         </el-button>
       </div>
 
-      <!-- 帖子列表 -->
-      <el-empty v-if="!loading && !list.length" description="暂无游记" />
-
-      <div v-else class="posts-list">
-        <div
-          v-for="p in list"
-          :key="p.id"
-          class="post-card"
-          @click="$router.push(`/community/${p.id}`)"
+      <!-- 热门话题 -->
+      <div class="topics-bar" v-if="topics.length">
+        <span class="label">热门话题：</span>
+        <el-tag
+          v-for="topic in topics"
+          :key="topic.id"
+          type="info"
+          style="margin-right: 10px; cursor: pointer;"
+          @click="goToTopic(topic.id)"
         >
-          <div v-if="firstImage(p.images)" class="post-image-wrapper">
-            <img :src="firstImage(p.images)" class="post-image" />
+          # {{ topic.name || '未命名话题' }}
+        </el-tag>
+      </div>
+
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-box">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <span>加载中...</span>
+      </div>
+
+      <!-- 游记列表 -->
+      <div v-else-if="posts.length" class="posts-grid">
+        <div
+          v-for="post in posts"
+          :key="post.p_id"
+          class="post-card"
+          @click="goToDetail(post.p_id)"
+        >
+          <div class="post-cover">
+            <el-image
+              :src="post.p_cover"
+              fit="cover"
+              lazy
+            >
+              <template #error>
+                <div class="image-error">
+                  <el-icon><Picture /></el-icon>
+                </div>
+              </template>
+            </el-image>
           </div>
-
-          <div class="post-content-wrapper">
-            <div class="post-header">
-              <h3 class="post-title">
-                <span v-if="p.isHot" class="hot-badge">热门</span>
-                {{ p.title }}
-              </h3>
-            </div>
-
-            <div class="post-excerpt">{{ p.content }}</div>
-
-            <div class="post-footer">
-              <div class="author-info">
-                <div class="author-avatar">
-                  {{ (p.author?.nickname || `用户${p.userId}`).charAt(0) }}
-                </div>
-                <div class="author-detail">
-                  <span class="author-name">{{ p.author?.nickname || `用户${p.userId}` }}</span>
-                  <span class="post-time">{{ formatTime(p.publishedAt || p.createdAt) }}</span>
-                </div>
-              </div>
-
-              <div class="post-stats">
-                <span class="stat-item">{{ p.likeCount }} 赞</span>
-                <span class="stat-item">{{ p.commentCount }} 评论</span>
-                <span class="stat-item">{{ p.viewCount }} 浏览</span>
-              </div>
+          <div class="post-info">
+            <h3 class="post-title">{{ post.p_title || '无标题' }}</h3>
+            <div class="post-stats">
+              <span><el-icon><View /></el-icon> {{ post.p_view_count || 0 }}</span>
+              <span><el-icon><Star /></el-icon> {{ post.p_like_count || 0 }}</span>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- 空状态 -->
+      <div v-else class="empty-box">
+        <el-empty description="暂无游记">
+          <el-button type="primary" @click="showPublish = true">发布第一篇游记</el-button>
+        </el-empty>
+      </div>
+
       <!-- 分页 -->
-      <div v-if="total > pageSize" class="pagination-wrapper">
+      <div v-if="total > pageSize" class="pagination">
         <el-pagination
-          layout="prev, pager, next, jumper, total"
-          :total="total"
+          v-model:current-page="page"
           :page-size="pageSize"
-          :current-page="page"
-          @current-change="load"
+          :total="total"
+          layout="prev, pager, next"
+          @current-change="loadPosts"
         />
       </div>
     </div>
+
+    <!-- 发布对话框 -->
+    <PublishDialog v-model="showPublish" @success="handlePublishSuccess" />
   </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import TopNav from '../../components/TopNav.vue';
-import request from '../../api/request';
-import { useUserStore } from '../../stores/user';
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { communityApi } from '@/api/community'
+import { Edit, Loading, Picture, View, Star } from '@element-plus/icons-vue'
+import PublishDialog from './components/PublishDialog.vue'
+import { ElMessage } from 'element-plus'
 
-const router = useRouter();
-const userStore = useUserStore();
-const topics = ref<any[]>([]);
-const currentTopic = ref<number>(0);
-const tab = ref('all');
-const list = ref<any[]>([]);
-const total = ref(0);
-const page = ref(1);
-const pageSize = 10;
-const loading = ref(false);
+const router = useRouter()
 
-function firstImage(images: string) {
+// 数据
+const loading = ref(true)
+const posts = ref([])
+const topics = ref([])
+const currentTab = ref('latest')
+const selectedTopic = ref(null)
+const showPublish = ref(false)
+const page = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+
+const tabs = [
+  { label: '最新', value: 'latest' },
+  { label: '热门', value: 'hot' }
+]
+
+// 加载游记列表
+const loadPosts = async () => {
+  loading.value = true
   try {
-    const arr = JSON.parse(images || '[]');
-    return arr.length ? arr[0] : '';
-  } catch {
-    return '';
-  }
-}
+    const res = await communityApi.getFeed({
+      page: page.value,
+      pageSize: pageSize.value,
+      topicId: selectedTopic.value,
+      orderBy: currentTab.value === 'hot' ? 'p_like_count' : 'p_create_time'
+    })
 
-function formatTime(t: string) {
-  return t ? String(t).replace('T', ' ').slice(0, 16) : '';
-}
-
-function onTopic(t: any) {
-  currentTopic.value = currentTopic.value === t.id ? 0 : t.id;
-  load(1);
-}
-
-async function load(p = 1) {
-  page.value = p;
-  if (tab.value === 'follow' && !userStore.isLogin) {
-    ElMessage.warning('请先登录后查看关注内容');
-    tab.value = 'all';
-  }
-  loading.value = true;
-  try {
-    const data: any = await request.get('/app/note/list', {
-      params: {
-        sort: tab.value === 'hot' ? 'hot' : 'new',
-        topicId: currentTopic.value || undefined,
-        page: page.value,
-        pageSize,
-      },
-    });
-    list.value = data.list || [];
-    total.value = data.total || 0;
-  } catch (err: any) {
-    // 关注 tab 未登录时后端会报错
-    if (tab.value === 'follow' && !userStore.isLogin) {
-      ElMessage.warning('请先登录后查看关注内容');
-      tab.value = 'all';
+    if (res && res.list) {
+      // API 返回的字段已经是 p_id, p_title 等格式，无需转换
+      posts.value = res.list
+      total.value = res.pagination?.total || res.list.length
+    } else {
+      posts.value = []
+      total.value = 0
     }
+  } catch (error) {
+    console.error('加载游记失败:', error)
+    ElMessage.error('加载游记失败: ' + (error.message || '请检查网络'))
+    posts.value = []
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
-onMounted(async () => {
+// 加载话题列表
+const loadTopics = async () => {
   try {
-    topics.value = await request.get('/app/topic/list');
-  } catch {
-    // 已提示
+    const res = await communityApi.getTopics({ page: 1, pageSize: 10 })
+    if (res && res.list) {
+      topics.value = res.list.slice(0, 8)
+    }
+  } catch (error) {
+    console.error('加载话题失败:', error)
   }
-  load(1);
-});
+}
+
+// 切换标签
+const switchTab = (tab) => {
+  currentTab.value = tab
+  page.value = 1
+  loadPosts()
+}
+
+// 按话题筛选
+const filterByTopic = (topicId) => {
+  if (selectedTopic.value === topicId) {
+    selectedTopic.value = null
+  } else {
+    selectedTopic.value = topicId
+  }
+  page.value = 1
+  loadPosts()
+}
+
+// 跳转详情
+const goToDetail = (id) => {
+  router.push(`/community/post/${id}`)
+}
+
+// 跳转话题详情
+const goToTopic = (topicId) => {
+  router.push(`/community/topic/${topicId}`)
+}
+
+// 发布成功
+const handlePublishSuccess = () => {
+  showPublish.value = false
+  page.value = 1
+  loadPosts()
+  ElMessage.success('发布成功！')
+}
+
+// 初始化
+onMounted(() => {
+  loadTopics()
+  loadPosts()
+})
 </script>
 
-<style scoped>
-.community-page {
-  background: #ffffff;
+<style scoped lang="scss">
+.community-feed {
   min-height: 100vh;
+  background: #f5f5f5;
+  padding: 20px 0;
 }
 
-/* 页面容器 */
-.page-container {
+.container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 24px;
+  padding: 0 20px;
 }
 
-/* 页面标题 */
-.page-header {
-  margin-bottom: 40px;
-}
-
-.page-title {
-  font-size: 32px;
-  font-weight: 400;
-  color: #333;
-  margin-bottom: 8px;
-  letter-spacing: 1px;
-}
-
-.page-description {
-  font-size: 14px;
-  color: #999;
-  font-weight: 300;
-}
-
-/* 话题区域 */
-.topics-section {
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.topics-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.topic-tag {
-  padding: 6px 16px;
-  background: #f9f9f9;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.topic-tag:hover {
-  background: #f0f0f0;
-  color: #333;
-}
-
-.topic-tag.active {
-  background: #8b7355;
-  border-color: #8b7355;
-  color: #fff;
-}
-
-/* 工具栏 */
-.toolbar {
+.header-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e5e5;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+
+  .tabs {
+    display: flex;
+    gap: 20px;
+
+    .tab-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.3s;
+
+      &:hover {
+        background: #f5f5f5;
+      }
+
+      &.active {
+        background: #409eff;
+        color: white;
+      }
+    }
+  }
 }
 
-.tab-buttons {
+.topics-bar {
+  background: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
   display: flex;
-  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  .label {
+    font-weight: 600;
+    color: #666;
+  }
 }
 
-.tab-button {
-  padding: 8px 16px;
-  font-size: 14px;
+.loading-box {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 8px;
+  font-size: 16px;
   color: #666;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  border-bottom: 2px solid transparent;
+
+  .el-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
 }
 
-.tab-button:hover {
-  color: #333;
-}
-
-.tab-button.active {
-  color: #333;
-  border-bottom-color: #8b7355;
-  font-weight: 500;
-}
-
-.publish-btn {
-  border-radius: 4px;
-  padding: 0 24px;
-}
-
-/* 帖子列表 */
-.posts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .post-card {
-  display: flex;
-  gap: 24px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  padding: 16px;
-  border: 1px solid transparent;
-  border-radius: 4px;
+  transition: all 0.3s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .post-cover {
+    width: 100%;
+    height: 240px;
+    overflow: hidden;
+
+    .el-image {
+      width: 100%;
+      height: 100%;
+    }
+
+    .image-error {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: #f5f5f5;
+      color: #ccc;
+      font-size: 48px;
+    }
+  }
+
+  .post-info {
+    padding: 15px;
+
+    .post-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 10px 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .post-stats {
+      display: flex;
+      gap: 15px;
+      color: #999;
+      font-size: 14px;
+
+      span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+    }
+  }
 }
 
-.post-card:hover {
-  transform: translateY(-2px);
-  border-color: #e5e5e5;
-  background: #fafafa;
+.empty-box {
+  background: white;
+  padding: 60px 20px;
+  border-radius: 8px;
+  text-align: center;
 }
 
-.post-image-wrapper {
-  width: 280px;
-  height: 200px;
-  flex-shrink: 0;
-  overflow: hidden;
-  background: #f9f9f9;
-  border-radius: 4px;
-}
-
-.post-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.post-card:hover .post-image {
-  transform: scale(1.05);
-}
-
-.post-content-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 8px 0;
-}
-
-.post-header {
-  margin-bottom: 12px;
-}
-
-.post-title {
-  font-size: 18px;
-  font-weight: 400;
-  color: #333;
-  line-height: 1.4;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hot-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  background: #8b7355;
-  color: #fff;
-  border-radius: 2px;
-  font-size: 11px;
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
-.post-excerpt {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.7;
-  margin-bottom: auto;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.post-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e5e5;
-}
-
-.author-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.author-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #8b7355;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
-.author-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.author-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
-}
-
-.post-time {
-  font-size: 12px;
-  color: #999;
-}
-
-.post-stats {
-  display: flex;
-  gap: 16px;
-}
-
-.stat-item {
-  font-size: 13px;
-  color: #999;
-}
-
-/* 分页 */
-.pagination-wrapper {
-  margin-top: 48px;
+.pagination {
   display: flex;
   justify-content: center;
-}
-
-:deep(.el-pagination .el-pager li) {
-  border-radius: 4px;
-  margin: 0 4px;
-  min-width: 32px;
-}
-
-:deep(.el-pagination .el-pager li.is-active) {
-  background: #8b7355;
-  color: #fff;
-}
-
-:deep(.el-pagination button) {
-  border-radius: 4px;
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
-  .toolbar {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .tab-buttons {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .publish-btn {
-    width: 100%;
-  }
-
-  .post-card {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .post-image-wrapper {
-    width: 100%;
-    height: 200px;
-  }
+  margin-top: 30px;
 }
 </style>

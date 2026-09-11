@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API路由诊断工具</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    h1 { color: #667eea; margin-bottom: 20px; }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s;
+    }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-primary:hover { background: #5568d3; transform: translateY(-2px); }
+    .log {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 15px;
+      max-height: 500px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 20px;
+    }
+    .success { color: #4ec9b0; }
+    .error { color: #f48771; }
+    .info { color: #4fc1ff; }
+    .warning { color: #dcdcaa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 API路由诊断工具</h1>
+    <p>这个工具会帮你找到正确的API路由路径</p>
+
+    <div style="margin: 20px 0;">
+      <button class="btn btn-primary" onclick="login()">1. 登录获取Token</button>
+      <button class="btn btn-primary" onclick="testRoutes()">2. 测试所有可能的路由</button>
+      <button class="btn btn-primary" onclick="clearLog()">清空日志</button>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    let token = '';
+
+    function log(msg, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      const className = type;
+      logDiv.innerHTML += `<div class="${className}">[${time}] ${msg}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+    }
+
+    async function login() {
+      log('开始登录...', 'info');
+      try {
+        const response = await fetch('http://localhost:8001/app/user/login/password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: '13800138000', password: '123456' })
+        });
+
+        const data = await response.json();
+
+        if (data.code === 1000) {
+          token = data.data.token;
+          log('✅ 登录成功！', 'success');
+          log(`Token: ${token.substring(0, 50)}...`, 'info');
+          localStorage.setItem('token', token);
+        } else {
+          log(`❌ 登录失败: ${data.message}`, 'error');
+        }
+      } catch (error) {
+        log(`❌ 登录请求失败: ${error.message}`, 'error');
+      }
+    }
+
+    async function testRoutes() {
+      if (!token) {
+        log('⚠️  请先登录获取Token', 'warning');
+        return;
+      }
+
+      log('开始测试API路由...', 'info');
+      log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+
+      // 所有可能的路由组合
+      const modules = ['', 'community/', 'note/'];
+      const controllers = ['topic', 'noteTopic', 'note-topic', 'note_topic'];
+      const actions = ['/list', '/feed'];
+
+      let foundRoutes = [];
+
+      for (const module of modules) {
+        for (const controller of controllers) {
+          for (const action of actions) {
+            const path = `/app/${module}${controller}${action}`;
+
+            try {
+              const response = await fetch(`http://localhost:8001${path}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': token
+                },
+                body: '{}'
+              });
+
+              const data = await response.json();
+
+              if (data.code !== 1001 || !data.message.includes('Not Found')) {
+                log(`✅ 找到有效路由: ${path}`, 'success');
+                log(`   响应: ${JSON.stringify(data)}`, 'info');
+                foundRoutes.push(path);
+              }
+            } catch (error) {
+              // 忽略网络错误
+            }
+          }
+        }
+      }
+
+      // 测试游记相关路由
+      const postPaths = [
+        '/app/note/feed',
+        '/app/notePost/feed',
+        '/app/note-post/feed',
+        '/app/note_post/feed',
+        '/app/post/feed',
+        '/app/community/note/feed',
+        '/app/community/post/feed'
+      ];
+
+      for (const path of postPaths) {
+        try {
+          const response = await fetch(`http://localhost:8001${path}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': token
+            },
+            body: '{}'
+          });
+
+          const data = await response.json();
+
+          if (data.code !== 1001 || !data.message.includes('Not Found')) {
+            log(`✅ 找到有效路由: ${path}`, 'success');
+            log(`   响应: ${JSON.stringify(data)}`, 'info');
+            foundRoutes.push(path);
+          }
+        } catch (error) {
+          // 忽略
+        }
+      }
+
+      log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+
+      if (foundRoutes.length > 0) {
+        log(`\n🎉 测试完成！找到 ${foundRoutes.length} 个有效路由：`, 'success');
+        foundRoutes.forEach(route => log(`   ${route}`, 'success'));
+      } else {
+        log('❌ 没有找到任何有效的路由', 'error');
+        log('', 'info');
+        log('可能的原因：', 'warning');
+        log('1. 社区模块未正确加载', 'warning');
+        log('2. 控制器路由配置有问题', 'warning');
+        log('3. Cool框架路由注册失败', 'warning');
+        log('', 'info');
+        log('建议：查看 http://localhost:8001/swagger-ui/index.html', 'info');
+      }
+    }
+
+    // 页面加载时尝试从localStorage恢复token
+    window.onload = () => {
+      const savedToken = localStorage.getItem('token');
+      if (savedToken) {
+        token = savedToken;
+        log('✅ 已从缓存加载Token', 'success');
+        log('可以直接点击"2. 测试所有可能的路由"', 'info');
+      } else {
+        log('👋 欢迎使用API路由诊断工具', 'info');
+        log('请先点击"1. 登录获取Token"', 'info');
+      }
+    };
+  </script>
+</body>
+</html>
