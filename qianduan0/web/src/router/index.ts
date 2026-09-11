@@ -53,6 +53,9 @@ const router = createRouter({
     // 个人中心
     { path: '/user', component: () => import('../views/user/Profile.vue'), meta: { requiresAuth: true } },
     { path: '/user/apply-merchant', component: () => import('../views/user/MerchantApply.vue'), meta: { requiresAuth: true } },
+    // 兜底：未匹配到任何路由时给一个像样的 404 页，而不是只剩导航的空白页。
+    // 必须放在最后。具名路由（如 /community/topics）比动态段更具体，不会被它吃掉。
+    { path: '/:pathMatch(.*)*', component: () => import('../views/NotFound.vue') },
   ],
 
   /**
