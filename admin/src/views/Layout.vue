@@ -3,7 +3,7 @@
     <!-- 侧栏 -->
     <aside class="side">
       <div class="logo">
-        <MiaoPattern :size="32" class="logo-icon" />
+        <BrandMark :size="34" tone="light" class="logo-icon" />
         <div class="logo-text">
           <div class="logo-title">乌东文旅</div>
           <div class="logo-sub">苗寨数字管理平台</div>
@@ -122,7 +122,7 @@ import request from '../api/request';
 import { useUserStore } from '../stores/user';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import ThemeSwitch from '../components/ThemeSwitch.vue';
-import MiaoPattern from '../components/MiaoPattern.vue';
+import BrandMark from '../components/BrandMark.vue';
 import CartoonAvatar from '../components/CartoonAvatar.vue';
 
 const route = useRoute();
@@ -177,8 +177,8 @@ onMounted(async () => {
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .logo-icon {
-  color: #e6f4f1;
-  opacity: 0.9;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
 }
 .logo-title {
   font-size: 17px;

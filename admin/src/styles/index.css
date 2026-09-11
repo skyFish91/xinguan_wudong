@@ -1,62 +1,94 @@
 /* ============================================================
-   乌东文旅 - 苗韵国风主题变量 + 全局样式
-   主色: 青绿 + 靛蓝(苗绣/银饰色调) + 米黄(纸张/谷物色调)
+   乌东文旅 - 管理后台设计令牌
+   与 C 端（qianduan0/web/src/styles/theme.css）保持同一套配色：
+   主色靛蓝、强调色苗绣红、银饰冷调、冷调浅底。
+   后台页面里的 --color-* 全部由下面的 --wd-* 色阶派生，
+   所以不需要改动各页面样式即可整体换色。
    ============================================================ */
 
 :root {
-  /* --- 品牌主色 --- */
-  --color-primary: #0e8c7e;
-  --color-primary-hover: #14a89a;
-  --color-primary-active: #0a6f64;
-  --color-primary-soft: #e6f4f1;
+  /* --- 与 C 端共享的品牌色阶（改主色时两边必须一起改）--- */
+  --wd-brand-900: #0d1f3d;
+  --wd-brand-700: #16305a;
+  --wd-brand-600: #1b3a6b;
+  --wd-brand: #22467e;
+  --wd-brand-400: #3a68a8;
+  --wd-brand-300: #6b8fc4;
+  --wd-brand-200: #a9c2e0;
+  --wd-brand-soft: #eef3fb;
+  --wd-brand-tint: #dbe6f6;
+  --wd-brand-rgb: 34, 70, 126;
 
-  --color-secondary: #2d4a7c;
-  --color-secondary-soft: #e8edf6;
+  /* 强调色：苗绣红，只用于价格 / 需注意项 / 必填 */
+  --wd-accent: #b93226;
+  --wd-accent-600: #a02a20;
+  --wd-accent-400: #d4574a;
+  --wd-accent-soft: #fdf2f1;
+  --wd-accent-rgb: 185, 50, 38;
 
-  --color-accent: #c08a3e;
-  --color-accent-soft: #faf2e0;
+  /* 苗族银饰：冷调银白 */
+  --wd-silver: #c9d3e2;
+  --wd-silver-strong: #a8b8cd;
+  --wd-silver-soft: #f2f5fa;
+  --wd-gold: #c9a227;
 
-  /* --- 状态色 --- */
-  --color-success: #4ea76b;
-  --color-warning: #e0a44b;
+  /* --- 品牌主色（由上面色阶派生）--- */
+  --color-primary: var(--wd-brand);
+  --color-primary-hover: var(--wd-brand-400);
+  --color-primary-active: var(--wd-brand-700);
+  --color-primary-soft: var(--wd-brand-soft);
+
+  --color-secondary: var(--wd-brand-700);
+  --color-secondary-soft: var(--wd-brand-tint);
+
+  --color-accent: var(--wd-accent);
+  --color-accent-soft: var(--wd-accent-soft);
+
+  /* 金额：C 端统一用苗绣红 */
+  --color-price: var(--wd-accent);
+
+  /* --- 状态色（语义色，不随品牌色变化）--- */
+  --color-success: #1e7a45;
+  --color-warning: #d98a1f;
   --color-danger: #c0514c;
-  --color-info: #7c8da6;
+  --color-info: #78829c;
 
-  /* --- 文本色 --- */
-  --text-primary: #1f2a3a;
-  --text-regular: #4a5566;
-  --text-secondary: #7c8da6;
-  --text-placeholder: #aab5c5;
+  /* --- 文本色：向蓝调微偏，与靛蓝主色同源 --- */
+  --text-primary: #1b2233;
+  --text-regular: #47506a;
+  --text-secondary: #78829c;
+  --text-placeholder: #a2abc2;
   --text-inverse: #ffffff;
 
-  /* --- 背景 / 边框 --- */
-  --bg-page: #f5f1e8;
+  /* --- 背景 / 边框：由暖米色改为与 C 端一致的冷调 --- */
+  --bg-page: #f6f8fc;
   --bg-card: #ffffff;
   --bg-elevated: #ffffff;
-  --bg-side: linear-gradient(180deg, #1f3a5f 0%, #0e2440 100%);
-  --bg-side-hover: rgba(255,255,255,0.08);
-  --bg-side-active: rgba(14, 140, 126, 0.4);
+  --bg-side: linear-gradient(180deg, #1b3a6b 0%, #0d1f3d 100%);
+  --bg-side-hover: rgba(255, 255, 255, 0.08);
+  --bg-side-active: rgba(58, 104, 168, 0.5);
 
-  --border-base: #e2dccd;
-  --border-light: #ede7d7;
+  --border-base: #dbe3f0;
+  --border-light: #eaeff7;
 
-  --shadow-sm: 0 1px 2px rgba(31,42,58,0.06);
-  --shadow-base: 0 4px 12px rgba(31,42,58,0.08);
-  --shadow-lg: 0 8px 24px rgba(31,42,58,0.12);
+  --shadow-sm: 0 1px 2px rgba(27, 34, 51, 0.04), 0 2px 8px rgba(27, 34, 51, 0.04);
+  --shadow-base: 0 2px 6px rgba(27, 34, 51, 0.05), 0 8px 24px rgba(27, 34, 51, 0.06);
+  --shadow-lg: 0 6px 16px rgba(27, 34, 51, 0.08), 0 18px 48px rgba(27, 34, 51, 0.1);
 
-  /* --- 圆角 --- */
-  --radius-sm: 4px;
-  --radius-base: 8px;
-  --radius-lg: 12px;
+  /* --- 圆角：对齐 C 端，比原先更圆润 --- */
+  --radius-sm: 8px;
+  --radius-base: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
   /* --- Element Plus 主题覆盖 --- */
   --el-color-primary: var(--color-primary);
-  --el-color-primary-light-3: #4cb1a3;
-  --el-color-primary-light-5: #87c9bf;
-  --el-color-primary-light-7: #c2e1db;
-  --el-color-primary-light-9: var(--color-primary-soft);
-  --el-color-primary-dark-2: var(--color-primary-active);
+  --el-color-primary-light-3: var(--wd-brand-400);
+  --el-color-primary-light-5: var(--wd-brand-300);
+  --el-color-primary-light-7: var(--wd-brand-200);
+  --el-color-primary-light-9: var(--wd-brand-soft);
+  --el-color-primary-dark-2: var(--wd-brand-700);
 
   --el-color-success: var(--color-success);
   --el-color-warning: var(--color-warning);
@@ -73,20 +105,23 @@
   --el-fill-color-blank: var(--bg-card);
   --el-bg-color: var(--bg-page);
   --el-bg-color-page: var(--bg-page);
+
+  --el-border-radius-base: var(--radius-sm);
 }
 
 /* --- 深色模式 --- */
 html.dark {
-  --color-primary: #14a89a;
-  --color-primary-hover: #1cc4b3;
-  --color-primary-active: #0e8c7e;
-  --color-primary-soft: rgba(14, 140, 126, 0.15);
+  --color-primary: var(--wd-brand-400);
+  --color-primary-hover: var(--wd-brand-300);
+  --color-primary-active: var(--wd-brand);
+  --color-primary-soft: rgba(34, 70, 126, 0.22);
 
-  --color-secondary: #4a6ba8;
-  --color-secondary-soft: rgba(74, 107, 168, 0.15);
+  --color-secondary: #4a76b0;
+  --color-secondary-soft: rgba(74, 118, 176, 0.15);
 
-  --color-accent: #d4a262;
-  --color-accent-soft: rgba(212, 162, 98, 0.15);
+  --color-accent: var(--wd-accent-400);
+  --color-accent-soft: rgba(212, 87, 74, 0.15);
+  --color-price: var(--wd-accent-400);
 
   --text-primary: #e6edf6;
   --text-regular: #b8c5d4;
@@ -96,24 +131,24 @@ html.dark {
   --bg-page: #0e1825;
   --bg-card: #1a2738;
   --bg-elevated: #233246;
-  --bg-side: linear-gradient(180deg, #0a1622 0%, #050d18 100%);
-  --bg-side-hover: rgba(255,255,255,0.05);
-  --bg-side-active: rgba(20, 168, 154, 0.35);
+  --bg-side: linear-gradient(180deg, #0d1f3d 0%, #050d18 100%);
+  --bg-side-hover: rgba(255, 255, 255, 0.05);
+  --bg-side-active: rgba(58, 104, 168, 0.4);
 
   --border-base: #2c3a52;
   --border-light: #1e2a3e;
 
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-base: 0 4px 12px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-base: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 
-  /* --- Element Plus 深色补全（覆盖官方 dark css-vars，保持苗韵风格） --- */
+  /* --- Element Plus 深色补全（覆盖官方 dark css-vars，保持同一套靛蓝语言） --- */
   --el-color-primary: var(--color-primary);
-  --el-color-primary-light-3: #4cb1a3;
-  --el-color-primary-light-5: #2a9c8e;
-  --el-color-primary-light-7: rgba(20, 168, 154, 0.35);
+  --el-color-primary-light-3: var(--wd-brand-300);
+  --el-color-primary-light-5: var(--wd-brand);
+  --el-color-primary-light-7: rgba(34, 70, 126, 0.55);
   --el-color-primary-light-9: var(--color-primary-soft);
-  --el-color-primary-dark-2: var(--color-primary-active);
+  --el-color-primary-dark-2: var(--wd-brand-700);
 
   --el-bg-color: #0e1825;
   --el-bg-color-page: #0e1825;
@@ -141,8 +176,8 @@ html.dark {
   --el-text-color-disabled: #5f6e85;
 
   --el-mask-color: rgba(0, 0, 0, 0.72);
-  --el-box-shadow: 0 12px 32px 4px rgba(0,0,0,0.5);
-  --el-box-shadow-light: 0 4px 12px rgba(0,0,0,0.4);
+  --el-box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.5);
+  --el-box-shadow-light: 0 4px 12px rgba(0, 0, 0, 0.4);
 
   /* 表格深色 */
   --el-table-bg-color: #1a2738;
@@ -150,7 +185,7 @@ html.dark {
   --el-table-header-bg-color: #233246;
   --el-table-header-text-color: #e6edf6;
   --el-table-border-color: #1e2a3e;
-  --el-table-row-hover-bg-color: rgba(20, 168, 154, 0.12);
+  --el-table-row-hover-bg-color: rgba(58, 104, 168, 0.14);
   --el-table-striped-bg-color: #1e2a3e;
 
   /* 分页深色 */

@@ -4,7 +4,7 @@
     <div class="brand-side">
       <img :src="bgSvg" class="bg-img" alt="苗寨" />
       <div class="brand-content">
-        <MiaoPattern :size="64" class="brand-icon" />
+        <BrandMark :size="72" tone="light" class="brand-icon" />
         <h1 class="brand-title">乌东文旅</h1>
         <div class="brand-subtitle">苗寨数字文旅管理平台</div>
         <div class="brand-desc">
@@ -19,7 +19,7 @@
       <div class="form-card">
         <div class="form-head">
           <div class="form-badge">
-            <MiaoPattern :size="40" />
+            <BrandMark :size="44" tone="brand" />
           </div>
           <h2>欢迎登录</h2>
           <p class="form-sub">请使用平台分配的账号登录后台</p>
@@ -71,7 +71,7 @@ import { ElMessage } from 'element-plus';
 import { Phone, Lock } from '@element-plus/icons-vue';
 import request from '../api/request';
 import { useUserStore } from '../stores/user';
-import MiaoPattern from '../components/MiaoPattern.vue';
+import BrandMark from '../components/BrandMark.vue';
 import bgSvg from '../assets/login-bg.jpg';
 
 const route = useRoute();
@@ -164,10 +164,8 @@ async function submit() {
 }
 
 .brand-icon {
-  color: var(--silver-white);
   margin-bottom: 24px;
-  opacity: 0.9;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35));
 }
 
 .brand-title {
@@ -257,25 +255,11 @@ async function submit() {
 .form-badge {
   width: 72px;
   height: 72px;
-  border-radius: 8px;
-  background: transparent;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--cinnabar-red);
   margin: 0 auto 24px;
-  border: 2px solid var(--cinnabar-red);
-  opacity: 0.8;
-  position: relative;
-}
-
-.form-badge::before {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  border: 1px solid var(--silver-grey);
-  opacity: 0.4;
-  border-radius: 10px;
 }
 
 .form-head h2 {
