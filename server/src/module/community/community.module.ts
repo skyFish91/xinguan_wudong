@@ -136,12 +136,17 @@ export class CommunityService {
     userId?: number;
     tab?: string;
     topicId?: number;
+    /** 只看某个作者的游记（个人主页） */
+    authorId?: number;
     page: number;
     pageSize: number;
   }) {
     const qb = this.postRepo.createQueryBuilder('p').where('p.status = 1');
     if (params.topicId) {
       qb.andWhere('p.topic_id = :topicId', { topicId: params.topicId });
+    }
+    if (params.authorId) {
+      qb.andWhere('p.user_id = :authorId', { authorId: params.authorId });
     }
     if (params.tab === 'follow') {
       const followQb = this.followRepo
@@ -392,6 +397,144 @@ export class CommunityService {
       this.reportRepo.create({ reportUserId: userId, ...dto, status: 0, handleNote: '' })
     );
   }
+
+  /** 已关注的话题 id 集合 */
+  private async followedTopicIds(userId: number | undefined, topicIds: number[]) {
+    const set = new Set<number>();
+    if (!userId || topicIds.length === 0) {
+      return set;
+    }
+    const rows = await this.favoriteRepo.findBy({
+      userId,
+      bizType: 'topic',
+      bizId: In(topicIds as number[]),
+    });
+    rows.forEach(r => set.add(Number(r.bizId)));
+    return set;
+  }
+
+  /** 已关注的用户 id 集合 */
+  private async followedUserIds(userId: number | undefined, userIds: number[]) {
+    const set = new Set<number>();
+    if (!userId || userIds.length === 0) {
+      return set;
+    }
+    const rows = await this.followRepo.findBy({
+      userId,
+      followUserId: In(userIds as number[]),
+    });
+    rows.forEach(r => set.add(Number(r.followUserId)));
+    return set;
+  }
+
+  /** 综合搜索：type = post / topic / user */
+  async search(params: {
+    keyword: string;
+    type?: string;
+    page: number;
+    pageSize: number;
+    userId?: number;
+  }) {
+    const kw = (params.keyword || '').trim();
+    const page = Number(params.page) || 1;
+    const pageSize = Number(params.pageSize) || 10;
+    if (!kw) {
+      return { list: [], total: 0, page, pageSize };
+    }
+    const like = `%${kw}%`;
+    const type = (params.type || 'post').toLowerCase();
+
+    if (type === 'topic') {
+      const [rows, total] = await this.topicRepo
+        .createQueryBuilder('t')
+        .where('(t.name LIKE :like OR t.intro LIKE :like)', { like })
+        .orderBy('t.followCount', 'DESC')
+        .skip((page - 1) * pageSize)
+        .take(pageSize)
+        .getManyAndCount();
+      const followed = await this.followedTopicIds(params.userId, rows.map(r => Number(r.id)));
+      return {
+        list: rows.map(t => ({ ...t, isFollowed: followed.has(Number(t.id)) })),
+        total,
+        page,
+        pageSize,
+      };
+    }
+
+    if (type === 'user') {
+      const [rows, total] = await this.userRepo
+        .createQueryBuilder('u')
+        .where('u.nickname LIKE :like', { like })
+        .andWhere('u.status = 1')
+        .orderBy('u.id', 'ASC')
+        .skip((page - 1) * pageSize)
+        .take(pageSize)
+        .getManyAndCount();
+      const followed = await this.followedUserIds(params.userId, rows.map(r => Number(r.id)));
+      const list = await Promise.all(
+        rows.map(async u => ({
+          id: u.id,
+          nickname: u.nickname,
+          avatar: u.avatar,
+          bio: u.bio,
+          postCount: await this.postRepo.countBy({ userId: u.id, status: 1 }),
+          followerCount: await this.followRepo.countBy({ followUserId: u.id }),
+          isFollowed: followed.has(Number(u.id)),
+        }))
+      );
+      return { list, total, page, pageSize };
+    }
+
+    const [posts, total] = await this.postRepo
+      .createQueryBuilder('p')
+      .where('p.status = 1')
+      .andWhere('(p.title LIKE :like OR p.content LIKE :like)', { like })
+      .orderBy('p.id', 'DESC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getManyAndCount();
+    return { list: await this.decoratePosts(posts, params.userId), total, page, pageSize };
+  }
+
+  /** 话题详情（含是否已关注） */
+  async topicDetail(id: number, userId?: number) {
+    const topic = await this.topicRepo.findOneBy({ id });
+    if (!topic) {
+      throw BizError.notFound('话题不存在');
+    }
+    const followed = await this.followedTopicIds(userId, [id]);
+    return { ...topic, isFollowed: followed.has(Number(id)) };
+  }
+
+  /** 用户公开主页（基本资料 + 统计 + 是否已关注） */
+  async userProfile(id: number, viewerId?: number) {
+    const user = await this.userRepo.findOneBy({ id });
+    if (!user) {
+      throw BizError.notFound('用户不存在');
+    }
+    const [postCount, followerCount, followingCount, favoriteCount] = await Promise.all([
+      this.postRepo.countBy({ userId: id, status: 1 }),
+      this.followRepo.countBy({ followUserId: id }),
+      this.followRepo.countBy({ userId: id }),
+      this.favoriteRepo.countBy({ userId: id, bizType: 'post' }),
+    ]);
+    const isFollowed = viewerId
+      ? !!(await this.followRepo.findOneBy({ userId: viewerId, followUserId: id }))
+      : false;
+    return {
+      id: user.id,
+      nickname: user.nickname,
+      avatar: user.avatar,
+      bio: user.bio,
+      region: user.region,
+      postCount,
+      favoriteCount,
+      followerCount,
+      followingCount,
+      isFollowed,
+      isSelf: Number(viewerId) === Number(id),
+    };
+  }
 }
 
 @ApiTags(['模块五-社区-照片分享'])
@@ -420,11 +563,12 @@ export class CommunityController {
     return this.communityService.createPost(user.userId, dto);
   }
 
-  @ApiOperation({ summary: '游记流（tab=all/hot/follow，topicId 筛选）' })
+  @ApiOperation({ summary: '游记流（tab=all/hot/follow，topicId/authorId 筛选）' })
   @Get('/posts')
   async posts(
     @Query('tab') tab: string,
     @Query('topicId') topicId: number | undefined,
+    @Query('authorId') authorId: number | undefined,
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 10,
     @CurrentUserParam() user?: CurrentUser
@@ -433,9 +577,40 @@ export class CommunityController {
       userId: user?.userId,
       tab: tab || 'all',
       topicId: topicId ? Number(topicId) : undefined,
+      authorId: authorId ? Number(authorId) : undefined,
       page: Number(page),
       pageSize: Number(pageSize),
     });
+  }
+
+  @ApiOperation({ summary: '综合搜索（type=post/topic/user）' })
+  @Get('/search')
+  async search(
+    @Query('keyword') keyword: string,
+    @Query('type') type: string,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @CurrentUserParam() user?: CurrentUser
+  ) {
+    return this.communityService.search({
+      keyword: keyword || '',
+      type: type || 'post',
+      page: Number(page),
+      pageSize: Number(pageSize),
+      userId: user?.userId,
+    });
+  }
+
+  @ApiOperation({ summary: '话题详情（含是否已关注）' })
+  @Get('/topics/:id')
+  async topicDetail(@Param('id') id: number, @CurrentUserParam() user?: CurrentUser) {
+    return this.communityService.topicDetail(Number(id), user?.userId);
+  }
+
+  @ApiOperation({ summary: '用户公开主页（资料 + 统计 + 是否已关注）' })
+  @Get('/users/:id')
+  async userProfile(@Param('id') id: number, @CurrentUserParam() user?: CurrentUser) {
+    return this.communityService.userProfile(Number(id), user?.userId);
   }
 
   @ApiOperation({ summary: '游记详情（浏览数+1，含互动状态）' })
