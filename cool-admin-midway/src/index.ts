@@ -202,6 +202,7 @@ export * from './modules/m2-food/config';
 export * from './modules/m3-stay/config';
 export * from './modules/m3-stay/controller/app/homestay';
 export * from './modules/m4-travel/config';
+export * from './modules/m4-travel/controller/app/scenic';
 export * from './modules/m5-community/config';
 export * from './modules/m6-admin/config';
 export * from './modules/merchant/config';
