@@ -78,7 +78,7 @@
 
             <div class="post-footer">
               <div class="author">
-                <el-avatar :size="24" :src="post.userAvatar">{{ (post.userName || '旅').slice(0, 1) }}</el-avatar>
+                <UserAvatar :size="24" :src="post.userAvatar" :seed="post.userId || post.userName" />
                 <span class="author-name clamp-1">{{ post.userName }}</span>
               </div>
               <div class="stats">
@@ -131,6 +131,7 @@ import SkeletonCard from '../../components/SkeletonCard.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import { img, imgError } from '../../utils/media'
 import PublishDialog from './components/PublishDialog.vue'
+import UserAvatar from '../../components/UserAvatar.vue';
 
 const router = useRouter()
 

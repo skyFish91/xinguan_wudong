@@ -113,7 +113,7 @@
               <p class="post-desc clamp-2" v-html="highlightKeyword(post.content)"></p>
               <div class="post-footer">
                 <div class="author">
-                  <el-avatar :size="24" :src="post.userAvatar">{{ (post.userName || '旅').slice(0, 1) }}</el-avatar>
+                  <UserAvatar :size="24" :src="post.userAvatar" :seed="post.userId || post.userName" />
                   <span class="author-name clamp-1">{{ post.userName }}</span>
                 </div>
                 <div class="stats">
@@ -166,9 +166,12 @@
             :style="{ animationDelay: `${Math.min(i, 8) * 45}ms` }"
             @click="$router.push(`/community/user/${user.id}`)"
           >
-            <el-avatar :size="60" :src="user.avatar" class="row-avatar">
-              {{ (user.nickname || '旅').slice(0, 1) }}
-            </el-avatar>
+            <UserAvatar
+              :size="60"
+              :src="user.avatar"
+              :seed="user.id || user.nickname"
+              class="row-avatar"
+            />
             <div class="row-main">
               <h3 class="row-title" v-html="highlightKeyword(user.nickname)"></h3>
               <p class="row-desc clamp-2">{{ user.bio || '这个人很懒，什么都没写' }}</p>
@@ -222,6 +225,7 @@ import { View, Star, VideoPlay, Delete, Close, Search, TrendCharts, CaretTop, Ca
 import { communityApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
 import { img, imgError } from '../../utils/media'
+import UserAvatar from '../../components/UserAvatar.vue';
 
 const route = useRoute()
 const router = useRouter()

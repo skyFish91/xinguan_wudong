@@ -83,7 +83,7 @@
 
             <div class="post-footer">
               <div class="author">
-                <el-avatar :size="24" :src="post.userAvatar">{{ (post.userName || '旅').slice(0, 1) }}</el-avatar>
+                <UserAvatar :size="24" :src="post.userAvatar" :seed="post.userId || post.userName" />
                 <span class="author-name clamp-1">{{ post.userName }}</span>
               </div>
               <div class="stats">
@@ -125,6 +125,7 @@ import { Plus, Edit, View, Star, VideoPlay } from '@element-plus/icons-vue'
 import { communityApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
 import { img, imgError } from '../../utils/media'
+import UserAvatar from '../../components/UserAvatar.vue';
 
 const route = useRoute()
 const topicId = ref(route.params.id)

@@ -38,9 +38,7 @@
           <!-- 作者 -->
           <div class="wd-card author-card">
             <div class="author-info" @click="$router.push(`/community/user/${post.userId}`)">
-              <el-avatar :size="46" :src="post.userAvatar">
-                {{ (post.userName || '旅').slice(0, 1) }}
-              </el-avatar>
+              <UserAvatar :size="46" :src="post.userAvatar" :seed="post.userId || post.userName" />
               <div class="author-meta">
                 <div class="author-name">{{ post.userName }}</div>
                 <div class="post-time">{{ post.createTime }}</div>
@@ -137,7 +135,7 @@
             </h3>
 
             <div class="comment-input">
-              <el-avatar :size="36" :src="userInfo.avatar" />
+              <UserAvatar :size="36" :src="userInfo.avatar" :seed="userInfo.id || userInfo.nickname" />
               <el-input
                 ref="commentInputRef"
                 v-model="commentText"
@@ -248,6 +246,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { img, imgLarge, imgError, imgListLarge } from '../../utils/media'
 import CommentItem from './components/CommentItem.vue'
 import ReportDialog from './components/ReportDialog.vue'
+import UserAvatar from '../../components/UserAvatar.vue';
 
 const route = useRoute()
 const router = useRouter()
@@ -273,7 +272,7 @@ const showReportDialog = ref(false)
 
 const userInfo = ref({
   id: 1,
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me',
+  avatar: '',
   role: 'USER',
 })
 
@@ -299,7 +298,7 @@ const loadPostDetail = async () => {
       poiName: data.poiName || '',
       userId: data.userId,
       userName: data.userName || '乌东用户',
-      userAvatar: data.userAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
+      userAvatar: data.userAvatar || '',
       createTime: data.createTime,
       likeCount: data.likeCount || 0,
       commentCount: data.commentCount || 0,
@@ -335,7 +334,7 @@ const loadComments = async (reset = false) => {
       content: item.content,
       userId: item.userId,
       userName: item.userName || '乌东用户',
-      userAvatar: item.userAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
+      userAvatar: item.userAvatar || '',
       createTime: item.createTime || new Date().toISOString(),
       likeCount: item.likeCount || 0,
       isLiked: false,
@@ -532,7 +531,7 @@ onMounted(() => {
       const info = JSON.parse(savedUserInfo)
       userInfo.value = {
         id: info.id || 1,
-        avatar: info.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=me',
+        avatar: info.avatarUrl || '',
         role: info.role || 'USER',
       }
     } catch (e) {

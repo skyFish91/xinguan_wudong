@@ -8,7 +8,13 @@
           <div class="cover-overlay"></div>
         </div>
         <div class="profile-main">
-          <el-avatar :size="120" :src="user.avatar" class="profile-avatar" />
+          <UserAvatar
+            :size="120"
+            :src="user.avatar"
+            :seed="user.id || user.nickname"
+            ring
+            class="profile-avatar"
+          />
           <div class="profile-info">
             <div class="user-name-row">
               <h1 class="user-name">{{ user.nickname }}</h1>
@@ -112,7 +118,7 @@
               <div class="post-content">
                 <h3 class="post-title">{{ post.title }}</h3>
                 <div class="post-author">
-                  <el-avatar :size="24" :src="post.userAvatar" />
+                  <UserAvatar :size="24" :src="post.userAvatar" :seed="post.userId || post.userName" />
                   <span>{{ post.userName }}</span>
                 </div>
               </div>
@@ -135,7 +141,7 @@
               <div class="post-content">
                 <h3 class="post-title">{{ post.title }}</h3>
                 <div class="post-author">
-                  <el-avatar :size="24" :src="post.userAvatar" />
+                  <UserAvatar :size="24" :src="post.userAvatar" :seed="post.userId || post.userName" />
                   <span>{{ post.userName }}</span>
                 </div>
               </div>
@@ -171,7 +177,7 @@
           class="follow-item"
         >
           <div class="follow-user" @click="$router.push(`/community/user/${item.id}`)">
-            <el-avatar :size="48" :src="item.avatar" />
+            <UserAvatar :size="48" :src="item.avatar" :seed="item.id || item.nickname" />
             <div class="follow-user-info">
               <div class="follow-user-name">{{ item.nickname }}</div>
               <div class="follow-user-bio">{{ item.bio || '这个人很懒，什么都没写' }}</div>
@@ -203,6 +209,7 @@ import { Plus, ChatDotRound, Setting, View, Star, VideoPlay } from '@element-plu
 import { communityApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import UserAvatar from '../../components/UserAvatar.vue';
 
 const route = useRoute()
 const userStore = useUserStore()

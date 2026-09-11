@@ -153,7 +153,10 @@
           <div class="review-list" v-if="reviews.length">
             <article v-for="r in reviews" :key="r.id" class="wd-card review-item">
               <div class="review-head">
-                <el-avatar :size="36">{{ (r.userNickname || '用').slice(0, 1) }}</el-avatar>
+                <UserAvatar
+                  :size="36"
+                  :seed="r.userId || r.userNickname || 'reviewer'"
+                />
                 <div class="review-who">
                   <div class="review-user">{{ r.userNickname || `用户${r.userId}` }}</div>
                   <el-rate :model-value="r.rating" disabled size="small" />
@@ -198,6 +201,7 @@ import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';
 import { useUserStore } from '../../stores/user';
 import { img, imgLarge, imgError, imgList, imgListLarge } from '../../utils/media';
+import UserAvatar from '../../components/UserAvatar.vue';
 
 const route = useRoute();
 const router = useRouter();

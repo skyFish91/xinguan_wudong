@@ -60,12 +60,18 @@
   --wd-border: #eaeff7;
   --wd-border-strong: #dbe3f0;
 
+  /* 布局：头部导航高度。导航是 fixed 定位（不占文档流），
+     内容区靠这个值让出高度——切换页面时不会有 68px 的顶下去再弹回来 */
+  --wd-nav-h: 68px;
+
   /* 圆角 */
   --wd-r-xs: 8px;
   --wd-r-sm: 12px;
   --wd-r-md: 16px;
   --wd-r-lg: 20px;
   --wd-r-xl: 28px;
+  /* 整屏面板 / 底部抽屉用，比 xl 再大一档 */
+  --wd-r-2xl: 36px;
   --wd-r-pill: 999px;
 
   /* 阴影：多层柔和，避免「脏边」 */
@@ -652,20 +658,27 @@ img {
   transform: translateY(-12px);
 }
 
-/* 登录 / 注册：整屏分屏，用轻微缩放代替位移，像镜头推近拉远 */
+/* 登录 / 注册：外壳只做淡入淡出，不做整屏缩放。
+   原先的 scale(1.012) 会让 100vh 的元素溢出视口 → 滚动条闪一下、内容横向抖一下，
+   是「切到登录页顿一下」的一半原因；另一半是导航栏退出时机（见 App.vue syncNav）。
+   位移感改由 AuthShell 内部元素承担（见该组件的 scoped 样式），观感仍是镜头推近。 */
 .wd-auth-enter-active {
-  transition: opacity 0.42s var(--wd-ease), transform 0.5s var(--wd-ease);
+  transition: opacity 0.34s var(--wd-ease);
 }
 .wd-auth-leave-active {
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  transition: opacity 0.2s ease-out;
 }
-.wd-auth-enter-from {
-  opacity: 0;
-  transform: scale(1.012);
-}
+.wd-auth-enter-from,
 .wd-auth-leave-to {
   opacity: 0;
-  transform: scale(0.988);
+}
+
+/* 头部导航的显隐。时长写在 TopNav 的 .nav 上（那里本来就有它自己的配色过渡），
+   这里只给两端状态，避免两处都声明 transition 互相覆盖。 */
+.wd-nav-enter-from,
+.wd-nav-leave-to {
+  opacity: 0;
+  transform: translateY(-100%);
 }
 
 /* 尊重系统的「减弱动态效果」设置 */
@@ -673,7 +686,9 @@ img {
   .wd-page-enter-active,
   .wd-page-leave-active,
   .wd-auth-enter-active,
-  .wd-auth-leave-active {
+  .wd-auth-leave-active,
+  .wd-nav-enter-active,
+  .wd-nav-leave-active {
     transition-duration: 0.01ms !important;
   }
   .wd-page-enter-from,

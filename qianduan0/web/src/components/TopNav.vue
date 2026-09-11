@@ -34,7 +34,11 @@
           <router-link to="/orders" class="ghost-btn">我的订单</router-link>
           <el-dropdown @command="onCommand" trigger="click">
             <span class="user-chip">
-              <el-avatar :size="26">{{ initial }}</el-avatar>
+              <UserAvatar
+                :size="26"
+                :src="userStore.userInfo?.avatar"
+                :seed="userStore.userInfo?.id || userStore.userInfo?.nickname"
+              />
               <span class="user-name">{{ userStore.userInfo?.nickname || '我的' }}</span>
               <el-icon class="caret"><ArrowDown /></el-icon>
             </span>
@@ -63,6 +67,7 @@ import { ArrowDown } from '@element-plus/icons-vue';
 import BrandMark from './BrandMark.vue';
 import { useUserStore } from '../stores/user';
 import request from '../api/request';
+import UserAvatar from './UserAvatar.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -82,11 +87,6 @@ const navs = [
 const activePath = computed(() => {
   const seg = '/' + (route.path.split('/')[1] || '');
   return navs.some((n) => n.path === seg) ? seg : '/';
-});
-
-const initial = computed(() => {
-  const n = userStore.userInfo?.nickname || '';
-  return n ? n.slice(0, 1).toUpperCase() : '我';
 });
 
 async function loadCartCount() {
@@ -128,15 +128,22 @@ window.addEventListener('cart-changed', loadCartCount);
 
 <style scoped>
 .nav {
-  position: sticky;
+  /* fixed 而非 sticky：导航不再占据文档流，
+     进出「裸页」（登录 / 注册整屏分屏）时页面高度不会先少 68px 再补回来。
+     让位改由 App.vue 的 .app-content 用 --wd-nav-h 统一承担。 */
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 200;
   background: rgba(255, 255, 255, 0.66);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid rgba(237, 240, 245, 0.9);
+  /* 后两项是路由显隐动画（.wd-nav-enter-from / .wd-nav-leave-to 只给两端状态） */
   transition: background 0.3s var(--wd-ease), box-shadow 0.3s var(--wd-ease),
-    border-color 0.3s var(--wd-ease);
+    border-color 0.3s var(--wd-ease), opacity 0.24s var(--wd-ease),
+    transform 0.28s var(--wd-ease);
 }
 .nav.is-scrolled {
   background: rgba(255, 255, 255, 0.86);
@@ -148,7 +155,7 @@ window.addEventListener('cart-changed', loadCartCount);
   display: flex;
   align-items: center;
   gap: 28px;
-  height: 68px;
+  height: var(--wd-nav-h);
 }
 
 /* 品牌 */

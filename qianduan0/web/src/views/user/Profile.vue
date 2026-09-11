@@ -4,9 +4,7 @@
       <PageBack />
       <!-- 个人资料头卡 -->
       <header class="wd-card user-hero">
-        <el-avatar :size="64" :src="profile.avatar">
-          {{ (profile.nickname || '乌').slice(0, 1) }}
-        </el-avatar>
+        <UserAvatar :size="64" :src="profile.avatar" :seed="profile.id || profile.nickname" />
         <div class="user-main">
           <h1 class="user-name">{{ profile.nickname || '乌东用户' }}</h1>
           <div class="user-meta">
@@ -289,6 +287,7 @@ import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';
 import { useUserStore } from '../../stores/user';
 import { img, imgError } from '../../utils/media';
+import UserAvatar from '../../components/UserAvatar.vue';
 
 const userStore = useUserStore();
 const tab = ref('profile');

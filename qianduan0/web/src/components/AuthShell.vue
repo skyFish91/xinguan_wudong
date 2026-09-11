@@ -99,6 +99,13 @@ withDefaults(
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   min-height: 100vh;
+  /* 抵消 .app-content 为固定导航预留的 68px，让分屏真正铺满一屏
+     （app-content 的 padding 是恒定值，这里用等量负 margin 抵消，
+       切换页面时不会有任何位置变化，所以不会「顿一下」） */
+  margin-top: calc(-1 * var(--wd-nav-h));
+  /* 压住固定导航：否则导航退场的那 0.2s 会在登录页顶部擦过一道 */
+  position: relative;
+  z-index: 300;
 }
 
 /* ---------------- 左：实景 ---------------- */
@@ -230,10 +237,20 @@ withDefaults(
 /* ---------------- 右：表单 ---------------- */
 .auth-main {
   position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* 向左压进实景一张圆角的距离，配合左侧大圆角：
+     圆角后面透出实景，「实景 → 表单」不再是硬邦邦一条竖缝，
+     而是像一张纸斜盖在照片上，两块自然衔接 */
+  margin-left: calc(-1 * var(--wd-r-2xl));
+  border-radius: var(--wd-r-2xl) 0 0 var(--wd-r-2xl);
+  background: linear-gradient(180deg, #ffffff, var(--wd-bg) 46%);
+  box-shadow: -18px 0 56px rgba(9, 21, 42, 0.22);
+  /* 内边距保持左右等宽：面板整体（含压在照片上的那 36px）都是可见面，
+     卡片居中的基准就是面板自身，多加左内边距反而会把卡片推偏 18px */
   padding: var(--wd-s8) var(--wd-gutter);
   overflow: hidden;
 }
@@ -336,7 +353,13 @@ withDefaults(
   .visual-chips {
     display: none;
   }
+  /* 单列时改为「向上盖住实景」：圆角挪到上缘，衔接逻辑与桌面端一致 */
   .auth-main {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--wd-r-2xl));
+    border-radius: var(--wd-r-2xl) var(--wd-r-2xl) 0 0;
+    background: linear-gradient(180deg, #ffffff, var(--wd-bg) 30%);
+    box-shadow: 0 -16px 44px rgba(9, 21, 42, 0.2);
     padding: var(--wd-s7) var(--wd-gutter) var(--wd-s9);
   }
 }

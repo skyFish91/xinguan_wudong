@@ -1,6 +1,6 @@
 ﻿<template>
   <div class="comment-item">
-    <el-avatar :size="40" :src="comment.userAvatar" />
+    <UserAvatar :size="40" :src="comment.userAvatar" :seed="comment.userId || comment.userName" />
     <div class="comment-content">
       <div class="comment-header">
         <span class="comment-author">{{ comment.userName }}</span>
@@ -15,7 +15,7 @@
           :key="reply.id"
           class="reply-item"
         >
-          <el-avatar :size="32" :src="reply.userAvatar" />
+          <UserAvatar :size="32" :src="reply.userAvatar" :seed="reply.userId || reply.userName" />
           <div class="reply-content">
             <div class="reply-header">
               <span class="reply-author">{{ reply.userName }}</span>
@@ -81,6 +81,7 @@ import { ref, computed } from 'vue'
 import { Star, ChatDotRound, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import UserAvatar from '../../../components/UserAvatar.vue';
 
 const props = defineProps({
   comment: {

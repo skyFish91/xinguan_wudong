@@ -235,7 +235,7 @@
               <div class="wd-title clamp-2">{{ p.title }}</div>
               <div class="post-foot">
                 <div class="post-author">
-                  <el-avatar :size="22" :src="p.userAvatar">{{ (p.userName || '旅').slice(0, 1) }}</el-avatar>
+                  <UserAvatar :size="22" :src="p.userAvatar" :seed="p.userId || p.userName" />
                   <span class="clamp-1">{{ p.userName || '匿名旅人' }}</span>
                 </div>
                 <div class="post-stats">
@@ -302,6 +302,7 @@ import SkeletonCard from '../components/SkeletonCard.vue';
 import EmptyState from '../components/EmptyState.vue';
 import request from '../api/request';
 import { img, imgLarge, imgError, imgList, HERO_SLIDES, PHOTO, PHOTO_LARGE } from '../utils/media';
+import UserAvatar from '../components/UserAvatar.vue';
 
 const home = reactive<any>({
   banners: [],

@@ -218,7 +218,28 @@ cd D:/xinguan_wudong && node scripts/route-diff.mjs . qianduan0/web/src && node 
 
 # ⑤ 核心业务链路端到端冒烟（改完交易/支付相关代码后跑）
 cd D:/xinguan_wudong && node scripts/smoke-order.mjs
+
+# ⑥ 全路由渲染冒烟（改完路由 / App.vue / 布局层 / 批量改 .vue 文件后必跑）
+cd D:/xinguan_wudong && python scripts/smoke-routes.py
 ```
+
+### 为什么必须跑 ⑥：构建通过 ≠ 页面能显示
+
+SPA 有个致命的盲区——**路由写错、组件抛异常，页面照样返回 HTTP 200，构建也照样通过**。
+表现是「只剩导航的一整片空白」，靠看构建日志和抽查几张截图都发现不了。
+
+`scripts/smoke-routes.py` 拿**渲染出的正文文本量**当白屏探针：逐条路由用无头 Chrome
+`--dump-dom` 渲染，剥掉标签数正文，低于 `--min-text`（默认 150 字）即判疑似白屏，退出码 1。
+
+```bash
+python scripts/smoke-routes.py                      # 自动用测试账号取 token
+python scripts/smoke-routes.py --min-text 100       # 报错态文案短，可放宽阈值
+```
+
+- 它自己往 `public/_seed.html` 写临时注入页、跑完 `finally` 删除，**不需要手工准备**
+- ⚠️ **错误态页面正文天然很短**（如收银台传一个不存在的订单号，只有「该订单已支付」几个字），
+  会被阈值误判成白屏。**判定异常后必须把该页正文 dump 出来人工看一眼**，别直接当 bug 修。
+- 新增页面后要往脚本里的 `ROUTES` 补一行，否则覆盖不到
 
 `smoke-order.mjs` 会跑通 **登录 → 取商品 → 加购 → 结算下单 → 创建支付 → 模拟扫码 → 查支付状态**，
 逐步打印状态码与响应，断在哪一环一目了然。默认用 `13800000001/user123`，
@@ -236,7 +257,7 @@ cd D:/xinguan_wudong && node scripts/smoke-order.mjs
 
 ---
 
-## 八、视觉验收：不装 agent-browser 也能截图
+## 八点五、视觉验收：不装 agent-browser 也能截图
 
 `agent-browser` 在本机没装（要下 ~500MB Chromium，且走代理易超时）。
 **本机已有 Chrome**，用无头模式直接截图，几秒出结果，是改样式后的首选验收手段：
@@ -259,6 +280,20 @@ CHROME="/c/Program Files/Google/Chrome/Application/chrome.exe"
 > **判断"文字发灰/发虚"这类疑似 bug，必须用 2x 放大复看。**
 > 1440px 的截图被缩略查看时，15px 正文的抗锯齿会让它看起来像灰蓝色，
 > 很容易误判成配色 bug —— 实际是查看端缩放的假象。
+
+> 💡 **想特写某一处细节（圆角、描边、两块面板的接缝）**：`--force-device-scale-factor=2`
+> 只能放大整页，而且窗口一改小就跨断点、布局全变了。更稳的是**临时放一个同源
+> `qianduan0/web/public/_zoom.html`**，用 iframe 加载目标路由再整体放大：
+> ```html
+> <div style="position:fixed;inset:0;overflow:hidden">
+>   <iframe src="/login" style="width:1440px;height:900px;border:0;
+>     transform-origin:0 0;transform:scale(6) translate(-100px,-498px)"></iframe>
+> </div>
+> ```
+> `scale(z) translate(-x,-y)` 把 CSS 坐标 `(x,y)` 挪到画面左上角，等于对任意位置做 6~8 倍特写。
+> ⚠️ 截图输出**不一定等于 `--window-size`**（本机实测 1440×900 出 1080×675，0.75 倍），
+> 算平移量要用 **CSS 像素**：截图上的像素坐标要 ÷0.75 才是 CSS 坐标。
+> 同一个 iframe 还能直接读 `contentDocument` 量几何（见第十节 `_measure.html`）。**用完即删**。
 
 **截图前先确认路由对**：本项目景区页是 `/travel`（不是 `/travel/scenics`），
 路由写错会得到一张只有背景渐变的"白屏"，看着像页面崩了其实只是没匹配到路由。
@@ -322,27 +357,64 @@ CHROME="/c/Program Files/Google/Chrome/Application/chrome.exe"
 
 ## 十、布局层与页面动效（改导航 / 切页动效前必读）
 
-### 头部导航在 App.vue，不在页面里
+### 头部导航在 App.vue，且是 `fixed` 定位（不占文档流）
 
 历史上 25 个视图各自 `<TopNav />`，导致切页时导航跟着一起淡出重绘、看着闪。
-现已把导航提到布局层：
+现已把导航提到布局层，并且**导航本身是 `position: fixed`**：
 
 ```
 src/App.vue
-  ├── <RouteProgress />          ← 顶部 2px 进度条
-  ├── <TopNav v-if="showNav" />  ← showNav 由 route.meta.bare 驱动
-  └── <router-view v-slot> + <transition :name="animName" mode="out-in">
+  ├── <RouteProgress />                                  ← 顶部 2px 进度条
+  ├── <transition name="wd-nav"><TopNav v-if="showNav" /></transition>
+  └── <div class="app-content">                          ← padding-top: var(--wd-nav-h)
+        <router-view v-slot> + <transition :name="animName" mode="out-in">
+      </div>
 ```
 
 - **新增页面不要自己引 TopNav**，否则会出现两条导航
 - `meta.bare: true` 的页面（`/login`、`/register`，整屏分屏）不渲染导航
-- `meta.transition` 指定动画名，缺省 `wd-page`；登录注册用 `wd-auth`（缩放而非位移）
-- 导航的显隐**刻意错开 140~200ms**（App.vue 里的 `navTimer`），跟着路由立刻切会与页面淡入撞在一起
+- `meta.transition` 指定动画名，缺省 `wd-page`；登录注册用 `wd-auth`
+- 导航高度是令牌 `--wd-nav-h: 68px`；导航不占流，内容区靠 `.app-content` 的
+  `padding-top` 让位。整屏面板（`AuthShell`）用**等量负 margin** 抵消回来：
+  `margin-top: calc(-1 * var(--wd-nav-h))`，于是 `padding + (-margin) + 100vh = 100vh`
+- `AuthShell` 带 `position: relative; z-index: 300` —— 压住 `z-index: 200` 的固定导航，
+  否则导航退场那 0.2s 会在登录页顶部擦过一道
+
+> ⚠️ **「切到登录页会顿一下」的根因（已修，别改回去）**：导航原先是 `sticky`、占着
+> 68px 文档流，显隐又用 `setTimeout` 延迟 200ms；而 `mode="out-in"` 换页只要 160ms。
+> 于是登录页先被顶下去 68px、40ms 后再弹回来。
+> **修法不是调定时器，而是让导航彻底不占流**；显隐改为 `showNav = computed(() => !route.meta.bare)`
+> （App.vue 里已无任何 `navTimer`）。
+> 判断标准：**切页时任何元素都不该发生位移**，只该有透明度/位移动画。
+> 同理 `wd-auth` **不要用 `scale()`**：整屏元素缩放会溢出视口 → 滚动条闪一下 + 内容横向抖。
+
+> 💡 验收动效别靠肉眼看截图，用同源 iframe 量几何：临时放一个 `_measure.html`，
+> 在 iframe 里读 `.auth-shell` 的 `getBoundingClientRect().top / .bottom`，
+> 期望 `top === 0`、`bottom === innerHeight`、`documentElement.scrollHeight === innerHeight`（无滚动条）。
 
 切页动画定义在 `styles/theme.css` 的「10.1 路由切换动效」：
 出场 0.16s、入场 0.3~0.4s；只动 `opacity`/`transform`，**不要加 `filter: blur()`**——
 祖先元素一旦有 filter/transform 会成为 `position: fixed` 后代的包含块，且大面积模糊会拖慢低端机。
 已带 `@media (prefers-reduced-motion: reduce)` 降级。
+
+- 路由表末尾有兜底 `/:pathMatch(.*)*` → `views/NotFound.vue`（404 页）。
+  ⚠️ **它必须永远是最后一条**；具名路由（如 `/community/topics`）比动态段更具体不会被吃掉，
+  但如果你在它后面新增路由，新路由将永远匹配不到，表现同样是「白屏」
+
+### 登录 / 注册外壳：`components/AuthShell.vue`
+
+左右分屏：左实景 + 深靛遮罩 + 苗纹 + 标志锁形，右玻璃表单卡。
+右侧面板压进实景 `var(--wd-r-2xl)` 并带同值左圆角（`border-radius: 36px 0 0 36px`
++ `margin-left: -36px`），圆角后面透出实景，两块自然衔接——像一张纸盖在照片上。
+移动端（≤900px）改为单列、圆角挪到上缘。
+> 内边距左右必须等宽：面板压在照片上的那 36px 也是可见面，多加左内边距会把卡片推偏 18px。
+
+### 卡通头像：`components/UserAvatar.vue` + `CartoonAvatar.vue`
+
+`UserAvatar` 可直接替换 `el-avatar`：`<UserAvatar :size="26" :src="u.avatar" :seed="u.id" />`。
+`src` 有值就显示真图，否则按 `seed`（用户 id / 昵称，必须传，保证同一用户头像稳定）
+本地生成苗族风格卡通头像（银角冠 / 花环 / 头帕 + 靛蓝圆底）。
+**不要引外网头像源**（曾用 `api.dicebear.com`，国内访问不通会渲染成白块）。
 
 ### 滚动行为
 
