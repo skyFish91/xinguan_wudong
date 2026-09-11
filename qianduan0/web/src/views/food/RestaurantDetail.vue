@@ -1,8 +1,7 @@
 <template>
   <div class="restaurant-detail">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <!-- 骨架屏 -->
       <div v-if="loading" class="hero-grid">
         <div class="wd-skeleton skel-img"></div>
@@ -146,7 +145,7 @@ import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { Star, Location } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';
 import { useUserStore } from '../../stores/user';

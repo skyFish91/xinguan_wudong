@@ -1,7 +1,6 @@
 <template>
   <div class="pay-page">
-    <TopNav />
-
+    <div class="wd-container pay-back"><PageBack /></div>
     <div class="pay-wrap">
       <!-- 骨架屏 -->
       <div v-if="loading" class="wd-skel-card pay-card">
@@ -71,7 +70,7 @@ import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { Wallet } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import request from '../../api/request';
 
 const route = useRoute();
@@ -124,10 +123,15 @@ onMounted(init);
   min-height: 100vh;
 }
 
+/* 返回条：与卡片同宽，别贴到浏览器边缘 */
+.pay-back {
+  padding-top: var(--wd-s6);
+}
+
 .pay-wrap {
   display: flex;
   justify-content: center;
-  padding: var(--wd-s9) var(--wd-gutter) var(--wd-s10);
+  padding: var(--wd-s3) var(--wd-gutter) var(--wd-s10);
 }
 
 .pay-card {

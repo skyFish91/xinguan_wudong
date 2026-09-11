@@ -1,8 +1,7 @@
 ﻿<template>
   <div class="publish-post-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <header class="page-head">
         <h1 class="page-title">发布游记</h1>
         <p class="page-sub">记录一段旅途，分享给同样在路上的人</p>
@@ -128,7 +127,7 @@
 </template>
 
 <script setup>
-import TopNav from '../../components/TopNav.vue'
+import PageBack from '../../components/PageBack.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

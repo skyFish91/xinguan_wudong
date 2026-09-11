@@ -630,6 +630,72 @@ img {
 }
 
 /* --------------------------------------------------------------------------
+   10.1 路由切换动效（配合 App.vue 的 <transition mode="out-in">）
+   --------------------------------------------------------------------------
+   设计要点：
+     · 出场快（0.16s）入场慢（0.3s）—— 出场拖沓才会让人觉得「卡」
+     · 只动 opacity / transform，不碰 filter，避免大面积模糊拖慢低端机
+     · 主站页面向「上」滑动，营造从下往上翻阅的连续感
+   -------------------------------------------------------------------------- */
+.wd-page-enter-active {
+  transition: opacity 0.3s var(--wd-ease), transform 0.36s var(--wd-ease);
+}
+.wd-page-leave-active {
+  transition: opacity 0.16s ease-out, transform 0.16s ease-out;
+}
+.wd-page-enter-from {
+  opacity: 0;
+  transform: translateY(18px);
+}
+.wd-page-leave-to {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+/* 登录 / 注册：整屏分屏，用轻微缩放代替位移，像镜头推近拉远 */
+.wd-auth-enter-active {
+  transition: opacity 0.42s var(--wd-ease), transform 0.5s var(--wd-ease);
+}
+.wd-auth-leave-active {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+.wd-auth-enter-from {
+  opacity: 0;
+  transform: scale(1.012);
+}
+.wd-auth-leave-to {
+  opacity: 0;
+  transform: scale(0.988);
+}
+
+/* 尊重系统的「减弱动态效果」设置 */
+@media (prefers-reduced-motion: reduce) {
+  .wd-page-enter-active,
+  .wd-page-leave-active,
+  .wd-auth-enter-active,
+  .wd-auth-leave-active {
+    transition-duration: 0.01ms !important;
+  }
+  .wd-page-enter-from,
+  .wd-page-leave-to,
+  .wd-auth-enter-from,
+  .wd-auth-leave-to {
+    transform: none;
+  }
+  .wd-rise {
+    animation: none;
+  }
+  .wd-skeleton {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
    11. Element Plus 组件覆写
    -------------------------------------------------------------------------- */
 

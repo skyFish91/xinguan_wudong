@@ -1,8 +1,7 @@
 <template>
   <div class="orders-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <!-- 页头 -->
       <header class="page-head">
         <h1 class="page-title">我的订单</h1>
@@ -159,7 +158,7 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import { img, imgError } from '../../utils/media';
 import request from '../../api/request';

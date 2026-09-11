@@ -1,6 +1,5 @@
 <template>
   <div>
-    <TopNav />
     <div class="wd-container wd-page">
       <header class="page-head">
         <h1 class="page-title">景区出行</h1>
@@ -97,7 +96,6 @@ import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { Clock, InfoFilled, Location } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
 import TravelTabs from '../../components/TravelTabs.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';

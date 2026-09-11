@@ -1,7 +1,7 @@
 <template>
   <div>
-    <TopNav />
     <div class="wd-container cart-page">
+      <PageBack />
       <header class="page-head">
         <h1 class="page-title">购物车</h1>
         <p class="page-sub">确认规格与数量后勾选结算，支持按商家自动拆单</p>
@@ -101,7 +101,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';
 import { img, imgError } from '../../utils/media';

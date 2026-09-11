@@ -1,8 +1,7 @@
 <template>
   <div class="profile-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <!-- 个人资料头卡 -->
       <header class="wd-card user-hero">
         <el-avatar :size="64" :src="profile.avatar">
@@ -285,7 +284,7 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { ArrowRight } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';
 import { useUserStore } from '../../stores/user';

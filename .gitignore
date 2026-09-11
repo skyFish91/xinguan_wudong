@@ -29,6 +29,7 @@ dist_bak_*
 .timestamp-*.mjs
 # 本地临时产物（截图、路由清单等调试用）
 .workbuddy/tmp/
+.workbuddy/shots*/
 
 # ============ 原始素材池（体积大且与 public/images 重复，不入库） ============
 sucai/

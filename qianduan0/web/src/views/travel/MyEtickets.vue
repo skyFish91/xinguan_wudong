@@ -1,8 +1,7 @@
 <template>
   <div class="eticket-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <header class="page-head">
         <h1 class="page-title">我的电子票</h1>
         <p class="page-sub">到景区出示票号即可核销，出行前记得核对使用日期</p>
@@ -78,7 +77,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';
 

@@ -1,6 +1,5 @@
 <template>
   <div>
-    <TopNav />
     <div class="wd-container wd-page">
       <header class="page-head">
         <h1 class="page-title">民宿住宿</h1>
@@ -109,7 +108,6 @@ import {
   Search,
   StarFilled,
 } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
 import SkeletonCard from '../../components/SkeletonCard.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';

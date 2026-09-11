@@ -1,7 +1,7 @@
 <template>
   <div>
-    <TopNav />
     <div class="wd-container wd-page">
+      <PageBack />
       <header class="page-head">
         <h1 class="page-title">精品路线</h1>
         <p class="page-sub">苗族银饰工坊、梯田徒步、云海日出——按天数挑一条适合你的</p>
@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { Clock, Location, Position, Search } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import TravelTabs from '../../components/TravelTabs.vue';
 import SkeletonCard from '../../components/SkeletonCard.vue';
 import EmptyState from '../../components/EmptyState.vue';

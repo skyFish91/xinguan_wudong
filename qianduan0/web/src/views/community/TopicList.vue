@@ -1,8 +1,7 @@
 ﻿<template>
   <div class="topic-list-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <!-- 页头 -->
       <header class="page-head">
         <h1 class="page-title">热门话题</h1>
@@ -107,7 +106,7 @@
 </template>
 
 <script setup>
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <TopNav />
     <div class="wd-container wd-page">
+      <PageBack />
       <header class="page-head">
         <h1 class="page-title">出行攻略</h1>
         <p class="page-sub">从各地出发到乌东的交通方案、用时与花费，一次看懂怎么来</p>
@@ -78,7 +78,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { ArrowRight, Clock, Van, Wallet } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import TravelTabs from '../../components/TravelTabs.vue';
 import SkeletonCard from '../../components/SkeletonCard.vue';
 import EmptyState from '../../components/EmptyState.vue';

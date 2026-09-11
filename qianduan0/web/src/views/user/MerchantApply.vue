@@ -1,8 +1,7 @@
 <template>
   <div class="apply-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <header class="page-head">
         <h1 class="page-title">商家入驻申请</h1>
         <p class="page-sub">提交后由平台审核，通过后即可在商户后台管理店铺</p>
@@ -88,7 +87,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import request from '../../api/request';
 
 const router = useRouter();

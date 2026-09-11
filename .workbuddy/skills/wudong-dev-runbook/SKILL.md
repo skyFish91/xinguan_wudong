@@ -317,3 +317,86 @@ CHROME="/c/Program Files/Google/Chrome/Application/chrome.exe"
 `public/logo.svg`（favicon + 复用）+ `components/BrandMark.vue`（`tone`: `brand`/`light`/`mono`）。
 母题为苗族三大符号：铜鼓太阳纹 + 蝴蝶妈妈 + 银饰银角。
 `tone="light"` 用于深色或图片背景（白底靛蓝标），`tone="brand"` 用于浅色页面。
+
+---
+
+## 十、布局层与页面动效（改导航 / 切页动效前必读）
+
+### 头部导航在 App.vue，不在页面里
+
+历史上 25 个视图各自 `<TopNav />`，导致切页时导航跟着一起淡出重绘、看着闪。
+现已把导航提到布局层：
+
+```
+src/App.vue
+  ├── <RouteProgress />          ← 顶部 2px 进度条
+  ├── <TopNav v-if="showNav" />  ← showNav 由 route.meta.bare 驱动
+  └── <router-view v-slot> + <transition :name="animName" mode="out-in">
+```
+
+- **新增页面不要自己引 TopNav**，否则会出现两条导航
+- `meta.bare: true` 的页面（`/login`、`/register`，整屏分屏）不渲染导航
+- `meta.transition` 指定动画名，缺省 `wd-page`；登录注册用 `wd-auth`（缩放而非位移）
+- 导航的显隐**刻意错开 140~200ms**（App.vue 里的 `navTimer`），跟着路由立刻切会与页面淡入撞在一起
+
+切页动画定义在 `styles/theme.css` 的「10.1 路由切换动效」：
+出场 0.16s、入场 0.3~0.4s；只动 `opacity`/`transform`，**不要加 `filter: blur()`**——
+祖先元素一旦有 filter/transform 会成为 `position: fixed` 后代的包含块，且大面积模糊会拖慢低端机。
+已带 `@media (prefers-reduced-motion: reduce)` 降级。
+
+### 滚动行为
+
+`router/index.ts` 的 `scrollBehavior`：前进后退还原位置；锚点留 88px 给吸顶导航；
+**只有 query 变化时返回 `false`**（筛选/翻页不该跳回顶部）；其余回顶部（不做平滑滚动，会和 out-in 的淡出叠成"甩一下"的错觉）。
+
+### 子页面返回条：`components/PageBack.vue`
+
+19 个子级页面（详情页、购物车/订单/收银台、个人中心、社区子页）内容容器开头都有一行 `<PageBack />`。
+零配置：组件自己从 `route.path` 推断上级层级（`TRAILS`）与末级文案（`CURRENT_BY_PATH`），
+`goBack()` 有历史栈就 `router.back()`，直接打开链接时退到上级页。
+
+> ⚠️ **通配规则必须排在具名规则之后**。踩过：`CURRENT_BY_PATH` 里
+> `[/^\/community\/[^/]+$/, '游记详情']` 排在 `/community/topics` 之前，
+> 于是"话题广场"页的面包屑显示成"游记详情"。兜底规则改成只认纯数字 `\/community\/\d+$`。
+
+## 十一、批量改多个 .vue 文件的正确姿势
+
+给 20+ 个文件做同样的机械改动时，**写脚本 + 先 `--dry-run` 再 `--apply`** 是对的，
+但有个必踩的坑：
+
+> **先 search 拿到 start/end，再改动字符串，然后拿旧下标去切片 → 下标错位。**
+> 实际表现：`import TopNav from '../../components/TopNav.vue';`
+> 被切成 `import TopNav fimport PageBack from '../../components/PageBack.vue';`
+> （因为先删掉了上一行的 `<TopNav />`，后面的偏移全变了）
+
+正确做法：**全程用 `re.sub(re, callback, s, count=1)`，不做任何手工下标运算**；
+或者严格「先改后面的、再改前面的」。
+改完必须 grep 校验（如 `grep -rn "TopNav" src/` 确认只剩 App.vue 一处），再跑构建。
+
+## 十二、给"需要登录"的页面截图
+
+`--headless` 没法点登录，但可以借 Vite 的 `public/` 目录同源注入 localStorage：
+
+```bash
+# 1) 拿 token
+T=$(curl -s --noproxy '*' -X POST http://localhost:7001/api/auth/login \
+     -H 'Content-Type: application/json' \
+     -d '{"phone":"13800000001","password":"user123"}' | sed -E 's/.*"accessToken":"([^"]+)".*/\1/')
+
+# 2) 临时页（放进 qianduan0/web/public/_seed.html）
+#    <script>
+#      var p = new URLSearchParams(location.search);
+#      localStorage.setItem('token', p.get('t')||'');
+#      localStorage.setItem('userInfo','null');
+#      location.replace(p.get('to')||'/');
+#    </script>
+
+# 3) 截图（同源 → localStorage 生效）
+"$CHROME" --headless=new --no-proxy-server --virtual-time-budget=11000 \
+  --screenshot="D:/xinguan_wudong/.workbuddy/shots2/pay.png" \
+  "http://localhost:5173/_seed.html?t=${T}&to=/pay/203"
+```
+
+> 🚫 **`public/_seed.html` 用完必须删**，否则会被 `npm run build` 打进 `dist` 一起发布。
+> token 也别留在磁盘上（临时文件写 `.workbuddy/tmp/`，用完 `rm`）。
+> 截图受保护页面若需要造数据（如待支付订单），**跑完记得把订单取消掉**，别把测试订单留在演示库里。

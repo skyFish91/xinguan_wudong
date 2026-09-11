@@ -1,7 +1,5 @@
 <template>
   <div>
-    <TopNav />
-
     <!-- ============ Hero 轮播 ============ -->
     <section class="hero">
       <div class="hero-inner wd-container">
@@ -299,7 +297,6 @@ import {
   Promotion,
   Star,
 } from '@element-plus/icons-vue';
-import TopNav from '../components/TopNav.vue';
 import BrandMark from '../components/BrandMark.vue';
 import SkeletonCard from '../components/SkeletonCard.vue';
 import EmptyState from '../components/EmptyState.vue';

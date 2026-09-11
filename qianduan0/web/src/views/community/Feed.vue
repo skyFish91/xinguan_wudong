@@ -1,8 +1,7 @@
 ﻿<template>
   <div class="feed-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <!-- 页头 -->
       <header class="page-head">
         <h1 class="page-title">游记广场</h1>
@@ -122,7 +121,7 @@
 </template>
 
 <script setup>
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Edit, View, Star, VideoPlay, Location } from '@element-plus/icons-vue'

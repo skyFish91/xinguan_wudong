@@ -1,6 +1,5 @@
 ﻿<template>
   <div class="community-page">
-    <TopNav />
     <div class="container">
       <!-- 页头 -->
       <header class="page-head">
@@ -127,7 +126,6 @@
 </template>
 
 <script setup>
-import TopNav from '../../components/TopNav.vue';
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Edit, View, Star, ChatDotRound, VideoPlay, Location } from '@element-plus/icons-vue'

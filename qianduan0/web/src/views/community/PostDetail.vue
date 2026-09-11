@@ -1,8 +1,7 @@
 ﻿<template>
   <div class="post-detail-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <!-- 骨架屏 -->
       <div v-if="loading" class="detail-layout">
         <div class="main-col">
@@ -237,7 +236,7 @@
 </template>
 
 <script setup>
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

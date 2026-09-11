@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="user-profile-page">
-    <TopNav />
     <div class="container">
+      <PageBack />
       <!-- 用户信息卡片 -->
       <div class="profile-header card">
         <div class="profile-cover" :style="{ backgroundImage: `url(${user.coverImage || defaultCover})` }">
@@ -195,7 +195,7 @@
 
 <script setup>
 
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import { ref, computed, onMounted } from 'vue'
 import { img, imgError } from '../../utils/media'
 import { useRoute } from 'vue-router'

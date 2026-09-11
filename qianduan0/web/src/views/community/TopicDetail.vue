@@ -1,8 +1,7 @@
 ﻿<template>
   <div class="topic-detail-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <!-- 话题头图 + 玻璃浮层 -->
       <header class="topic-hero wd-card">
         <div class="hero-media">
@@ -117,7 +116,7 @@
 </template>
 
 <script setup>
-import TopNav from '../../components/TopNav.vue'
+import PageBack from '../../components/PageBack.vue';
 import SkeletonCard from '../../components/SkeletonCard.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import { ref, onMounted } from 'vue'

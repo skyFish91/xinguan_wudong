@@ -1,6 +1,5 @@
 <template>
   <div>
-    <TopNav />
     <div class="wd-container wd-page">
       <!-- 页头 -->
       <header class="page-head">
@@ -123,7 +122,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { ArrowRight, Search } from '@element-plus/icons-vue';
-import TopNav from '../../components/TopNav.vue';
 import SkeletonCard from '../../components/SkeletonCard.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';

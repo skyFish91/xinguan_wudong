@@ -1,8 +1,7 @@
 ﻿<template>
   <div class="search-page">
-    <TopNav />
-
     <div class="wd-container wd-page">
+      <PageBack />
       <!-- 搜索框 -->
       <div class="search-hero">
         <h1 class="hero-title">搜索乌东</h1>
@@ -214,7 +213,7 @@
 </template>
 
 <script setup>
-import TopNav from '../../components/TopNav.vue';
+import PageBack from '../../components/PageBack.vue';
 import SkeletonCard from '../../components/SkeletonCard.vue';
 import EmptyState from '../../components/EmptyState.vue';
 import { ref, computed, onMounted } from 'vue'
