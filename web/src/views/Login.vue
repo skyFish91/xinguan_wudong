@@ -76,16 +76,22 @@ async function onLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2c3e50, #34495e);
+  background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)),
+              url('https://picsum.photos/seed/wudong-miao/1920/1080') center/cover;
+  /* 实际应使用乌东苗寨村落全景图片 */
 }
 .login-card {
-  width: 380px;
-  padding: 20px;
+  width: 420px;
+  padding: 30px;
+  backdrop-filter: blur(5px);
+  background: rgba(255, 255, 255, 0.95);
 }
 .title {
   text-align: center;
-  margin-bottom: 20px;
-  color: #333;
+  margin-bottom: 24px;
+  color: #c0392b;
+  font-size: 24px;
+  font-weight: bold;
 }
 .full {
   width: 100%;
@@ -95,9 +101,19 @@ async function onLogin() {
   justify-content: space-between;
   font-size: 13px;
 }
+.links a {
+  color: #c0392b;
+  text-decoration: none;
+}
+.links a:hover {
+  text-decoration: underline;
+}
 .demo-tips {
   font-size: 12px;
-  color: #999;
+  color: #666;
   line-height: 1.8;
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
 }
 </style>

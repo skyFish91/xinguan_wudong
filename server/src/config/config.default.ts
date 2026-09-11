@@ -14,7 +14,7 @@ export default {
         host: process.env.DB_HOST || '127.0.0.1',
         port: Number(process.env.DB_PORT || 3306),
         username: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || 'root',
+        password: process.env.DB_PASSWORD || 'ws764766',
         database: process.env.DB_NAME || 'wudong',
         synchronize: false,
         logging: false,
@@ -24,6 +24,9 @@ export default {
         extra: {
           supportBigNumbers: true,
           bigNumberStrings: false,
+          // 关键：`date` 列按原始字符串返回，避免 timezone + Date 对象往返导致日期偏移一天；
+          // `datetime`/`timestamp` 仍按 Date 对象返回，行为不变
+          dateStrings: ['DATE'],
         },
       },
     },

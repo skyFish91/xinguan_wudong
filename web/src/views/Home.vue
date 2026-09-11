@@ -1,71 +1,70 @@
 <template>
-  <div>
+  <div class="home-page">
     <TopNav />
-    <div class="page">
-      <!-- 轮播 -->
-      <el-carousel v-if="home.banners?.length" height="360px" class="banner">
+
+    <!-- 主轮播区域 -->
+    <section class="hero-carousel">
+      <el-carousel v-if="home.banners?.length" height="calc(100vh - 64px)" :interval="5000" arrow="hover" indicator-position="none">
         <el-carousel-item v-for="b in home.banners" :key="b.id">
-          <img :src="b.imageUrl" class="banner-img" />
+          <div class="carousel-slide">
+            <img :src="b.imageUrl" class="slide-image" />
+            <div class="slide-overlay"></div>
+            <div class="slide-content">
+              <div class="slide-text">
+                <h1 class="slide-title">乌东苗寨</h1>
+                <p class="slide-description">
+                  千年古寨 · 吊脚楼群 · 梯田风光<br>
+                  感受苗族文化的原生魅力
+                </p>
+              </div>
+            </div>
+          </div>
         </el-carousel-item>
       </el-carousel>
+    </section>
 
-      <!-- 公告 -->
-      <el-alert
-        v-for="a in home.announcements"
-        :key="a.id"
-        :title="a.title"
-        type="info"
-        :closable="false"
-        class="announce"
-      />
+    <!-- 四大功能入口 -->
+    <section class="main-categories">
+      <div class="container">
+        <div class="categories-grid">
+          <router-link to="/clothing" class="category-card">
+            <div class="category-icon">衣</div>
+            <h3 class="category-title">苗族服饰</h3>
+            <p class="category-desc">银饰 · 蜡染 · 刺绣</p>
+          </router-link>
 
-      <!-- 活动横幅 -->
-      <div v-if="home.activities?.length" class="activities">
-        <img v-for="a in home.activities" :key="a.id" :src="a.imageUrl" class="activity-img" />
-      </div>
+          <router-link to="/food" class="category-card">
+            <div class="category-icon">食</div>
+            <h3 class="category-title">特色美食</h3>
+            <p class="category-desc">酸汤鱼 · 长桌宴 · 糯米饭</p>
+          </router-link>
 
-      <!-- 热门非遗商品 -->
-      <el-divider content-position="left">热门非遗好物</el-divider>
-      <div class="grid">
-        <el-card v-for="p in home.hotProducts" :key="p.id" class="item-card" shadow="hover" @click="$router.push(`/clothing/${p.id}`)">
-          <img :src="p.mainImage" class="item-img" />
-          <div class="item-title">{{ p.title }}</div>
-          <div class="item-price">¥{{ p.price }}</div>
-        </el-card>
-      </div>
+          <router-link to="/hotel" class="category-card">
+            <div class="category-icon">住</div>
+            <h3 class="category-title">民宿客栈</h3>
+            <p class="category-desc">吊脚楼 · 观景房 · 特色民宿</p>
+          </router-link>
 
-      <!-- 热门民宿 -->
-      <el-divider content-position="left">热门民宿</el-divider>
-      <div class="grid">
-        <el-card v-for="h in home.hotHomestays" :key="h.id" class="item-card" shadow="hover" @click="$router.push(`/hotel/${h.id}`)">
-          <img :src="h.mainImage" class="item-img" />
-          <div class="item-title">{{ h.name }}</div>
-          <div class="item-price">¥{{ h.minPrice }} 起/晚</div>
-        </el-card>
-      </div>
-
-      <!-- 热门路线 -->
-      <el-divider content-position="left">热门路线</el-divider>
-      <div class="grid">
-        <el-card v-for="r in home.hotRoutes" :key="r.id" class="item-card" shadow="hover" @click="$router.push(`/travel/routes/${r.id}`)">
-          <img :src="r.coverImage" class="item-img" />
-          <div class="item-title">{{ r.title }}</div>
-          <div class="item-price">¥{{ r.price }} /人</div>
-        </el-card>
-      </div>
-
-      <!-- 热门游记 -->
-      <el-divider content-position="left">社区热帖</el-divider>
-      <div class="posts">
-        <div v-for="p in home.hotPosts" :key="p.id" class="post-row" @click="$router.push(`/community/${p.id}`)">
-          <img v-if="p.images" :src="String(p.images).split(',')[0]" class="post-img" />
-          <div>
-            <div class="post-title">{{ p.title }}</div>
-            <div class="post-meta">赞 {{ p.likeCount }} · 评论 {{ p.commentCount }} · 浏览 {{ p.viewCount }}</div>
-          </div>
+          <router-link to="/travel" class="category-card">
+            <div class="category-icon">行</div>
+            <h3 class="category-title">景点门票</h3>
+            <p class="category-desc">路线 · 导览 · 电子票</p>
+          </router-link>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- 简介区域 -->
+    <section class="intro-section">
+      <div class="container">
+        <h2 class="section-title">云上乌东</h2>
+        <p class="section-desc">
+          乌东苗寨位于贵州省黔东南，是一座保存完整的苗族传统村落。<br>
+          这里有原生态的民族文化、壮观的梯田风光、精美的苗族银饰与蜡染技艺。<br>
+          在线预订门票、住宿、美食，开启你的苗寨文化之旅。
+        </p>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -74,7 +73,7 @@ import { onMounted, reactive } from 'vue';
 import TopNav from '../components/TopNav.vue';
 import request from '../api/request';
 
-const home = reactive<any>({ banners: [], announcements: [], activities: [], hotProducts: [], hotHomestays: [], hotRoutes: [], hotPosts: [] });
+const home = reactive<any>({ banners: [] });
 
 onMounted(async () => {
   try {
@@ -120,79 +119,259 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page {
+.home-page {
+  background: #ffffff;
+  min-height: 100vh;
+}
+
+/* 主轮播 */
+.hero-carousel {
+  width: 100%;
+}
+
+.carousel-slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slide-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%);
+}
+
+.slide-content {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.slide-text {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 48px;
 }
-.banner-img {
-  width: 100%;
-  height: 360px;
-  object-fit: cover;
+
+.slide-title {
+  font-family: "Noto Serif SC", Georgia, serif;
+  font-size: 56px;
+  font-weight: 300;
+  color: #ffffff;
+  margin-bottom: 20px;
+  letter-spacing: 8px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
-.announce {
-  margin-top: 12px;
+
+.slide-description {
+  font-size: 18px;
+  color: #ffffff;
+  line-height: 1.8;
+  letter-spacing: 2px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  opacity: 0.95;
 }
-.activities {
-  margin-top: 16px;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+
+/* 四大功能入口 */
+.main-categories {
+  padding: 80px 0;
+  background: #F7F4EE;
 }
-.activity-img {
-  height: 120px;
-  border-radius: 6px;
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
 }
-.grid {
+
+.categories-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 32px;
 }
-.item-card {
+
+.category-card {
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  padding: 48px 32px;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
   cursor: pointer;
 }
-.item-img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 4px;
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(27, 42, 74, 0.12);
+  border-color: #C0C7D0;
 }
-.item-title {
-  margin-top: 8px;
-  font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.item-price {
-  margin-top: 4px;
-  color: #c0392b;
-  font-weight: bold;
-}
-.posts {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.post-row {
-  display: flex;
-  gap: 12px;
-  cursor: pointer;
-  align-items: center;
-}
-.post-img {
-  width: 80px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 4px;
-}
-.post-title {
-  font-size: 15px;
+
+.category-icon {
+  font-family: "Noto Serif SC", Georgia, serif;
+  font-size: 48px;
   font-weight: 600;
+  color: #1B2A4A;
+  margin-bottom: 24px;
+  letter-spacing: 2px;
 }
-.post-meta {
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
+
+.category-title {
+  font-family: "Noto Serif SC", Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #171512;
+  margin: 0 0 12px;
+  letter-spacing: 2px;
+}
+
+.category-desc {
+  font-size: 14px;
+  color: #6B4F3A;
+  margin: 0;
+  letter-spacing: 1px;
+  line-height: 1.6;
+}
+
+/* 简介区域 */
+.intro-section {
+  padding: 80px 0;
+  background: #ffffff;
+}
+
+.section-title {
+  font-family: "Noto Serif SC", Georgia, serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: #1B2A4A;
+  text-align: center;
+  margin: 0 0 32px;
+  letter-spacing: 8px;
+}
+
+.section-desc {
+  font-size: 16px;
+  color: #6B4F3A;
+  text-align: center;
+  line-height: 2;
+  letter-spacing: 1px;
+  margin: 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .slide-title {
+    font-size: 36px;
+    letter-spacing: 4px;
+  }
+
+  .slide-description {
+    font-size: 14px;
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .category-card {
+    padding: 32px 24px;
+  }
+
+  .main-categories,
+  .intro-section {
+    padding: 48px 0;
+  }
+
+  .container {
+    padding: 0 24px;
+  }
+
+  .section-title {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+
+  .section-desc {
+    font-size: 14px;
+  }
+}
+</style>
+
+.slide-description {
+  font-size: 18px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.95);
+  font-weight: 300;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* Element Plus 轮播指示器自定义 */
+:deep(.el-carousel__indicator) {
+  padding: 0;
+}
+
+:deep(.el-carousel__button) {
+  width: 40px;
+  height: 2px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 0;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-carousel__indicator.is-active .el-carousel__button) {
+  background: rgba(255,255,255,0.9);
+}
+
+/* 轮播箭头 */
+:deep(.el-carousel__arrow) {
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+:deep(.el-carousel__arrow:hover) {
+  background: rgba(255,255,255,0.3);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .slide-title {
+    font-size: 36px;
+    letter-spacing: 4px;
+  }
+
+  .slide-description {
+    font-size: 14px;
+  }
+
+  .slide-text {
+    padding: 0 24px;
+  }
+
+  .slide-content {
+    bottom: 40px;
+  }
 }
 </style>

@@ -13,15 +13,17 @@
             <el-button type="primary" @click="loadProducts(1)">查询</el-button>
             <el-button type="success" @click="openProduct()">新增商品</el-button>
           </div>
-          <el-table :data="products" border>
+          <el-table :data="products" stripe>
             <el-table-column prop="id" label="ID" width="70" />
             <el-table-column prop="title" label="商品名" />
-            <el-table-column prop="price" label="售价" width="90" />
+            <el-table-column label="售价" width="100">
+              <template #default="{ row }"><span class="money">¥{{ row.price }}</span></template>
+            </el-table-column>
             <el-table-column prop="stock" label="库存" width="80" />
             <el-table-column prop="sales" label="销量" width="80" />
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="dark">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="200">
@@ -44,7 +46,7 @@
 
         <!-- 库存预警 -->
         <el-tab-pane label="库存预警" name="warnings">
-          <el-table :data="warnings" border>
+          <el-table :data="warnings" stripe>
             <el-table-column prop="productTitle" label="商品" />
             <el-table-column prop="specName" label="规格" width="160" />
             <el-table-column prop="stock" label="当前库存" width="100" />
@@ -65,13 +67,15 @@
             </el-select>
             <el-button type="primary" @click="loadOrders(1)">查询</el-button>
           </div>
-          <el-table :data="orders" border>
+          <el-table :data="orders" stripe>
             <el-table-column prop="orderNo" label="订单号" width="170" />
             <el-table-column prop="remark" label="内容" />
-            <el-table-column prop="totalAmount" label="金额" width="100" />
+            <el-table-column label="金额" width="100">
+              <template #default="{ row }"><span class="money">¥{{ row.totalAmount }}</span></template>
+            </el-table-column>
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag size="small">{{ statusTexts[row.status] || `状态${row.status}` }}</el-tag>
+                <el-tag size="small" effect="dark">{{ statusTexts[row.status] || `状态${row.status}` }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="下单时间" width="160">
@@ -95,7 +99,7 @@
 
         <!-- 评价 -->
         <el-tab-pane label="评价管理" name="reviews">
-          <el-table :data="reviews" border>
+          <el-table :data="reviews" stripe>
             <el-table-column prop="id" label="ID" width="70" />
             <el-table-column label="评分" width="80">
               <template #default="{ row }">{{ row.rating }} 星</template>
@@ -104,7 +108,7 @@
             <el-table-column prop="merchantReply" label="商家回复" width="180" show-overflow-tooltip />
             <el-table-column label="状态" width="80">
               <template #default="{ row }">
-                <el-tag :type="row.isHidden ? 'danger' : 'success'" size="small">{{ row.isHidden ? '已隐藏' : '正常' }}</el-tag>
+                <el-tag :type="row.isHidden ? 'danger' : 'success'" size="small" effect="dark">{{ row.isHidden ? '已隐藏' : '正常' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="170">
@@ -172,7 +176,9 @@
         <el-table :data="orderDetail.items" border size="small" class="items">
           <el-table-column prop="title" label="商品" />
           <el-table-column prop="specName" label="规格" width="130" />
-          <el-table-column prop="price" label="单价" width="90" />
+          <el-table-column label="单价" width="90">
+            <template #default="{ row }"><span class="money">¥{{ row.price }}</span></template>
+          </el-table-column>
           <el-table-column prop="quantity" label="数量" width="70" />
         </el-table>
         <p v-if="orderDetail.refund" class="refund">
@@ -413,7 +419,10 @@ onMounted(() => {
 .toolbar {
   display: flex;
   gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border-light);
 }
 .search {
   width: 200px;
@@ -422,7 +431,7 @@ onMounted(() => {
   width: 130px;
 }
 .pager {
-  margin-top: 14px;
+  margin-top: 18px;
   justify-content: flex-end;
 }
 .sku-box {

@@ -15,6 +15,7 @@ import { OrderService } from '../order/order.module';
 import { Auth, CurrentUserParam, CurrentUser } from '../../common/decorators';
 import { BizError } from '../../common/BizError';
 import { OrderType } from '../../common/constants';
+import { normalizeDateToYMD } from '../../common/date';
 import { IsNotEmpty } from 'class-validator';
 import dayjs from 'dayjs';
 import { RedisService } from '@midwayjs/redis';
@@ -256,7 +257,8 @@ export class TravelService {
     if (ticket.status === 2) {
       throw BizError.biz('该电子票已退款');
     }
-    if (dayjs(ticket.useDate).format('YYYY-MM-DD') !== dayjs().format('YYYY-MM-DD')) {
+    // 仅比较「日期」部分，避免时区/时间分量导致的 CI 偶发失败
+    if (normalizeDateToYMD(ticket.useDate) !== normalizeDateToYMD(new Date())) {
       throw BizError.biz('电子票仅限使用日期当日核销');
     }
     ticket.status = 1;

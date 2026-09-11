@@ -2,49 +2,108 @@
   <div>
     <TopNav />
     <div class="page">
-      <h2>商家入驻申请</h2>
+      <el-card class="apply-card">
+        <h2>申请成为乌东文旅商家</h2>
+        <p class="subtitle">加入乌东文旅平台，开启您的线上经营之旅</p>
 
-      <!-- 已有申请 -->
-      <div v-if="applies.length" class="apply-status">
-        <el-divider content-position="left">我的申请记录</el-divider>
-        <div v-for="a in applies" :key="a.id" class="apply-row">
-          <div>{{ a.shopName }}（{{ moduleText(a.moduleType) }}）</div>
-          <el-tag :type="a.status === 1 ? 'success' : a.status === 2 ? 'danger' : 'warning'" size="small">
-            {{ a.status === 0 ? '审核中' : a.status === 1 ? '已通过' : '已驳回' }}
-          </el-tag>
-          <div v-if="a.rejectReason" class="reject">驳回原因：{{ a.rejectReason }}</div>
+        <el-alert
+          v-if="application?.status === 0"
+          title="您的商家申请正在审核中"
+          type="warning"
+          :closable="false"
+          show-icon
+          class="alert"
+        />
+        <el-alert
+          v-if="application?.status === 2"
+          :title="`申请被驳回：${application.rejectReason || '未通过审核'}`"
+          type="error"
+          :closable="false"
+          show-icon
+          class="alert"
+        />
+
+        <el-form
+          v-if="!application || application.status === 2"
+          :model="form"
+          label-width="120px"
+          class="form"
+        >
+          <el-divider content-position="left">基本信息</el-divider>
+          <el-form-item label="商家类型">
+            <el-radio-group v-model="form.bizType">
+              <el-radio value="individual">个体工商户</el-radio>
+              <el-radio value="company">企业</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="店铺名称">
+            <el-input v-model="form.shopName" placeholder="请输入店铺名称" />
+          </el-form-item>
+          <el-form-item label="经营类目">
+            <el-checkbox-group v-model="form.categories">
+              <el-checkbox value="clothing">非遗商品</el-checkbox>
+              <el-checkbox value="food">餐饮美食</el-checkbox>
+              <el-checkbox value="hotel">民宿住宿</el-checkbox>
+              <el-checkbox value="travel">景区出行</el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="店铺简介">
+            <el-input v-model="form.description" type="textarea" :rows="3" placeholder="介绍您的店铺特色" />
+          </el-form-item>
+
+          <el-divider content-position="left">联系信息</el-divider>
+          <el-form-item label="联系人">
+            <el-input v-model="form.contactName" />
+          </el-form-item>
+          <el-form-item label="联系电话">
+            <el-input v-model="form.contactPhone" maxlength="11" />
+          </el-form-item>
+          <el-form-item label="店铺地址">
+            <el-input v-model="form.address" placeholder="省市区详细地址" />
+          </el-form-item>
+
+          <el-divider content-position="left">资质证明</el-divider>
+          <el-form-item label="营业执照">
+            <el-upload
+              action="/api/upload"
+              :headers="{ Authorization: `Bearer ${token}` }"
+              :on-success="(res: any) => form.licenseUrl = res.url"
+              :show-file-list="false"
+              accept="image/*"
+            >
+              <el-button size="small" type="primary">上传营业执照</el-button>
+            </el-upload>
+            <div v-if="form.licenseUrl" class="upload-preview">
+              <img :src="form.licenseUrl" class="preview-img" />
+            </div>
+          </el-form-item>
+          <el-form-item label="身份证照片">
+            <el-upload
+              action="/api/upload"
+              :headers="{ Authorization: `Bearer ${token}` }"
+              :on-success="(res: any) => form.idCardUrl = res.url"
+              :show-file-list="false"
+              accept="image/*"
+            >
+              <el-button size="small" type="primary">上传身份证</el-button>
+            </el-upload>
+            <div v-if="form.idCardUrl" class="upload-preview">
+              <img :src="form.idCardUrl" class="preview-img" />
+            </div>
+          </el-form-item>
+
+          <el-divider />
+          <el-form-item>
+            <el-button type="danger" size="large" :loading="submitting" @click="submit">提交申请</el-button>
+            <el-button size="large" @click="$router.back()">返回</el-button>
+          </el-form-item>
+        </el-form>
+
+        <div v-if="application?.status === 0" class="pending-tip">
+          <p>您的申请已提交，预计 1-3 个工作日内完成审核</p>
+          <el-button @click="$router.push('/user')">返回个人中心</el-button>
         </div>
-      </div>
-
-      <el-form :model="form" label-width="110px" class="form">
-        <el-form-item label="店铺名称">
-          <el-input v-model="form.shopName" class="input" placeholder="如：乌东苗绣坊" />
-        </el-form-item>
-        <el-form-item label="经营模块">
-          <el-select v-model="form.moduleType" class="input">
-            <el-option label="衣 · 非遗好物" value="clothing" />
-            <el-option label="食 · 餐饮美食" value="food" />
-            <el-option label="住 · 民宿住宿" value="hotel" />
-            <el-option label="行 · 线路订票" value="travel" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="联系人">
-          <el-input v-model="form.contact" class="input" />
-        </el-form-item>
-        <el-form-item label="联系电话">
-          <el-input v-model="form.contactPhone" class="input" />
-        </el-form-item>
-        <el-form-item label="营业执照号">
-          <el-input v-model="form.licenseNo" class="input" />
-        </el-form-item>
-        <el-form-item label="补充材料">
-          <el-input v-model="form.materials" type="textarea" :rows="3" placeholder="其他资质说明（选填）" class="input" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="submitting" @click="submit">提交申请</el-button>
-          <el-button @click="$router.back()">返回</el-button>
-        </el-form-item>
-      </el-form>
+      </el-card>
     </div>
   </div>
 </template>
@@ -57,40 +116,52 @@ import TopNav from '../../components/TopNav.vue';
 import request from '../../api/request';
 
 const router = useRouter();
-const applies = ref<any[]>([]);
+const token = localStorage.getItem('token');
+const application = ref<any>(null);
 const submitting = ref(false);
 const form = reactive({
+  bizType: 'individual',
   shopName: '',
-  moduleType: 'clothing',
-  contact: '',
+  categories: [] as string[],
+  description: '',
+  contactName: '',
   contactPhone: '',
-  licenseNo: '',
-  materials: '',
+  address: '',
+  licenseUrl: '',
+  idCardUrl: ''
 });
 
-function moduleText(m: string) {
-  const map: Record<string, string> = { clothing: '衣·非遗好物', food: '食·餐饮美食', hotel: '住·民宿住宿', travel: '行·线路订票' };
-  return map[m] || m;
-}
-
-async function loadApplies() {
+async function loadApplication() {
   try {
-    applies.value = await request.get('/merchant/my-apply');
+    application.value = await request.get('/user/merchant-apply');
   } catch {
-    // 已提示
+    // 未申请过，返回 404
   }
 }
 
 async function submit() {
-  if (!form.shopName.trim() || !form.contact.trim() || !form.contactPhone.trim() || !form.licenseNo.trim()) {
-    ElMessage.warning('请填写完整申请信息');
+  if (!form.shopName) {
+    ElMessage.warning('请输入店铺名称');
     return;
   }
+  if (!form.categories.length) {
+    ElMessage.warning('请选择经营类目');
+    return;
+  }
+  if (!form.contactName || !form.contactPhone) {
+    ElMessage.warning('请填写联系信息');
+    return;
+  }
+  if (!form.licenseUrl) {
+    ElMessage.warning('请上传营业执照');
+    return;
+  }
+
   submitting.value = true;
   try {
-    await request.post('/merchant/apply', { ...form });
-    ElMessage.success('申请已提交，请等待平台审核');
-    router.push('/user');
+    await request.post('/user/merchant-apply', form);
+    ElMessage.success('申请已提交，等待审核');
+    loadApplication();
   } catch {
     // 已提示
   } finally {
@@ -98,30 +169,50 @@ async function submit() {
   }
 }
 
-onMounted(loadApplies);
+onMounted(loadApplication);
 </script>
 
 <style scoped>
 .page {
-  max-width: 640px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+}
+.apply-card {
+  padding: 30px;
+}
+h2 {
+  text-align: center;
+  color: #c0392b;
+  margin-bottom: 8px;
+}
+.subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 24px;
+}
+.alert {
+  margin-bottom: 20px;
 }
 .form {
   margin-top: 20px;
 }
-.input {
-  max-width: 380px;
+.upload-preview {
+  margin-top: 10px;
 }
-.apply-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+.preview-img {
+  width: 200px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #eee;
 }
-.reject {
-  color: #c0392b;
-  font-size: 12px;
+.pending-tip {
+  text-align: center;
+  padding: 40px 20px;
+}
+.pending-tip p {
+  color: #666;
+  margin-bottom: 20px;
 }
 </style>

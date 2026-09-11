@@ -1,6 +1,7 @@
 import { BizError } from '../src/common/BizError';
 import { ErrorCode, OrderStatus, OrderType, UserRole, MerchantType } from '../src/common/constants';
 import { maskPhone, maskIdCard } from '../src/common/mask';
+import { normalizeDateToYMD } from '../src/common/date';
 import { ok, PageDTO } from '../src/common/response';
 import { dataSource } from './helpers/db';
 
@@ -40,6 +41,30 @@ describe('common 工具', () => {
       expect(maskPhone('')).toBe('');
       expect(maskPhone('123')).toBe('123');
       expect(maskIdCard('')).toBe('');
+    });
+  });
+
+  describe('normalizeDateToYMD 日期归一化', () => {
+    it('纯日期字符串原样返回', () => {
+      expect(normalizeDateToYMD('2026-09-12')).toBe('2026-09-12');
+    });
+
+    it('带时间/时区后缀的字符串取前 10 位', () => {
+      expect(normalizeDateToYMD('2026-09-12T00:00:00.000Z')).toBe('2026-09-12');
+      expect(normalizeDateToYMD('2026-09-12 08:30:00')).toBe('2026-09-12');
+    });
+
+    it('Date 对象按本地时区取年月日', () => {
+      // 本地时间构造的 Date 应无偏移地还原为 YYYY-MM-DD
+      const d = new Date(2026, 8, 12, 0, 0, 0, 0); // 2026-09-12 本地 00:00
+      expect(normalizeDateToYMD(d)).toBe('2026-09-12');
+    });
+
+    it('空值/非法值返回 null 或原样', () => {
+      expect(normalizeDateToYMD(null)).toBeNull();
+      expect(normalizeDateToYMD(undefined)).toBeNull();
+      expect(normalizeDateToYMD(new Date(NaN))).toBeNull();
+      expect(normalizeDateToYMD('')).toBeNull();
     });
   });
 

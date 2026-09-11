@@ -2,370 +2,335 @@
   <div>
     <TopNav />
     <div class="page">
-      <h2>个人中心</h2>
-
-      <!-- 用户信息卡片 -->
-      <el-card class="user-card">
-        <div class="user-header">
-          <el-avatar :size="80" :src="userStore.userInfo?.avatar || defaultAvatar" />
-          <div class="user-info">
-            <h3>{{ userStore.userInfo?.nickname || '游客' }}</h3>
-            <p>手机号：{{ userStore.userInfo?.phone || '未绑定' }}</p>
+      <el-card class="profile-card">
+        <div class="profile-header">
+          <el-avatar :size="80" :src="userInfo.avatar" class="avatar">
+            {{ userInfo.nickname?.[0] || '用' }}
+          </el-avatar>
+          <div class="header-info">
+            <h2>{{ userInfo.nickname || '游客' }}</h2>
+            <div class="meta">手机号：{{ userInfo.phone }}</div>
+            <div class="meta">注册时间：{{ formatTime(userInfo.createdAt) }}</div>
           </div>
-          <el-button type="primary" @click="editProfile">编辑资料</el-button>
+          <el-button type="primary" @click="showEditDialog = true">编辑资料</el-button>
         </div>
-      </el-card>
 
-      <!-- 功能导航 -->
-      <div class="nav-grid">
-        <el-card class="nav-item" shadow="hover" @click="$router.push('/orders')">
-          <el-icon :size="32" color="#667eea"><ShoppingBag /></el-icon>
-          <div class="nav-title">我的订单</div>
-        </el-card>
-        <el-card class="nav-item" shadow="hover" @click="$router.push('/travel/my-etickets')">
-          <el-icon :size="32" color="#764ba2"><Ticket /></el-icon>
-          <div class="nav-title">电子票券</div>
-        </el-card>
-        <el-card class="nav-item" shadow="hover" @click="$router.push('/community?tab=my')">
-          <el-icon :size="32" color="#f39c12"><Document /></el-icon>
-          <div class="nav-title">我的游记</div>
-        </el-card>
-        <el-card class="nav-item" shadow="hover" @click="$router.push('/user/favorites')">
-          <el-icon :size="32" color="#e74c3c"><Star /></el-icon>
-          <div class="nav-title">我的收藏</div>
-        </el-card>
-      </div>
+        <el-divider />
 
-      <!-- 商家申请 -->
-      <el-card class="merchant-card">
-        <div class="merchant-header">
-          <div>
-            <h3>成为商家</h3>
-            <p>入驻平台，开启您的线上生意</p>
+        <el-descriptions title="个人信息" :column="2" border>
+          <el-descriptions-item label="真实姓名">{{ userInfo.realName || '未设置' }}</el-descriptions-item>
+          <el-descriptions-item label="身份证号">{{ maskIdCard(userInfo.idCard) }}</el-descriptions-item>
+          <el-descriptions-item label="账户余额">
+            <span class="balance">¥0.00</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="积分">{{ userInfo.points || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="角色" :span="2">
+            <el-tag v-if="userInfo.role === 'admin'" type="danger">管理员</el-tag>
+            <el-tag v-else-if="userInfo.role === 'merchant'" type="warning">商家</el-tag>
+            <el-tag v-else type="info">普通用户</el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <el-divider />
+
+        <div class="actions-section">
+          <h3>快捷操作</h3>
+          <div class="action-grid">
+            <el-card shadow="hover" class="action-card" @click="$router.push('/orders')">
+              <div class="action-icon">📦</div>
+              <div class="action-title">我的订单</div>
+            </el-card>
+            <el-card shadow="hover" class="action-card" @click="$router.push('/travel/my-etickets')">
+              <div class="action-icon">🎫</div>
+              <div class="action-title">我的电子票</div>
+            </el-card>
+            <el-card shadow="hover" class="action-card" @click="$router.push('/cart')">
+              <div class="action-icon">🛒</div>
+              <div class="action-title">购物车</div>
+            </el-card>
+            <el-card shadow="hover" class="action-card" @click="$router.push('/community')">
+              <div class="action-icon">📝</div>
+              <div class="action-title">我的动态</div>
+            </el-card>
+            <el-card v-if="userInfo.role !== 'merchant'" shadow="hover" class="action-card" @click="$router.push('/user/apply-merchant')">
+              <div class="action-icon">🏪</div>
+              <div class="action-title">申请商家</div>
+            </el-card>
           </div>
-          <el-button type="primary" @click="$router.push('/user/apply-merchant')">
-            申请入驻
-          </el-button>
         </div>
-      </el-card>
 
-      <!-- 地址管理 -->
-      <el-card class="address-card">
-        <div class="card-header">
-          <h3>收货地址</h3>
-          <el-button type="primary" link @click="addAddress">添加地址</el-button>
-        </div>
-        <div v-if="addresses.length" class="address-list">
+        <el-divider />
+
+        <div class="address-section">
+          <div class="section-header">
+            <h3>收货地址</h3>
+            <el-button size="small" type="primary" @click="showAddressDialog = true">新增地址</el-button>
+          </div>
+          <div v-if="!addresses.length" class="empty-tip">暂无收货地址</div>
           <div v-for="addr in addresses" :key="addr.id" class="address-item">
-            <div class="address-info">
-              <div class="address-name">
-                {{ addr.name }} {{ addr.phone }}
-                <el-tag v-if="addr.isDefault" type="danger" size="small">默认</el-tag>
-              </div>
-              <div class="address-detail">
-                {{ addr.province }} {{ addr.city }} {{ addr.district }} {{ addr.detail }}
-              </div>
+            <div class="address-main">
+              <el-tag v-if="addr.isDefault" type="danger" size="small">默认</el-tag>
+              <span class="address-name">{{ addr.receiverName }}</span>
+              <span class="address-phone">{{ addr.receiverPhone }}</span>
+              <div class="address-detail">{{ addr.province }} {{ addr.city }} {{ addr.district }} {{ addr.detail }}</div>
             </div>
-            <div class="address-actions">
+            <div class="address-ops">
               <el-button link @click="editAddress(addr)">编辑</el-button>
               <el-button link type="danger" @click="deleteAddress(addr)">删除</el-button>
             </div>
           </div>
         </div>
-        <el-empty v-else description="暂无收货地址" />
       </el-card>
 
-      <!-- 退出登录 -->
-      <div class="logout-section">
-        <el-button type="danger" @click="handleLogout">退出登录</el-button>
-      </div>
-    </div>
+      <!-- 编辑资料弹窗 -->
+      <el-dialog v-model="showEditDialog" title="编辑资料" width="500px">
+        <el-form :model="editForm" label-width="80px">
+          <el-form-item label="昵称">
+            <el-input v-model="editForm.nickname" />
+          </el-form-item>
+          <el-form-item label="真实姓名">
+            <el-input v-model="editForm.realName" />
+          </el-form-item>
+          <el-form-item label="身份证号">
+            <el-input v-model="editForm.idCard" maxlength="18" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="showEditDialog = false">取消</el-button>
+          <el-button type="primary" @click="updateProfile">保存</el-button>
+        </template>
+      </el-dialog>
 
-    <!-- 地址编辑对话框 -->
-    <el-dialog v-model="addressDialog" :title="editingAddress ? '编辑地址' : '新增地址'" width="500px">
-      <el-form :model="addressForm" label-width="80px">
-        <el-form-item label="收货人">
-          <el-input v-model="addressForm.name" placeholder="请输入收货人姓名" />
-        </el-form-item>
-        <el-form-item label="手机号">
-          <el-input v-model="addressForm.phone" placeholder="请输入手机号" maxlength="11" />
-        </el-form-item>
-        <el-form-item label="省市区">
-          <el-input v-model="addressForm.region" placeholder="请选择省市区" />
-        </el-form-item>
-        <el-form-item label="详细地址">
-          <el-input v-model="addressForm.detail" type="textarea" :rows="3" placeholder="请输入详细地址" />
-        </el-form-item>
-        <el-form-item label="默认地址">
-          <el-switch v-model="addressForm.isDefault" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="addressDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveAddress">保存</el-button>
-      </template>
-    </el-dialog>
+      <!-- 地址弹窗 -->
+      <el-dialog v-model="showAddressDialog" :title="addressForm.id ? '编辑地址' : '新增地址'" width="500px">
+        <el-form :model="addressForm" label-width="80px">
+          <el-form-item label="收货人">
+            <el-input v-model="addressForm.receiverName" />
+          </el-form-item>
+          <el-form-item label="手机号">
+            <el-input v-model="addressForm.receiverPhone" maxlength="11" />
+          </el-form-item>
+          <el-form-item label="省市区">
+            <el-input v-model="addressForm.province" placeholder="省" style="width: 30%" />
+            <el-input v-model="addressForm.city" placeholder="市" style="width: 34%; margin: 0 2%" />
+            <el-input v-model="addressForm.district" placeholder="区" style="width: 30%" />
+          </el-form-item>
+          <el-form-item label="详细地址">
+            <el-input v-model="addressForm.detail" type="textarea" :rows="2" />
+          </el-form-item>
+          <el-form-item label="设为默认">
+            <el-switch v-model="addressForm.isDefault" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="showAddressDialog = false">取消</el-button>
+          <el-button type="primary" @click="saveAddress">保存</el-button>
+        </template>
+      </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, reactive, ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ShoppingBag, Ticket, Document, Star } from '@element-plus/icons-vue';
 import TopNav from '../../components/TopNav.vue';
-import { useUserStore } from '../../stores/user';
 import request from '../../api/request';
+import { useUserStore } from '../../stores/user';
 
-const router = useRouter();
 const userStore = useUserStore();
-
-const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+const userInfo = ref<any>({});
 const addresses = ref<any[]>([]);
-const addressDialog = ref(false);
-const editingAddress = ref<any>(null);
-
+const showEditDialog = ref(false);
+const showAddressDialog = ref(false);
+const editForm = reactive({ nickname: '', realName: '', idCard: '' });
 const addressForm = reactive({
-  name: '',
-  phone: '',
-  region: '',
+  id: 0,
+  receiverName: '',
+  receiverPhone: '',
+  province: '',
+  city: '',
+  district: '',
   detail: '',
   isDefault: false
 });
 
-// 加载地址列表
-const loadAddresses = async () => {
+function formatTime(t: string) {
+  return t ? String(t).replace('T', ' ').slice(0, 10) : '';
+}
+
+function maskIdCard(s?: string) {
+  if (!s) return '未设置';
+  return s.slice(0, 6) + '****' + s.slice(-4);
+}
+
+async function loadProfile() {
   try {
-    const data: any = await request.get('/app/user/address/list');
-    addresses.value = data.list || [];
+    userInfo.value = await request.get('/auth/profile');
+    userStore.setUserInfo(userInfo.value);
+    Object.assign(editForm, {
+      nickname: userInfo.value.nickname,
+      realName: userInfo.value.realName || '',
+      idCard: userInfo.value.idCard || ''
+    });
   } catch {
-    addresses.value = [
-      {
-        id: 1,
-        name: '张三',
-        phone: '13800138000',
-        province: '贵州省',
-        city: '黔东南州',
-        district: '凯里市',
-        detail: '某某街道某某小区1栋1单元101',
-        isDefault: true
-      }
-    ];
+    // 已提示
   }
-};
+}
 
-// 编辑资料
-const editProfile = () => {
-  ElMessage.info('编辑资料功能开发中');
-};
+async function loadAddresses() {
+  try {
+    addresses.value = await request.get('/user/addresses');
+  } catch {
+    // 已提示
+  }
+}
 
-// 添加地址
-const addAddress = () => {
-  editingAddress.value = null;
-  Object.assign(addressForm, {
-    name: '',
-    phone: '',
-    region: '',
-    detail: '',
-    isDefault: false
-  });
-  addressDialog.value = true;
-};
+async function updateProfile() {
+  try {
+    await request.put('/auth/profile', editForm);
+    ElMessage.success('资料已更新');
+    showEditDialog.value = false;
+    loadProfile();
+  } catch {
+    // 已提示
+  }
+}
 
-// 编辑地址
-const editAddress = (addr: any) => {
-  editingAddress.value = addr;
-  Object.assign(addressForm, {
-    name: addr.name,
-    phone: addr.phone,
-    region: `${addr.province} ${addr.city} ${addr.district}`,
-    detail: addr.detail,
-    isDefault: addr.isDefault
-  });
-  addressDialog.value = true;
-};
+function editAddress(addr: any) {
+  Object.assign(addressForm, addr);
+  showAddressDialog.value = true;
+}
 
-// 保存地址
-const saveAddress = async () => {
-  if (!addressForm.name || !addressForm.phone || !addressForm.detail) {
-    ElMessage.warning('请填写完整信息');
+async function saveAddress() {
+  if (!addressForm.receiverName || !addressForm.receiverPhone || !addressForm.detail) {
+    ElMessage.warning('请填写完整地址信息');
     return;
   }
-
   try {
-    if (editingAddress.value) {
-      await request.post(`/app/user/address/update`, {
-        id: editingAddress.value.id,
-        ...addressForm
-      });
-      ElMessage.success('保存成功');
+    if (addressForm.id) {
+      await request.put(`/user/addresses/${addressForm.id}`, addressForm);
     } else {
-      await request.post('/app/user/address/add', addressForm);
-      ElMessage.success('添加成功');
+      await request.post('/user/addresses', addressForm);
     }
-    addressDialog.value = false;
+    ElMessage.success('地址已保存');
+    showAddressDialog.value = false;
     loadAddresses();
   } catch {
-    ElMessage.error('操作失败');
+    // 已提示
   }
-};
+}
 
-// 删除地址
-const deleteAddress = async (addr: any) => {
+async function deleteAddress(addr: any) {
   try {
-    await ElMessageBox.confirm('确认删除该地址？', '提示', { type: 'warning' });
-    await request.post(`/app/user/address/delete`, { id: addr.id });
-    ElMessage.success('删除成功');
+    await ElMessageBox.confirm('确定删除该地址？', '提示', { type: 'warning' });
+    await request.delete(`/user/addresses/${addr.id}`);
+    ElMessage.success('地址已删除');
     loadAddresses();
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('删除失败');
-    }
-  }
-};
-
-// 退出登录
-const handleLogout = async () => {
-  try {
-    await ElMessageBox.confirm('确认退出登录？', '提示', { type: 'warning' });
-    userStore.logout();
-    ElMessage.success('已退出登录');
-    router.push('/');
   } catch {
-    // 取消
+    // 取消或已提示
   }
-};
+}
 
 onMounted(() => {
+  loadProfile();
   loadAddresses();
 });
 </script>
 
 <style scoped>
 .page {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
 }
-
-.user-card {
-  margin-bottom: 20px;
+.profile-card {
+  padding: 24px;
 }
-
-.user-header {
+.profile-header {
   display: flex;
   align-items: center;
   gap: 20px;
 }
-
-.user-info {
+.avatar {
+  background: #c0392b;
+  font-size: 32px;
+  font-weight: bold;
+}
+.header-info {
   flex: 1;
 }
-
-.user-info h3 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
+.meta {
+  color: #666;
+  font-size: 14px;
+  margin-top: 6px;
 }
-
-.user-info p {
-  margin: 0;
-  color: #999;
+.balance {
+  color: #c0392b;
+  font-weight: bold;
+  font-size: 18px;
 }
-
-.nav-grid {
+.actions-section h3,
+.section-header h3 {
+  margin-bottom: 16px;
+}
+.action-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
-  margin-bottom: 20px;
 }
-
-.nav-item {
+.action-card {
   text-align: center;
-  padding: 24px;
   cursor: pointer;
-  transition: all 0.3s;
+  padding: 20px;
 }
-
-.nav-item:hover {
+.action-card:hover {
   transform: translateY(-4px);
+  transition: transform 0.2s;
 }
-
-.nav-title {
-  margin-top: 12px;
-  font-size: 14px;
+.action-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
 }
-
-.merchant-card {
-  margin-bottom: 20px;
+.action-title {
+  font-weight: 600;
 }
-
-.merchant-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.merchant-header h3 {
-  margin: 0 0 4px 0;
-}
-
-.merchant-header p {
-  margin: 0;
-  color: #999;
-  font-size: 14px;
-}
-
-.address-card {
-  margin-bottom: 20px;
-}
-
-.card-header {
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
-
-.card-header h3 {
-  margin: 0;
+.empty-tip {
+  color: #999;
+  text-align: center;
+  padding: 20px;
 }
-
-.address-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .address-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px;
   border: 1px solid #eee;
-  border-radius: 8px;
+  border-radius: 6px;
+  margin-bottom: 12px;
 }
-
-.address-info {
+.address-main {
   flex: 1;
 }
-
 .address-name {
-  font-weight: bold;
-  margin-bottom: 8px;
+  font-weight: 600;
+  margin: 0 12px;
 }
-
-.address-detail {
+.address-phone {
   color: #666;
-  font-size: 14px;
 }
-
-.address-actions {
+.address-detail {
+  margin-top: 6px;
+  color: #555;
+}
+.address-ops {
   display: flex;
   gap: 8px;
-}
-
-.logout-section {
-  text-align: center;
-  padding: 40px 0;
 }
 </style>

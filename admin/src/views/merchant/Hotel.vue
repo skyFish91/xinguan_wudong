@@ -7,7 +7,7 @@
           <div class="toolbar">
             <el-button type="success" @click="openHomestay()">新增民宿</el-button>
           </div>
-          <el-table :data="homestays" border>
+          <el-table :data="homestays" stripe>
             <el-table-column prop="id" label="ID" width="70" />
             <el-table-column prop="name" label="名称" width="180" />
             <el-table-column prop="address" label="地址" />
@@ -15,7 +15,7 @@
             <el-table-column prop="rating" label="评分" width="70" />
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="dark">{{ row.status === 1 ? '上架中' : '已下架' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="200">
@@ -35,17 +35,19 @@
             </el-select>
             <el-button type="success" @click="openRoom()">新增房型</el-button>
           </div>
-          <el-table :data="rooms" border>
+          <el-table :data="rooms" stripe>
             <el-table-column prop="id" label="ID" width="70" />
             <el-table-column prop="name" label="房型" width="180" />
             <el-table-column prop="bedType" label="床型" width="120" />
             <el-table-column prop="area" label="面积" width="80" />
             <el-table-column prop="capacity" label="可住" width="70" />
-            <el-table-column prop="price" label="价格" width="90" />
+            <el-table-column label="价格" width="90">
+              <template #default="{ row }"><span class="money">¥{{ row.price }}</span></template>
+            </el-table-column>
             <el-table-column prop="stock" label="库存" width="70" />
             <el-table-column label="状态" width="80">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '在售' : '停售' }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="dark">{{ row.status === 1 ? '在售' : '停售' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="140">
@@ -78,7 +80,7 @@
             <el-table-column prop="total" label="总库存" width="80" />
             <el-table-column label="状态" width="100">
               <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">{{ row.status === 1 ? '可订' : '关闭' }}</el-tag>
+                <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small" effect="dark">{{ row.status === 1 ? '可订' : '关闭' }}</el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -93,7 +95,7 @@
             </el-select>
             <el-button type="primary" @click="loadOrders(1)">查询</el-button>
           </div>
-          <el-table :data="orders" border>
+          <el-table :data="orders" stripe>
             <el-table-column prop="orderNo" label="订单号" width="170" />
             <el-table-column label="入住信息" width="240">
               <template #default="{ row }">
@@ -103,10 +105,12 @@
             <el-table-column label="入住码" width="120">
               <template #default="{ row }">{{ row.booking?.checkinCode || '-' }}</template>
             </el-table-column>
-            <el-table-column prop="totalAmount" label="金额" width="100" />
+            <el-table-column label="金额" width="100">
+              <template #default="{ row }"><span class="money">¥{{ row.totalAmount }}</span></template>
+            </el-table-column>
             <el-table-column label="状态" width="90">
               <template #default="{ row }">
-                <el-tag size="small">{{ statusTexts[row.status] || `状态${row.status}` }}</el-tag>
+                <el-tag size="small" effect="dark">{{ statusTexts[row.status] || `状态${row.status}` }}</el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -450,13 +454,16 @@ onMounted(() => {
 .toolbar {
   display: flex;
   gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border-light);
 }
 .select {
   width: 180px;
 }
 .pager {
-  margin-top: 14px;
+  margin-top: 18px;
   justify-content: flex-end;
 }
 .checkin-box {

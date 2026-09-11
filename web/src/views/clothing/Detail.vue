@@ -1,80 +1,144 @@
 <template>
-  <div>
+  <div class="product-detail-page">
     <TopNav />
-    <div class="page" v-if="product.id">
-      <div class="top">
-        <img :src="product.mainImage" class="main-img" />
-        <div class="info">
-          <h2>{{ product.title }}</h2>
-          <div class="sub">{{ product.subtitle }}</div>
-          <div class="price-row">
-            <span class="price">¥{{ currentSku ? currentSku.price : product.price }}</span>
-            <span class="market">市场价 ¥{{ product.marketPrice }}</span>
-            <span class="sales">已售 {{ product.sales }} · 评分 {{ product.rating }}</span>
-          </div>
-          <div class="craft">{{ product.craftIntro }}</div>
 
-          <!-- SKU 选择 -->
-          <div class="sku-row" v-if="product.skus?.length">
-            <div class="label">规格</div>
-            <div class="sku-list">
-              <el-tag
+    <div class="page-container" v-if="product.id">
+      <!-- 面包屑导航 -->
+      <div class="breadcrumb">
+        <span @click="$router.push('/clothing')">非遗好物</span>
+        <span class="separator">/</span>
+        <span class="current">{{ product.title }}</span>
+      </div>
+
+      <!-- 主要内容 -->
+      <div class="product-main">
+        <!-- 左侧图片 -->
+        <div class="product-gallery">
+          <div class="main-image">
+            <img :src="product.mainImage" />
+          </div>
+        </div>
+
+        <!-- 右侧信息 -->
+        <div class="product-info">
+          <h1 class="product-title">{{ product.title }}</h1>
+          <p class="product-subtitle">{{ product.subtitle }}</p>
+
+          <!-- 价格 -->
+          <div class="price-section">
+            <div class="price-row">
+              <span class="price-label">价格</span>
+              <span class="price-value">¥{{ currentSku ? currentSku.price : product.price }}</span>
+            </div>
+            <div class="market-price">市场价 ¥{{ product.marketPrice }}</div>
+          </div>
+
+          <!-- 统计信息 -->
+          <div class="stats-row">
+            <span class="stat-item">销量 {{ product.sales }}</span>
+            <span class="stat-item">评分 {{ product.rating }}</span>
+          </div>
+
+          <!-- 工艺介绍 -->
+          <div class="craft-intro" v-if="product.craftIntro">
+            <p>{{ product.craftIntro }}</p>
+          </div>
+
+          <!-- 规格选择 -->
+          <div class="spec-section" v-if="product.skus?.length">
+            <div class="spec-label">选择规格</div>
+            <div class="spec-options">
+              <div
                 v-for="s in product.skus"
                 :key="s.id"
-                :effect="currentSku?.id === s.id ? 'dark' : 'plain'"
-                :type="currentSku?.id === s.id ? 'danger' : 'info'"
-                class="sku-tag"
-                @click="currentSku = s"
+                class="spec-item"
+                :class="{ active: currentSku?.id === s.id, disabled: s.stock === 0 }"
+                @click="s.stock > 0 && (currentSku = s)"
               >
-                {{ s.specName }}（库存 {{ s.stock }}）
-              </el-tag>
+                <span class="spec-name">{{ s.specName }}</span>
+                <span class="spec-stock">库存 {{ s.stock }}</span>
+              </div>
             </div>
           </div>
 
-          <div class="qty-row">
-            <div class="label">数量</div>
+          <!-- 数量 -->
+          <div class="quantity-section">
+            <span class="quantity-label">数量</span>
             <el-input-number v-model="quantity" :min="1" :max="99" />
           </div>
 
-          <div class="actions">
-            <el-button type="danger" size="large" @click="addCart">加入购物车</el-button>
-            <el-button size="large" :type="favorited ? 'info' : 'default'" @click="toggleFav">
+          <!-- 操作按钮 -->
+          <div class="action-buttons">
+            <el-button type="primary" size="large" class="btn-cart" @click="addCart">
+              加入购物车
+            </el-button>
+            <el-button size="large" class="btn-favorite" @click="toggleFav">
               {{ favorited ? '已收藏' : '收藏' }}
             </el-button>
           </div>
 
-          <!-- 传承人 -->
-          <div class="inheritor" v-if="product.inheritor">
-            <div class="label">非遗传承人</div>
-            <div class="inheritor-name">{{ product.inheritor.name }}（{{ product.inheritor.title }}）</div>
-            <div class="inheritor-story">{{ product.inheritor.story }}</div>
+          <!-- 传承人信息 -->
+          <div class="inheritor-section" v-if="product.inheritor">
+            <div class="inheritor-header">非遗传承人</div>
+            <div class="inheritor-content">
+              <h4 class="inheritor-name">{{ product.inheritor.name }}</h4>
+              <p class="inheritor-title">{{ product.inheritor.title }}</p>
+              <p class="inheritor-story">{{ product.inheritor.story }}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 图文详情 -->
-      <el-divider content-position="left">商品详情</el-divider>
-      <div class="detail-html" v-html="product.detail" />
-
-      <!-- 评价 -->
-      <el-divider content-position="left">用户评价（{{ reviewTotal }}）</el-divider>
-      <div class="review-form" v-if="userStore.isLogin">
-        <el-rate v-model="reviewForm.rating" />
-        <el-input v-model="reviewForm.content" type="textarea" :rows="3" placeholder="分享你的使用体验" maxlength="500" />
-        <el-button type="primary" class="submit-btn" @click="submitReview">发表评价</el-button>
-      </div>
-      <div v-else class="review-tip">登录后可发表评价</div>
-
-      <div v-for="r in reviews" :key="r.id" class="review-item">
-        <div class="review-head">
-          <span class="review-user">{{ r.userNickname || `用户${r.userId}` }}</span>
-          <el-rate :model-value="r.rating" disabled size="small" />
-          <span class="review-time">{{ formatTime(r.createdAt) }}</span>
+      <!-- 详情与评价 -->
+      <div class="detail-tabs">
+        <div class="tab-header">
+          <div class="tab-item active">商品详情</div>
+          <div class="tab-item">用户评价 ({{ reviewTotal }})</div>
         </div>
-        <div class="review-content">{{ r.content }}</div>
-        <div v-if="r.followUp" class="review-follow">追评：{{ r.followUp }}</div>
+
+        <!-- 商品详情 -->
+        <div class="detail-content">
+          <div class="detail-html" v-html="product.detail"></div>
+        </div>
+
+        <!-- 评价列表 -->
+        <div class="reviews-section">
+          <h3 class="section-title">用户评价</h3>
+
+          <!-- 评价表单 -->
+          <div class="review-form" v-if="userStore.isLogin">
+            <el-rate v-model="reviewForm.rating" />
+            <el-input
+              v-model="reviewForm.content"
+              type="textarea"
+              :rows="3"
+              placeholder="分享你的使用体验"
+              maxlength="500"
+            />
+            <el-button type="primary" @click="submitReview">发表评价</el-button>
+          </div>
+          <div v-else class="login-tip">
+            登录后可发表评价
+          </div>
+
+          <!-- 评价列表 -->
+          <div class="reviews-list">
+            <div v-for="r in reviews" :key="r.id" class="review-item">
+              <div class="review-header">
+                <div class="review-user">
+                  <span class="user-name">{{ r.userNickname || `用户${r.userId}` }}</span>
+                  <el-rate :model-value="r.rating" disabled size="small" />
+                </div>
+                <span class="review-time">{{ formatTime(r.createdAt) }}</span>
+              </div>
+              <div class="review-content">{{ r.content }}</div>
+              <div v-if="r.followUp" class="review-followup">追评：{{ r.followUp }}</div>
+            </div>
+          </div>
+
+          <el-empty v-if="!reviews.length" description="暂无评价" />
+        </div>
       </div>
-      <el-empty v-if="!reviews.length" description="暂无评价" />
     </div>
   </div>
 </template>
@@ -185,121 +249,409 @@ onMounted(load);
 </script>
 
 <style scoped>
-.page {
-  max-width: 1100px;
+.product-detail-page {
+  background: #ffffff;
+  min-height: 100vh;
+}
+
+.page-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
-.top {
+
+/* 面包屑 */
+.breadcrumb {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 32px;
+}
+
+.breadcrumb span {
+  cursor: pointer;
+}
+
+.breadcrumb span:hover {
+  color: #333;
+}
+
+.separator {
+  margin: 0 8px;
+  cursor: default;
+}
+
+.current {
+  color: #333;
+  cursor: default;
+}
+
+/* 主要内容 */
+.product-main {
   display: flex;
-  gap: 30px;
+  gap: 48px;
+  margin-bottom: 64px;
 }
-.main-img {
-  width: 420px;
-  height: 420px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-.info {
+
+/* 图片展示 */
+.product-gallery {
   flex: 1;
 }
-.sub {
-  color: #999;
-  margin-top: 8px;
+
+.main-image {
+  width: 100%;
+  padding-bottom: 100%;
+  position: relative;
+  background: #f9f9f9;
+  border-radius: 4px;
+  overflow: hidden;
 }
+
+.main-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 商品信息 */
+.product-info {
+  flex: 1;
+}
+
+.product-title {
+  font-size: 24px;
+  font-weight: 400;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.product-subtitle {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 24px;
+}
+
+/* 价格 */
+.price-section {
+  padding: 20px 0;
+  border-top: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 16px;
+}
+
 .price-row {
-  margin-top: 16px;
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  background: #fdf5f5;
-  padding: 12px;
-  border-radius: 6px;
+  gap: 16px;
+  margin-bottom: 8px;
 }
-.price {
-  color: #c0392b;
-  font-size: 28px;
-  font-weight: bold;
+
+.price-label {
+  font-size: 13px;
+  color: #999;
 }
-.market {
+
+.price-value {
+  font-size: 32px;
+  font-weight: 500;
+  color: #8b7355;
+}
+
+.market-price {
+  font-size: 13px;
   color: #999;
   text-decoration: line-through;
 }
-.sales {
-  color: #666;
-  margin-left: auto;
-}
-.craft {
-  margin-top: 12px;
-  color: #666;
-  line-height: 1.7;
-}
-.sku-row,
-.qty-row,
-.inheritor {
-  margin-top: 16px;
+
+/* 统计 */
+.stats-row {
   display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.stat-item {
+  font-size: 13px;
+  color: #666;
+}
+
+/* 工艺介绍 */
+.craft-intro {
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.craft-intro p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #666;
+}
+
+/* 规格选择 */
+.spec-section {
+  margin-bottom: 24px;
+}
+
+.spec-label,
+.quantity-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.spec-options {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
-.label {
-  color: #999;
-  width: 80px;
-  flex-shrink: 0;
-}
-.sku-tag {
+
+.spec-item {
+  padding: 10px 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
   cursor: pointer;
-  margin-right: 8px;
-}
-.actions {
-  margin-top: 24px;
-}
-.inheritor-name {
-  font-weight: 600;
-}
-.inheritor-story {
-  color: #666;
-  font-size: 13px;
-  line-height: 1.6;
-  margin-top: 4px;
-}
-.detail-html {
-  line-height: 1.8;
-  color: #444;
-}
-.review-form {
-  margin-bottom: 20px;
-}
-.submit-btn {
-  margin-top: 10px;
-}
-.review-tip {
-  color: #999;
-  margin-bottom: 12px;
-}
-.review-item {
-  border-bottom: 1px solid #f0f0f0;
-  padding: 12px 0;
-}
-.review-head {
+  transition: all 0.2s ease;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
 }
-.review-user {
-  font-weight: 600;
+
+.spec-item:hover {
+  border-color: #8b7355;
 }
-.review-time {
-  color: #999;
-  font-size: 12px;
-  margin-left: auto;
+
+.spec-item.active {
+  border-color: #8b7355;
+  background: rgba(139, 115, 85, 0.05);
 }
-.review-content {
-  margin-top: 6px;
+
+.spec-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.spec-name {
+  font-size: 13px;
   color: #333;
 }
-.review-follow {
-  margin-top: 6px;
-  color: #c0392b;
+
+.spec-stock {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 数量 */
+.quantity-section {
+  margin-bottom: 32px;
+}
+
+/* 按钮 */
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.btn-cart,
+.btn-favorite {
+  flex: 1;
+  border-radius: 4px;
+}
+
+.btn-cart {
+  background: #8b7355;
+  border-color: #8b7355;
+}
+
+.btn-cart:hover {
+  background: #6d5a42;
+  border-color: #6d5a42;
+}
+
+.btn-favorite {
+  border-color: #e5e5e5;
+}
+
+/* 传承人 */
+.inheritor-section {
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.inheritor-header {
   font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.inheritor-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.inheritor-title {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.inheritor-story {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* 详情标签页 */
+.detail-tabs {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 48px;
+}
+
+.tab-header {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.tab-item {
+  padding: 12px 0;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  position: relative;
+}
+
+.tab-item.active {
+  color: #333;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #8b7355;
+}
+
+/* 详情内容 */
+.detail-content {
+  margin-bottom: 64px;
+}
+
+.detail-html {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #666;
+}
+
+/* 评价区域 */
+.reviews-section {
+  margin-bottom: 64px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 400;
+  color: #333;
+  margin-bottom: 24px;
+}
+
+/* 评价表单 */
+.review-form {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.review-form :deep(.el-rate) {
+  margin-bottom: 16px;
+}
+
+.review-form :deep(.el-textarea) {
+  margin-bottom: 16px;
+}
+
+.login-tip {
+  padding: 24px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  text-align: center;
+  color: #999;
+  margin-bottom: 32px;
+}
+
+/* 评价列表 */
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.review-item {
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.review-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.review-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.review-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.review-followup {
+  font-size: 13px;
+  color: #8b7355;
+  line-height: 1.6;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .product-main {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
 }
 </style>
