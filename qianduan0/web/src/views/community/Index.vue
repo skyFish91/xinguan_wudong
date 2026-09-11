@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="community-page">
     <div class="container">
       <!-- 顶部筛选 -->
@@ -476,3 +476,4 @@ onMounted(() => {
   }
 }
 </style>
+

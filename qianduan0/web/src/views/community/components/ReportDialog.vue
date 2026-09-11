@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog
     v-model="visible"
     title="举报"
@@ -117,3 +117,4 @@ const handleClose = () => {
   visible.value = false
 }
 </script>
+

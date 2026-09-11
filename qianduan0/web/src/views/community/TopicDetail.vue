@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="topic-detail-page">
     <div class="container">
       <!-- 话题头部 -->
@@ -105,7 +105,7 @@ import { communityApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
 
 // 动态加载本地图片
-const localImages = import.meta.glob('@/views/community/topics_photos/*.{jpg,jpeg,png}', { eager: true })
+const localImages = import.meta.glob('./topics_photos/*.{jpg,jpeg,png}', { eager: true })
 
 const route = useRoute()
 const topicId = ref(route.params.id)
@@ -445,3 +445,4 @@ onMounted(() => {
   }
 }
 </style>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="user-profile-page">
     <div class="container">
       <!-- 用户信息卡片 -->
@@ -198,7 +198,7 @@ import { useRoute } from 'vue-router'
 import { Plus, ChatDotRound, Setting, View, Star, VideoPlay } from '@element-plus/icons-vue'
 import { communityApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/store/user'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -724,3 +724,4 @@ onMounted(() => {
   }
 }
 </style>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="search-page">
     <div class="container">
       <!-- 搜索框 -->
@@ -879,3 +879,4 @@ onMounted(() => {
   }
 }
 </style>
+

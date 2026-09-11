@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="post-detail-page">
     <div class="container">
       <div class="detail-container">
@@ -836,3 +836,4 @@ onMounted(() => {
   }
 }
 </style>
+

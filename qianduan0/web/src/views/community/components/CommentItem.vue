@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="comment-item">
     <el-avatar :size="40" :src="comment.userAvatar" />
     <div class="comment-content">
@@ -80,7 +80,7 @@
 import { ref, computed } from 'vue'
 import { Star, ChatDotRound, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/store/user'
+import { useUserStore } from '@/stores/user'
 
 const props = defineProps({
   comment: {
@@ -261,3 +261,4 @@ const handleDelete = () => {
   }
 }
 </style>
+

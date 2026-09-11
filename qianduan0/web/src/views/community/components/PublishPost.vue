@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog
     v-model="visible"
     title="发布游记"
@@ -271,3 +271,4 @@ const handleClose = () => {
   visible.value = false
 }
 </script>
+

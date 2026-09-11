@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="topic-list-page">
     <div class="container">
       <!-- 顶部导航 -->
@@ -195,7 +195,7 @@ const goToTopic = (topicId) => {
 }
 
 // 动态加载本地图片
-const localImages = import.meta.glob('@/views/community/topics_photos/*.{jpg,jpeg,png}', { eager: true })
+const localImages = import.meta.glob('./topics_photos/*.{jpg,jpeg,png}', { eager: true })
 
 // 获取话题对应的图片
 const getTopicImage = (topicName) => {
@@ -380,3 +380,4 @@ onMounted(() => {
   }
 }
 </style>
+

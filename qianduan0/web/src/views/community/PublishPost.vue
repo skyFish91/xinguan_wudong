@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="publish-post-page">
     <div class="container">
       <div class="publish-card card">
@@ -259,3 +259,4 @@ onMounted(() => {
   }
 }
 </style>
+
