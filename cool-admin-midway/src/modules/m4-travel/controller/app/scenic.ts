@@ -6,7 +6,7 @@ import { TvlScenic } from '../../entity/TvlScenic.entity';
 
 @Provide()
 @CoolUrlTag()
-@CoolController()
+@CoolController('scenic')
 export class AppScenicController extends BaseController {
   @InjectEntityModel(TvlScenic)
   scenicRepo: Repository<TvlScenic>;

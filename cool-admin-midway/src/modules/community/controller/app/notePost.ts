@@ -10,7 +10,7 @@ import { UserInfoEntity } from '../../../user/entity/info';
  */
 @Provide()
 @CoolUrlTag()
-@CoolController()
+@CoolController('notePost')
 export class AppNotePostController extends BaseController {
   @Inject()
   notePostService: NotePostService;
