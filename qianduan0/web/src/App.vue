@@ -19,6 +19,9 @@
       </transition>
     </router-view>
   </div>
+
+  <!-- AI 智能助手：全局悬浮，登录/注册这类裸页（整屏分屏）不打扰 -->
+  <AiAssistant v-if="!isBare" />
 </template>
 
 <script setup lang="ts">
@@ -26,6 +29,7 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import TopNav from './components/TopNav.vue';
 import RouteProgress from './components/RouteProgress.vue';
+import AiAssistant from './components/AiAssistant.vue';
 
 const route = useRoute();
 

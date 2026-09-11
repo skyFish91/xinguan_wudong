@@ -1,4 +1,4 @@
-/** 错误码分段：1xxx 认证 / 2xxx 参数 / 3xxx 业务 / 5xxx 系统 */
+/** 错误码分段：1xxx 认证 / 2xxx 参数 / 3xxx 业务 / 5xxx 系统 / 6xxx AI */
 export const ErrorCode = {
   OK: 0,
   // 认证类
@@ -16,6 +16,10 @@ export const ErrorCode = {
   NOT_FOUND: 3005,
   // 系统类
   SYSTEM_ERROR: 5001,
+  // AI 类：6011 未配置 Key（前端降级到本地知识库，不当成报错弹红条）
+  //        6012 上游不可用或超时（前端在气泡内提示可重试）
+  AI_NOT_CONFIGURED: 6011,
+  AI_UNAVAILABLE: 6012,
 } as const;
 
 /** 订单状态 */

@@ -1,3 +1,7 @@
+// 必须是第一个 import：显式加载 server/.env（Midway 3.20 不自带），
+// 否则下面所有 process.env 读到的都是未定义，配置会静默落到兜底默认值
+import './env';
+
 import { App, Configuration, Inject, Logger } from '@midwayjs/core';
 import * as koa from '@midwayjs/koa';
 import * as typeorm from '@midwayjs/typeorm';

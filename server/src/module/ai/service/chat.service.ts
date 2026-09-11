@@ -1,10 +1,12 @@
 import { Provide, Inject } from '@midwayjs/core';
 import { InjectEntityModel } from '@midwayjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
-import { ScenicEntity } from '../../travel/entity/scenic.entity';
-import { TicketTypeEntity } from '../../travel/entity/ticket-type.entity';
-import { RouteEntity } from '../../travel/entity/route.entity';
-import { TrafficGuideEntity } from '../../travel/entity/traffic-guide.entity';
+import { Repository } from 'typeorm';
+import {
+  ScenicEntity,
+  TicketTypeEntity,
+  RouteEntity,
+  TrafficGuideEntity,
+} from '../../../entity/travel.entity';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -29,7 +31,37 @@ export class AiChatService {
   private contextCache: { text: string; expireAt: number } | null = null;
 
   /**
+   * AI 是否已配置（前端据此决定走真实 AI 还是本地知识库兜底）
+   */
+  isConfigured(): boolean {
+    return !!process.env.DEEPSEEK_API_KEY;
+  }
+
+  /** 去掉富文本标签，只留纯文本喂给模型（详情字段里存的是 <p> 标签） */
+  private stripHtml(html?: string | null): string {
+    if (!html) return '';
+    return String(html)
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /** 金额：decimal 列在 mysql2 下按字符串返回，统一转成「元」的整数表述 */
+  private yuan(v: unknown): string {
+    const n = Number(v);
+    return Number.isFinite(n) ? String(Math.round(n)) : '—';
+  }
+
+  /**
    * 从数据库拼装平台实时数据，作为 AI 的事实依据
+   *
+   * 注意：实体来自 src/entity/travel.entity.ts（真实表 t_scenic / t_ticket_type /
+   * t_route / t_traffic_guide）。这些表**没有 deleted_at 列**，用 status = 1 过滤即可；
+   * price 存的是「元」而非「分」，不要再除以 100。
    */
   async buildPlatformContext(): Promise<string> {
     const now = Date.now();
@@ -38,29 +70,16 @@ export class AiChatService {
     }
 
     const [scenics, tickets, routes, traffics] = await Promise.all([
-      this.scenicRepo.find({
-        where: { deleted_at: IsNull(), status: 1 },
-        take: 30,
-      }),
-      this.ticketTypeRepo.find({
-        where: { deleted_at: IsNull(), status: 1 },
-        take: 60,
-      }),
-      this.routeRepo.find({
-        where: { deleted_at: IsNull(), status: 1 },
-        take: 20,
-      }),
-      this.trafficRepo.find({
-        where: { deleted_at: IsNull(), status: 1 },
-        order: { sort: 'ASC' },
-        take: 20,
-      }),
+      this.scenicRepo.find({ where: { status: 1 }, order: { id: 'ASC' }, take: 30 }),
+      this.ticketTypeRepo.find({ where: { status: 1 }, order: { id: 'ASC' }, take: 100 }),
+      this.routeRepo.find({ where: { status: 1 }, order: { id: 'ASC' }, take: 20 }),
+      this.trafficRepo.find({ where: { status: 1 }, order: { id: 'ASC' }, take: 20 }),
     ]);
 
     // 票种按景区归组，方便 AI 关联
     const ticketsByScenic = new Map<string, TicketTypeEntity[]>();
     for (const t of tickets) {
-      const key = String(t.scenic_id);
+      const key = String(t.scenicId);
       if (!ticketsByScenic.has(key)) {
         ticketsByScenic.set(key, []);
       }
@@ -69,38 +88,34 @@ export class AiChatService {
 
     const lines: string[] = [];
 
-    lines.push('## 景区列表');
+    lines.push(`## 景区列表（共 ${scenics.length} 个）`);
     for (const s of scenics) {
       lines.push(
-        `- ${s.name}（id=${s.id}）｜地址：${s.address}｜开放时间：${s.open_time}｜简介：${s.intro || '暂无'}`
+        `- ${s.name}（id=${s.id}）｜地址：${s.address}｜开放时间：${s.openTime}｜简介：${this.stripHtml(s.intro) || '暂无'}`
       );
       const its = ticketsByScenic.get(String(s.id)) || [];
-      for (const t of its) {
-        const price = (t.price / 100).toFixed(0);
-        const market = t.market_price ? `（门市价 ${(t.market_price / 100).toFixed(0)} 元）` : '';
-        const idCard = t.need_id_card ? '，需身份证' : '';
-        lines.push(`    · ${t.name}：${price} 元${market}｜${t.valid_rule}${idCard}`);
-      }
       if (its.length === 0) {
         lines.push('    · 暂未配置票种');
       }
+      for (const t of its) {
+        lines.push(`    · ${t.name}：${this.yuan(t.price)} 元｜${t.validRule}`);
+      }
     }
 
     lines.push('');
-    lines.push('## 旅游路线');
+    lines.push(`## 旅游路线（共 ${routes.length} 条）`);
     for (const r of routes) {
-      const price = (r.price / 100).toFixed(0);
-      const includes = Array.isArray(r.includes) ? r.includes.join('、') : '';
       lines.push(
-        `- ${r.title}（id=${r.id}）｜${r.days}天｜起价 ${price} 元/人｜主题：${r.theme}｜${r.departure} → ${r.destination}｜含：${includes}｜住宿：${r.hotel_standard}｜餐饮：${r.meal_standard}`
+        `- ${r.title}（id=${r.id}）｜${r.days} 天｜${this.yuan(r.price)} 元/人｜主题：${r.themes || '综合'}｜${r.departFrom} → ${r.dest}｜费用包含：${this.stripHtml(r.included) || '详见页面'}｜住宿标准：${r.hotelStandard || '—'}｜餐饮标准：${r.mealStandard || '—'}`
       );
     }
 
     lines.push('');
-    lines.push('## 交通攻略');
+    lines.push(`## 交通攻略（共 ${traffics.length} 条）`);
     for (const g of traffics) {
-      const cost = g.cost ? `参考费用 ${(g.cost / 100).toFixed(0)} 元` : '费用待查';
-      lines.push(`- ${g.from_city} 出发｜${g.transport_type}｜${g.duration}｜${cost}｜${g.content}`);
+      lines.push(
+        `- ${g.departFrom} → ${g.dest}｜${g.transport}｜${g.duration || '耗时待查'}｜费用：${g.cost || '待查'}｜${this.stripHtml(g.detail)}`
+      );
     }
 
     const text = lines.join('\n');
@@ -120,9 +135,9 @@ export class AiChatService {
       '回答要求：',
       '1. 用简体中文，语气亲切自然，像真人客服，不要太机械。',
       '2. 回答简洁，一般 2-4 句话说清即可，除非用户要求详细介绍。',
-      '3. 涉及景区名称、票价、开放时间、路线价格时，**只能引用下方「平台数据」中的真实信息**，绝对不要凭空编造价格或时间。',
+      '3. 涉及景区名称、票价、开放时间、路线价格、交通费用时，**只能引用下方「平台数据」中的真实信息**，绝对不要凭空编造价格或时间。',
       '4. 如果「平台数据」里没有用户问的内容，就诚实说明暂无该信息，并建议用户查看对应页面或联系人工客服（电话 400-123-4567）。',
-      '5. 票价请用「元」表述，不要提及「分」。',
+      '5. 票价、路线价格已在平台数据中标注为「元」，直接引用即可，不要换算、不要提及「分」。',
       '6. 用户闲聊（天气、心情、旅行建议等）时可以自然回应，但要适时把话题引回旅游服务。',
       '7. 如果用户问的是与旅游完全无关的专业问题（如写代码、做作业），礼貌说明你是旅游客服，帮不上这类问题。',
       '8. 不要使用 Markdown 语法（如 ** 或 ##），需要分行时直接换行。',
@@ -131,6 +146,7 @@ export class AiChatService {
       '- 订票流程：选择景区和票种 → 选择游玩日期 → 填写游客信息 → 完成支付 → 收到电子票。',
       '- 退改政策：未使用的门票可在游玩日期前 1 天申请退款，退款为订单金额的 90%；已使用的门票不支持退款。',
       '- 支付方式：支持微信支付、支付宝、银联。',
+      '- 下单与订单查询需要先登录；游客可以直接浏览景区、路线、交通攻略。',
       '- 人工客服电话：400-123-4567。',
       '',
       '=== 平台数据（实时，来自数据库）===',

@@ -14,7 +14,13 @@
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    /* 路径别名：必须与 vite.config.ts 的 resolve.alias['@'] 保持一致，
+       否则 vite 能解析、vue-tsc 却报 TS2307（编辑器里也会飘红） */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }
