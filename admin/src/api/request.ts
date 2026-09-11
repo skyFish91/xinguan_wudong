@@ -30,6 +30,18 @@ request.interceptors.response.use(
     return body;
   },
   (err) => {
+    // HTTP 401：登录态失效（token 过期/非法）。后端用 401 状态码返回，这里必须主动清理本地登录态，
+    // 否则后台会带着失效 token 反复请求，每个页面都刷 401。
+    if (err?.response?.status === 401) {
+      const hadToken = !!localStorage.getItem('token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+      if (hadToken && !window.location.pathname.startsWith('/login')) {
+        ElMessage.error('登录已过期，请重新登录');
+        window.location.href = '/login';
+      }
+      return Promise.reject(err);
+    }
     ElMessage.error(err.response?.data?.message || err.message || '网络错误');
     return Promise.reject(err);
   }

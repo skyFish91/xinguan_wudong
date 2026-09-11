@@ -12,7 +12,8 @@ import { CurrentUser } from '../common/decorators';
  * 老代码 Reflect.getMetadata('auth:roles', handler) 永远拿不到，装饰器形同虚设。
  *
  * 策略：路径前缀匹配 + 角色检查。
- *  - /api/auth/*                公开（登录/注册/profile）
+ *  - /api/auth/(login|register|sms-code|refresh)   公开
+ *  - /api/auth/(profile|password)                  要求登录（个人数据）
  *  - /api/admin/*               仅 admin
  *  - /api/(clothing|food|hotel|travel|community)/admin/*  仅 admin（运营域管理员接口）
  *  - /api/merchant/*            要求登录（商家角色由 controller 内 mustMerchant 精确校验）
@@ -54,8 +55,9 @@ export class AuthGuard implements IMiddleware<Context, NextFunction> {
         return;
       }
 
-      // 公开接口
-      if (path.startsWith('/api/auth/')) {
+      // 公开接口：仅登录/注册/验证码/刷新令牌
+      // （/api/auth/profile、/api/auth/password 属于个人数据，必须登录，否则 controller 里 user 为 null 会 500）
+      if (/^\/api\/auth\/(login|register|sms-code|refresh)(\/|$)/.test(path)) {
         await next();
         return;
       }
