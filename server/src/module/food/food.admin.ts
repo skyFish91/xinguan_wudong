@@ -254,6 +254,106 @@ export class FoodAdminService {
       farmSales: Number(farmAgg?.sales || 0),
     };
   }
+
+  // ---------- 商家仪表盘 ----------
+  async dashboard(merchantId: number) {
+    const dayjs = require('dayjs');
+
+    // 1. 商品总数（菜品+农产品）
+    const restaurant = await this.restaurantRepo.findOneBy({ merchantId });
+    const dishCount = restaurant ? await this.dishRepo.countBy({ restaurantId: restaurant.id }) : 0;
+    const farmCount = await this.farmRepo.countBy({ merchantId });
+    const productCount = dishCount + farmCount;
+    const onlineDishes = restaurant ? await this.dishRepo.countBy({ restaurantId: restaurant.id, status: 1 }) : 0;
+    const onlineFarms = await this.farmRepo.countBy({ merchantId, status: 1 });
+    const onlineProducts = onlineDishes + onlineFarms;
+
+    // 2. 订单总量和今日订单
+    const orderCount = await this.orderRepo.countBy({ merchantId });
+    const today = dayjs().format('YYYY-MM-DD');
+    const todayOrders = await this.orderRepo
+      .createQueryBuilder('o')
+      .where('o.merchant_id = :mid AND DATE(o.created_at) = :today', {
+        mid: merchantId,
+        today,
+      })
+      .getCount();
+
+    // 3. 销售总额和今日收入
+    const revenueResult = await this.orderRepo
+      .createQueryBuilder('o')
+      .select('COALESCE(SUM(o.pay_amount), 0)', 'total')
+      .where('o.merchant_id = :mid AND o.status >= 1 AND o.status NOT IN (5,7)', { mid: merchantId })
+      .getRawOne();
+    const totalRevenue = parseFloat(revenueResult?.total || '0');
+
+    const todayRevenueResult = await this.orderRepo
+      .createQueryBuilder('o')
+      .select('COALESCE(SUM(o.pay_amount), 0)', 'total')
+      .where('o.merchant_id = :mid AND o.status >= 1 AND o.status NOT IN (5,7) AND DATE(o.created_at) = :today', {
+        mid: merchantId,
+        today,
+      })
+      .getRawOne();
+    const todayRevenue = parseFloat(todayRevenueResult?.total || '0');
+
+    // 4. 评价总数和待回复
+    let reviewCount = 0;
+    let pendingReviews = 0;
+    if (restaurant) {
+      reviewCount = await this.reviewRepo
+        .createQueryBuilder('r')
+        .where('r.biz_type = :type AND r.biz_id = :id', { type: 'restaurant', id: restaurant.id })
+        .getCount();
+      pendingReviews = await this.reviewRepo
+        .createQueryBuilder('r')
+        .where('r.biz_type = :type AND r.biz_id = :id AND (r.merchant_reply IS NULL OR r.merchant_reply = "")', {
+          type: 'restaurant',
+          id: restaurant.id,
+        })
+        .getCount();
+    }
+
+    // 5. 销售趋势（近7天）
+    const revenueTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
+      const dayRevenue = await this.orderRepo
+        .createQueryBuilder('o')
+        .select('COALESCE(SUM(o.pay_amount), 0)', 'revenue')
+        .where('o.merchant_id = :mid AND o.status >= 1 AND o.status NOT IN (5,7) AND DATE(o.created_at) = :date', {
+          mid: merchantId,
+          date,
+        })
+        .getRawOne();
+      revenueTrend.push({
+        date: dayjs(date).format('MM-DD'),
+        revenue: parseFloat(dayRevenue?.revenue || '0'),
+      });
+    }
+
+    // 6. 订单状态分布
+    const orderStatus = {
+      pending: await this.orderRepo.countBy({ merchantId, status: 0 }),
+      paid: await this.orderRepo.countBy({ merchantId, status: 1 }),
+      shipped: await this.orderRepo.countBy({ merchantId, status: 2 }),
+      completed: await this.orderRepo.countBy({ merchantId, status: 3 }),
+      cancelled: await this.orderRepo.countBy({ merchantId, status: 5 }),
+    };
+
+    return {
+      productCount,
+      onlineProducts,
+      orderCount,
+      todayOrders,
+      totalRevenue,
+      todayRevenue,
+      reviewCount,
+      pendingReviews,
+      revenueTrend,
+      orderStatus,
+    };
+  }
 }
 
 @ApiTags(['商家后台-食'])
@@ -385,5 +485,12 @@ export class FoodAdminController {
   @Get('/stats')
   async stats(@CurrentUserParam() user: CurrentUser) {
     return this.foodAdminService.stats(user.merchantId);
+  }
+
+  @ApiOperation({ summary: '商家仪表盘数据' })
+  @Auth('merchant')
+  @Get('/dashboard')
+  async dashboard(@CurrentUserParam() user: CurrentUser) {
+    return this.foodAdminService.dashboard(user.merchantId);
   }
 }

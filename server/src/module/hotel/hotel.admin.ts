@@ -261,6 +261,94 @@ export class HotelAdminService {
       orderCount: Number(orderAgg?.orders || 0),
     };
   }
+
+  // ---------- 商家仪表盘 ----------
+  async dashboard(merchantId: number) {
+    // 1. 商品总数（民宿+房型）
+    const homestays = await this.homestayRepo.findBy({ merchantId });
+    const homestayIds = homestays.map(h => h.id);
+    const productCount = homestays.length;
+    const onlineProducts = homestays.filter(h => h.status === 1).length;
+
+    // 2. 订单总量和今日订单
+    const orderCount = await this.orderRepo.countBy({ merchantId, orderType: OrderType.HOTEL });
+    const today = dayjs().format('YYYY-MM-DD');
+    const todayOrders = await this.orderRepo
+      .createQueryBuilder('o')
+      .where('o.merchant_id = :mid AND o.order_type = :type AND DATE(o.created_at) = :today', {
+        mid: merchantId,
+        type: OrderType.HOTEL,
+        today,
+      })
+      .getCount();
+
+    // 3. 销售总额和今日收入
+    const revenueResult = await this.orderRepo
+      .createQueryBuilder('o')
+      .select('COALESCE(SUM(o.pay_amount), 0)', 'total')
+      .where('o.merchant_id = :mid AND o.order_type = :type AND o.status >= 1 AND o.status NOT IN (5,7)', {
+        mid: merchantId,
+        type: OrderType.HOTEL,
+      })
+      .getRawOne();
+    const totalRevenue = parseFloat(revenueResult?.total || '0');
+
+    const todayRevenueResult = await this.orderRepo
+      .createQueryBuilder('o')
+      .select('COALESCE(SUM(o.pay_amount), 0)', 'total')
+      .where('o.merchant_id = :mid AND o.order_type = :type AND o.status >= 1 AND o.status NOT IN (5,7) AND DATE(o.created_at) = :today', {
+        mid: merchantId,
+        type: OrderType.HOTEL,
+        today,
+      })
+      .getRawOne();
+    const todayRevenue = parseFloat(todayRevenueResult?.total || '0');
+
+    // 4. 评价总数和待回复（酒店评价暂时用0）
+    const reviewCount = 0;
+    const pendingReviews = 0;
+
+    // 5. 销售趋势（近7天）
+    const revenueTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
+      const dayRevenue = await this.orderRepo
+        .createQueryBuilder('o')
+        .select('COALESCE(SUM(o.pay_amount), 0)', 'revenue')
+        .where('o.merchant_id = :mid AND o.order_type = :type AND o.status >= 1 AND o.status NOT IN (5,7) AND DATE(o.created_at) = :date', {
+          mid: merchantId,
+          type: OrderType.HOTEL,
+          date,
+        })
+        .getRawOne();
+      revenueTrend.push({
+        date: dayjs(date).format('MM-DD'),
+        revenue: parseFloat(dayRevenue?.revenue || '0'),
+      });
+    }
+
+    // 6. 订单状态分布
+    const orderStatus = {
+      pending: await this.orderRepo.countBy({ merchantId, orderType: OrderType.HOTEL, status: 0 }),
+      paid: await this.orderRepo.countBy({ merchantId, orderType: OrderType.HOTEL, status: 1 }),
+      shipped: await this.orderRepo.countBy({ merchantId, orderType: OrderType.HOTEL, status: 2 }),
+      completed: await this.orderRepo.countBy({ merchantId, orderType: OrderType.HOTEL, status: 3 }),
+      cancelled: await this.orderRepo.countBy({ merchantId, orderType: OrderType.HOTEL, status: 5 }),
+    };
+
+    return {
+      productCount,
+      onlineProducts,
+      orderCount,
+      todayOrders,
+      totalRevenue,
+      todayRevenue,
+      reviewCount,
+      pendingReviews,
+      revenueTrend,
+      orderStatus,
+    };
+  }
 }
 
 @ApiTags(['商家后台-住'])
@@ -367,5 +455,12 @@ export class HotelAdminController {
   @Get('/stats')
   async stats(@CurrentUserParam() user: CurrentUser) {
     return this.hotelAdminService.stats(user.merchantId);
+  }
+
+  @ApiOperation({ summary: '商家仪表盘数据' })
+  @Auth('merchant')
+  @Get('/dashboard')
+  async dashboard(@CurrentUserParam() user: CurrentUser) {
+    return this.hotelAdminService.dashboard(user.merchantId);
   }
 }
