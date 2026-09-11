@@ -64,17 +64,26 @@ for (const dir of frontDirs) {
 
 // ---- 3. 归一化 & 差集 ----
 const normSeg = s => s.replace(/\$\{[^}]+\}/g, ':p').replace(/:[A-Za-z_][\w]*/g, ':p').replace(/\/+$/, '') || '/';
-const normPath = p => {
-  let x = p.replace(/^\/api/, '');
+// 注意：不能简单剥离 /api 前缀，否则 /api/ai/chat 与 /ai/chat 会被误判成同一条，
+// 而这个差异正是「前端代理得到、但后端路由不对」的典型 bug。
+// 正确做法：前端相对路径按 axios 的 baseURL 补回前缀，再做精确比对。
+const API_BASE = process.env.ROUTE_DIFF_BASE || '/api';
+const normPath = (p, isFront) => {
+  let x = String(p).trim();
+  if (isFront && !x.startsWith(API_BASE + '/') && x !== API_BASE) {
+    x = API_BASE + (x.startsWith('/') ? x : '/' + x);
+  }
   if (!x.startsWith('/')) x = '/' + x;
   return normSeg(x);
 };
 
-const backendSet = new Set(backendRoutes.map(r => `${r.method} ${normPath(r.full)}`));
-const backendPatterns = backendRoutes.map(r => ({ method: r.method, segs: normPath(r.full).split('/').filter(Boolean) }));
+const backendPatterns = backendRoutes.map(r => ({
+  method: r.method,
+  segs: normPath(r.full, false).split('/').filter(Boolean),
+}));
 
 function match(method, p) {
-  const segs = normPath(p).split('/').filter(Boolean);
+  const segs = normPath(p, true).split('/').filter(Boolean);
   return backendPatterns.some(bp => {
     if (bp.method !== method) return false;
     if (bp.segs.length !== segs.length) return false;

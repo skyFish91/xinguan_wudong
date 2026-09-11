@@ -1,7 +1,9 @@
 import { Controller, Post, Body, Inject } from '@midwayjs/core';
 import { AiChatService, ChatMessage } from '../service/chat.service';
 
-@Controller('/ai')
+// 前缀必须是 /api/ai：与其余模块保持一致，且 auth.guard 的公开规则
+// 是按 /api/ai/* 匹配的（写成 /ai 会导致路由绕过守卫规则、且前端代理不到）
+@Controller('/api/ai')
 export class AiChatController {
   @Inject()
   aiChatService: AiChatService;
