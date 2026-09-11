@@ -258,7 +258,7 @@ console.log(data.data.message); // AI 的回复
 ### Q2: 如何启动前端？
 **A**: 
 ```bash
-cd web
+cd qianduan0/web   # ⚠️ C 端在 qianduan0/web，根目录 web/ 已废弃
 npm install
 npm run dev
 # 然后访问 http://localhost:5173
