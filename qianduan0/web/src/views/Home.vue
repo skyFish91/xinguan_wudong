@@ -63,11 +63,40 @@
 
       <!-- ============ 公告 ============ -->
       <transition-group v-if="home.announcements?.length" name="fade" tag="div" class="announces">
-        <div v-for="a in home.announcements" :key="a.id" class="announce glass">
+        <div
+          v-for="a in home.announcements"
+          :key="a.id"
+          class="announce glass"
+          role="button"
+          tabindex="0"
+          @click="openAnnounce(a)"
+          @keyup.enter="openAnnounce(a)"
+        >
           <el-icon class="announce-icon"><Bell /></el-icon>
           <span class="announce-text">{{ a.title }}</span>
+          <el-icon class="announce-arrow"><ArrowRight /></el-icon>
         </div>
       </transition-group>
+
+      <!-- 公告详情弹窗 -->
+      <el-dialog
+        v-model="announceVisible"
+        :title="currentAnnounce?.title || '公告'"
+        width="560px"
+        align-center
+        class="announce-dialog"
+      >
+        <div class="announce-body">
+          <div class="announce-meta">
+            <el-icon class="announce-meta-icon"><Bell /></el-icon>
+            <span>{{ announceDate }}</span>
+          </div>
+          <p class="announce-content">{{ currentAnnounce?.content || '暂无正文内容。' }}</p>
+        </div>
+        <template #footer>
+          <el-button type="primary" @click="announceVisible = false">我知道了</el-button>
+        </template>
+      </el-dialog>
 
       <!-- ============ 活动横幅 ============ -->
       <section v-if="loading || home.activities?.length" class="wd-section">
@@ -316,6 +345,20 @@ const home = reactive<any>({
 const loading = ref(true);
 const heroIndex = ref(0);
 const carouselRef = ref<any>(null);
+
+/** 公告详情弹窗 */
+const announceVisible = ref(false);
+const currentAnnounce = ref<any>(null);
+const announceDate = computed(() => {
+  const d = currentAnnounce.value?.createdAt || currentAnnounce.value?.created_at;
+  if (!d) return '';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '' : `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+});
+function openAnnounce(a: any) {
+  currentAnnounce.value = a;
+  announceVisible.value = true;
+}
 
 function goSlide(i: number) {
   carouselRef.value?.setActiveItem?.(i);
@@ -583,15 +626,55 @@ onMounted(async () => {
   border-radius: var(--wd-r-sm);
   font-size: 13.5px;
   color: var(--wd-text-2);
+  cursor: pointer;
+  transition: transform 0.25s var(--wd-ease), box-shadow 0.25s var(--wd-ease);
+}
+.announce:hover {
+  transform: translateY(-1px);
 }
 .announce-icon {
   color: var(--wd-brand);
   flex-shrink: 0;
 }
 .announce-text {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.announce-arrow {
+  color: var(--wd-text-3);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.25s var(--wd-ease), transform 0.25s var(--wd-ease);
+}
+.announce:hover .announce-arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* 公告详情弹窗 */
+.announce-body {
+  padding: 4px 2px 8px;
+}
+.announce-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--wd-text-3);
+  margin-bottom: 16px;
+}
+.announce-meta-icon {
+  color: var(--wd-brand);
+}
+.announce-content {
+  font-size: 14.5px;
+  line-height: 1.9;
+  color: var(--wd-text-1);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
 }
 
 /* ---------- 活动 ---------- */
