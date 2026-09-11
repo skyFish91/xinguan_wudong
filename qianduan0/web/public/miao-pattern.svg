@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" fill="none">
+  <!--
+    苗族纹样底纹（可平铺）
+    取材自苗族刺绣与蜡染中反复出现的三种母题：
+      · 回纹（雷纹）   —— 连续折线，象征绵延
+      · 铜鼓太阳纹     —— 中心同心点，象征太阳与鼓面
+      · 菱形挑花格     —— 苗绣底布上的基础骨架
+    颜色只用白/银，靠 opacity 控制深浅，方便压在任意深色底上。
+  -->
+  <g stroke="#ffffff" stroke-width="1.1" fill="none" opacity="0.5">
+    <!-- 菱形挑花骨架 -->
+    <path d="M48 4 L92 48 L48 92 L4 48 Z" />
+    <path d="M48 22 L74 48 L48 74 L22 48 Z" opacity="0.75" />
+
+    <!-- 四角回纹（两折钩） -->
+    <path d="M8 8 H24 V20 H16 V14" stroke-linecap="square" />
+    <path d="M88 8 H72 V20 H80 V14" stroke-linecap="square" />
+    <path d="M8 88 H24 V76 H16 V82" stroke-linecap="square" />
+    <path d="M88 88 H72 V76 H80 V82" stroke-linecap="square" />
+  </g>
+
+  <!-- 铜鼓太阳纹：同心点 -->
+  <g fill="#ffffff" opacity="0.62">
+    <circle cx="48" cy="48" r="3.4" />
+    <circle cx="48" cy="48" r="8" opacity="0.34" />
+    <circle cx="48" cy="34" r="1.5" />
+    <circle cx="48" cy="62" r="1.5" />
+    <circle cx="34" cy="48" r="1.5" />
+    <circle cx="62" cy="48" r="1.5" />
+  </g>
+</svg>

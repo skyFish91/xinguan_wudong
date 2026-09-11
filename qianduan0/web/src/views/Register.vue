@@ -1,41 +1,74 @@
 <template>
-  <div class="reg-page">
-    <el-card class="reg-card">
-      <h2 class="title">注册账号</h2>
-      <el-form :model="form" label-width="0">
-        <el-form-item>
-          <el-input v-model="form.phone" placeholder="手机号" maxlength="11" />
-        </el-form-item>
-        <el-form-item>
-          <div class="code-row">
-            <el-input v-model="form.smsCode" placeholder="短信验证码（测试环境填 123456）" />
-            <el-button :disabled="counting > 0" @click="sendCode">{{ counting > 0 ? `${counting}s` : '获取验证码' }}</el-button>
-          </div>
-        </el-form-item>
-        <el-form-item>
-          <el-input v-model="form.nickname" placeholder="昵称" />
-        </el-form-item>
-        <el-form-item>
-          <el-input v-model="form.password" type="password" placeholder="密码（至少 6 位）" show-password />
-        </el-form-item>
-        <el-form-item>
-          <el-input v-model="form.confirmPassword" type="password" placeholder="确认密码" show-password />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" class="full" :loading="loading" @click="onRegister">注册</el-button>
-        </el-form-item>
-      </el-form>
-      <div class="links">
-        <router-link to="/login">已有账号，去登录</router-link>
-      </div>
-    </el-card>
-  </div>
+  <AuthShell
+    title="创建账号"
+    subtitle="三步之后，就能收藏好物、预订民宿、分享游记"
+    visual-title="从一次注册开始，走进苗乡"
+    visual-desc="加入乌东，收藏非遗好物、预订山间民宿，把旅途见闻写进社区。"
+  >
+    <el-form :model="form" label-position="top">
+      <el-form-item label="手机号">
+        <el-input v-model="form.phone" placeholder="请输入手机号" maxlength="11" size="large">
+          <template #prefix><el-icon><Iphone /></el-icon></template>
+        </el-input>
+      </el-form-item>
+
+      <el-form-item label="短信验证码">
+        <div class="code-row">
+          <el-input v-model="form.smsCode" placeholder="测试环境填 123456" size="large">
+            <template #prefix><el-icon><Message /></el-icon></template>
+          </el-input>
+          <el-button size="large" :disabled="counting > 0" @click="sendCode">
+            {{ counting > 0 ? `${counting}s` : '获取验证码' }}
+          </el-button>
+        </div>
+      </el-form-item>
+
+      <el-form-item label="昵称">
+        <el-input v-model="form.nickname" placeholder="给自己取个名字" size="large" />
+      </el-form-item>
+
+      <el-form-item label="密码">
+        <el-input
+          v-model="form.password"
+          type="password"
+          placeholder="至少 6 位"
+          show-password
+          size="large"
+        >
+          <template #prefix><el-icon><Lock /></el-icon></template>
+        </el-input>
+      </el-form-item>
+
+      <el-form-item label="确认密码">
+        <el-input
+          v-model="form.confirmPassword"
+          type="password"
+          placeholder="请再次输入密码"
+          show-password
+          size="large"
+        >
+          <template #prefix><el-icon><Lock /></el-icon></template>
+        </el-input>
+      </el-form-item>
+
+      <el-button type="primary" size="large" class="full" :loading="loading" @click="onRegister">
+        注册
+      </el-button>
+    </el-form>
+
+    <div class="links">
+      <router-link to="/login">已有账号，去登录</router-link>
+      <router-link to="/">返回首页</router-link>
+    </div>
+  </AuthShell>
 </template>
 
 <script setup lang="ts">
 import { onBeforeUnmount, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { Iphone, Lock, Message } from '@element-plus/icons-vue';
+import AuthShell from '../components/AuthShell.vue';
 import request from '../api/request';
 
 const router = useRouter();
@@ -100,31 +133,32 @@ onBeforeUnmount(() => clearInterval(timer));
 </script>
 
 <style scoped>
-.reg-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #2c3e50, #34495e);
-}
-.reg-card {
-  width: 400px;
-  padding: 20px;
-}
-.title {
-  text-align: center;
-  margin-bottom: 20px;
-}
-.full {
-  width: 100%;
-}
 .code-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
+.code-row .el-input {
+  flex: 1;
+}
+
+.full {
+  width: 100%;
+  margin-top: var(--wd-s2);
+}
+
 .links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--wd-s4);
   font-size: 13px;
-  text-align: center;
+  color: var(--wd-text-3);
+}
+.links a {
+  text-decoration: none;
+  transition: color 0.24s var(--wd-ease);
+}
+.links a:hover {
+  color: var(--wd-brand);
 }
 </style>

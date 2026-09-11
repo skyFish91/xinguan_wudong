@@ -1,212 +1,228 @@
 ﻿<template>
   <div class="search-page">
-    <div class="container">
-      <!-- 搜索框 -->
-      <div class="search-header card">
-        <el-input
-          v-model="keyword"
-          size="large"
-          placeholder="搜索游记、话题、用户..."
-          prefix-icon="Search"
-          clearable
-          @keyup.enter="handleSearch"
-          @clear="handleClear"
-        >
-          <template #append>
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
-          </template>
-        </el-input>
-      </div>
+    <TopNav />
 
-      <!-- Tab 切换 -->
-      <div class="search-tabs">
-        <div
-          v-for="tab in tabs"
-          :key="tab.value"
-          :class="['search-tab', { active: currentTab === tab.value }]"
-          @click="switchTab(tab.value)"
-        >
-          {{ tab.label }}
-          <span class="tab-count" v-if="getTabCount(tab.value) > 0">
-            ({{ formatCount(getTabCount(tab.value)) }})
-          </span>
+    <div class="wd-container wd-page">
+      <!-- 搜索框 -->
+      <div class="search-hero">
+        <h1 class="hero-title">搜索乌东</h1>
+        <p class="hero-sub">游记、话题、旅人，一次搜个遍</p>
+
+        <div class="search-box glass-strong">
+          <el-input
+            v-model="keyword"
+            size="large"
+            placeholder="试试「梯田」「银饰」「长桌宴」…"
+            :prefix-icon="Search"
+            clearable
+            @keyup.enter="handleSearch"
+            @clear="handleClear"
+          >
+            <template #append>
+              <el-button type="primary" @click="handleSearch">搜索</el-button>
+            </template>
+          </el-input>
         </div>
       </div>
 
-      <!-- 搜索结果 -->
-      <div class="search-content">
-        <!-- 游记结果 -->
-        <div v-if="currentTab === 'posts'">
-          <div class="waterfall" v-if="posts.length">
-            <div
-              v-for="post in posts"
-              :key="post.id"
-              class="waterfall-item"
-              @click="$router.push(`/community/${post.id}`)"
+      <!-- 未搜索：历史 + 热搜 -->
+      <template v-if="!searched">
+        <div class="wd-card panel" v-if="searchHistory.length">
+          <div class="panel-head">
+            <h3 class="panel-title">搜索历史</h3>
+            <el-button text size="small" @click="clearHistory">
+              <el-icon><Delete /></el-icon>
+              清空
+            </el-button>
+          </div>
+          <div class="chip-wrap">
+            <span
+              v-for="(item, index) in searchHistory"
+              :key="index"
+              class="history-chip"
+              @click="searchHistoryItem(item)"
             >
-              <div class="post-card card">
-                <div class="post-image">
-                  <img :src="post.cover" :alt="post.title" />
-                  <div class="video-badge" v-if="post.videoUrl">
-                    <el-icon><VideoPlay /></el-icon>
-                  </div>
-                </div>
-                <div class="post-content">
-                  <h3 class="post-title" v-html="highlightKeyword(post.title)"></h3>
-                  <p class="post-desc" v-html="highlightKeyword(post.content)"></p>
-                  <div class="post-footer">
-                    <div class="author">
-                      <el-avatar :size="28" :src="post.userAvatar" />
-                      <span>{{ post.userName }}</span>
-                    </div>
-                    <div class="stats">
-                      <span><el-icon><View /></el-icon> {{ formatCount(post.viewCount) }}</span>
-                      <span><el-icon><Star /></el-icon> {{ formatCount(post.likeCount) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              {{ item }}
+              <el-icon class="chip-close" @click.stop="removeHistory(index)"><Close /></el-icon>
+            </span>
           </div>
         </div>
 
-        <!-- 话题结果 -->
-        <div v-if="currentTab === 'topics'">
-          <div class="topic-list" v-if="topics.length">
+        <div class="wd-card panel" v-if="hotSearches.length">
+          <div class="panel-head">
+            <h3 class="panel-title">热门搜索</h3>
+            <el-icon class="panel-icon"><TrendCharts /></el-icon>
+          </div>
+          <div class="hot-list">
             <div
-              v-for="topic in topics"
-              :key="topic.id"
-              class="topic-item card"
-              @click="$router.push(`/community/topic/${topic.id}`)"
+              v-for="(item, index) in hotSearches"
+              :key="index"
+              class="hot-item"
+              @click="searchHistoryItem(item.keyword)"
             >
-              <div class="topic-cover">
-                <img :src="topic.cover" :alt="topic.name" />
-              </div>
-              <div class="topic-info">
-                <h3 class="topic-name" v-html="highlightKeyword('# ' + topic.name)"></h3>
-                <p class="topic-desc">{{ topic.description }}</p>
-                <div class="topic-stats">
-                  <span>{{ formatCount(topic.postCount) }} 篇游记</span>
-                  <span>{{ formatCount(topic.followCount) }} 人关注</span>
-                </div>
-              </div>
-              <div class="topic-action">
-                <el-button
-                  :type="topic.isFollowed ? '' : 'primary'"
-                  round
-                  @click.stop="handleFollowTopic(topic)"
-                >
-                  {{ topic.isFollowed ? '已关注' : '关注' }}
-                </el-button>
+              <span :class="['hot-rank', { top: index < 3 }]">{{ index + 1 }}</span>
+              <span class="hot-keyword">{{ item.keyword }}</span>
+              <el-icon v-if="item.trend === 'up'" class="trend up"><CaretTop /></el-icon>
+              <el-icon v-if="item.trend === 'down'" class="trend down"><CaretBottom /></el-icon>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- 已搜索：结果区 -->
+      <template v-else>
+        <!-- Tab 切换（液态玻璃吸顶） -->
+        <div class="result-bar glass-strong">
+          <div class="result-tabs">
+            <div
+              v-for="tab in tabs"
+              :key="tab.value"
+              :class="['result-tab', { active: currentTab === tab.value }]"
+              @click="switchTab(tab.value)"
+            >
+              {{ tab.label }}
+              <span class="tab-count" v-if="getTabCount(tab.value)">{{ getTabCount(tab.value) }}</span>
+            </div>
+          </div>
+          <span class="result-summary">
+            “{{ keyword }}” 共找到 {{ formatCount(totalAll) }} 条结果
+          </span>
+        </div>
+
+        <!-- 加载中 -->
+        <div v-if="loading && !getCurrentList().length" class="wd-waterfall">
+          <SkeletonCard v-for="i in 8" :key="`s${i}`" variant="waterfall" cover="160px" />
+        </div>
+
+        <!-- 游记结果（瀑布流） -->
+        <div v-else-if="currentTab === 'posts' && posts.length" class="wd-waterfall">
+          <article
+            v-for="(post, i) in posts"
+            :key="post.id"
+            class="wd-card wd-card-hover post-card wd-rise"
+            :style="{ animationDelay: `${Math.min(i, 10) * 45}ms` }"
+            @click="$router.push(`/community/${post.id}`)"
+          >
+            <div class="wd-media" :style="{ height: postHeight(post) + 'px' }">
+              <img :src="img(post.cover, post.title)" :alt="post.title" @error="imgError" />
+              <div class="video-badge wd-chip" v-if="post.videoUrl">
+                <el-icon><VideoPlay /></el-icon> 视频
               </div>
             </div>
+            <div class="wd-card-body">
+              <h3 class="wd-title clamp-2" v-html="highlightKeyword(post.title)"></h3>
+              <p class="post-desc clamp-2" v-html="highlightKeyword(post.content)"></p>
+              <div class="post-footer">
+                <div class="author">
+                  <el-avatar :size="24" :src="post.userAvatar">{{ (post.userName || '旅').slice(0, 1) }}</el-avatar>
+                  <span class="author-name clamp-1">{{ post.userName }}</span>
+                </div>
+                <div class="stats">
+                  <span><el-icon><View /></el-icon> {{ formatCount(post.viewCount) }}</span>
+                  <span><el-icon><Star /></el-icon> {{ formatCount(post.likeCount) }}</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- 话题结果 -->
+        <div v-else-if="currentTab === 'topics' && topics.length" class="result-list">
+          <div
+            v-for="(topic, i) in topics"
+            :key="topic.id"
+            class="wd-card wd-card-hover row-card wd-rise"
+            :style="{ animationDelay: `${Math.min(i, 8) * 45}ms` }"
+            @click="$router.push(`/community/topic/${topic.id}`)"
+          >
+            <div class="row-thumb">
+              <img :src="img(topic.cover, topic.name, true)" :alt="topic.name" @error="imgError" />
+            </div>
+            <div class="row-main">
+              <h3 class="row-title" v-html="highlightKeyword('# ' + topic.name)"></h3>
+              <p class="row-desc clamp-2">{{ topic.intro || topic.description || '暂无简介' }}</p>
+              <div class="row-meta">
+                <span>{{ formatCount(topic.postCount) }} 篇游记</span>
+                <span class="dot"></span>
+                <span>{{ formatCount(topic.followCount) }} 人关注</span>
+              </div>
+            </div>
+            <el-button
+              class="row-action"
+              :type="topic.isFollowed ? '' : 'primary'"
+              round
+              @click.stop="handleFollowTopic(topic)"
+            >
+              {{ topic.isFollowed ? '已关注' : '关注' }}
+            </el-button>
           </div>
         </div>
 
         <!-- 用户结果 -->
-        <div v-if="currentTab === 'users'">
-          <div class="user-list" v-if="users.length">
-            <div
-              v-for="user in users"
-              :key="user.id"
-              class="user-item card"
-              @click="$router.push(`/community/user/${user.id}`)"
-            >
-              <el-avatar :size="64" :src="user.avatar" />
-              <div class="user-info">
-                <h3 class="user-name" v-html="highlightKeyword(user.nickname)"></h3>
-                <p class="user-bio">{{ user.bio || '这个人很懒，什么都没写' }}</p>
-                <div class="user-stats">
-                  <span>{{ formatCount(user.postCount) }} 游记</span>
-                  <span>{{ formatCount(user.followerCount) }} 粉丝</span>
-                </div>
-              </div>
-              <div class="user-action">
-                <el-button
-                  :type="user.isFollowed ? '' : 'primary'"
-                  round
-                  @click.stop="handleFollowUser(user)"
-                >
-                  {{ user.isFollowed ? '已关注' : '关注' }}
-                </el-button>
+        <div v-else-if="currentTab === 'users' && users.length" class="result-list">
+          <div
+            v-for="(user, i) in users"
+            :key="user.id"
+            class="wd-card wd-card-hover row-card wd-rise"
+            :style="{ animationDelay: `${Math.min(i, 8) * 45}ms` }"
+            @click="$router.push(`/community/user/${user.id}`)"
+          >
+            <el-avatar :size="60" :src="user.avatar" class="row-avatar">
+              {{ (user.nickname || '旅').slice(0, 1) }}
+            </el-avatar>
+            <div class="row-main">
+              <h3 class="row-title" v-html="highlightKeyword(user.nickname)"></h3>
+              <p class="row-desc clamp-2">{{ user.bio || '这个人很懒，什么都没写' }}</p>
+              <div class="row-meta">
+                <span>{{ formatCount(user.postCount) }} 游记</span>
+                <span class="dot"></span>
+                <span>{{ formatCount(user.followerCount) }} 粉丝</span>
               </div>
             </div>
+            <el-button
+              class="row-action"
+              :type="user.isFollowed ? '' : 'primary'"
+              round
+              @click.stop="handleFollowUser(user)"
+            >
+              {{ user.isFollowed ? '已关注' : '关注' }}
+            </el-button>
           </div>
         </div>
 
         <!-- 空状态 -->
-        <el-empty
-          v-if="!loading && !searched"
-          description="输入关键词开始搜索"
-          :image-size="120"
-        />
-        <el-empty
-          v-if="!loading && searched && getCurrentList().length === 0"
-          description="没有找到相关内容"
-          :image-size="120"
-        />
+        <div v-else-if="!loading" class="wd-card">
+          <EmptyState
+            variant="search"
+            title="没有找到相关内容"
+            desc="换个说法试试，比如只写关键词「梯田」「银饰」，或从热门话题进入。"
+          >
+            <el-button @click="handleClear">返回</el-button>
+            <router-link to="/community"><el-button type="primary">去社区逛逛</el-button></router-link>
+          </EmptyState>
+        </div>
 
         <!-- 加载更多 -->
         <div class="load-more" v-if="hasMore && getCurrentList().length">
-          <el-button @click="loadMore" :loading="loading">
-            {{ loading ? '加载中...' : '加载更多' }}
+          <el-button size="large" :loading="loading" @click="loadMore">
+            {{ loading ? '加载中…' : '加载更多' }}
           </el-button>
         </div>
-      </div>
-
-      <!-- 搜索历史 -->
-      <div class="search-history card" v-if="!searched && searchHistory.length">
-        <div class="history-header">
-          <h3>搜索历史</h3>
-          <el-button text @click="clearHistory">
-            <el-icon><Delete /></el-icon>
-            清空
-          </el-button>
-        </div>
-        <div class="history-tags">
-          <el-tag
-            v-for="(item, index) in searchHistory"
-            :key="index"
-            closable
-            @close="removeHistory(index)"
-            @click="searchHistoryItem(item)"
-            class="history-tag"
-          >
-            {{ item }}
-          </el-tag>
-        </div>
-      </div>
-
-      <!-- 热门搜索 -->
-      <div class="hot-search card" v-if="!searched && hotSearches.length">
-        <div class="hot-header">
-          <h3>热门搜索</h3>
-          <el-icon><TrendCharts /></el-icon>
-        </div>
-        <div class="hot-list">
-          <div
-            v-for="(item, index) in hotSearches"
-            :key="index"
-            class="hot-item"
-            @click="searchHistoryItem(item.keyword)"
-          >
-            <span :class="['hot-rank', { top: index < 3 }]">{{ index + 1 }}</span>
-            <span class="hot-keyword">{{ item.keyword }}</span>
-            <el-icon v-if="item.trend === 'up'" color="#f56c6c"><CaretTop /></el-icon>
-            <el-icon v-if="item.trend === 'down'" color="#67c23a"><CaretBottom /></el-icon>
-          </div>
-        </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
+import TopNav from '../../components/TopNav.vue';
+import SkeletonCard from '../../components/SkeletonCard.vue';
+import EmptyState from '../../components/EmptyState.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { View, Star, VideoPlay, Delete, TrendCharts, CaretTop, CaretBottom } from '@element-plus/icons-vue'
+import { View, Star, VideoPlay, Delete, Close, Search, TrendCharts, CaretTop, CaretBottom } from '@element-plus/icons-vue'
 import { communityApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
+import { img, imgError } from '../../utils/media'
 
 const route = useRoute()
 const router = useRouter()
@@ -216,7 +232,7 @@ const currentTab = ref('posts')
 const tabs = [
   { label: '游记', value: 'posts' },
   { label: '话题', value: 'topics' },
-  { label: '用户', value: 'users' }
+  { label: '用户', value: 'users' },
 ]
 
 const posts = ref([])
@@ -238,51 +254,41 @@ const hotSearches = ref([
   { keyword: '苗族银饰', trend: 'up' },
   { keyword: '梯田摄影', trend: 'down' },
   { keyword: '长桌宴', trend: '' },
-  { keyword: '蜡染体验', trend: 'up' }
+  { keyword: '蜡染体验', trend: 'up' },
 ])
 
-// 获取 Tab 数量
+const totalAll = computed(() => postsTotal.value + topicsTotal.value + usersTotal.value)
+
+// 瀑布流高度：按 id 稳定错落
+const HEIGHTS = [180, 240, 200, 270, 190, 230, 210, 250]
+const postHeight = (post) => HEIGHTS[(Number(post.id) || 0) % HEIGHTS.length]
+
 const getTabCount = (tab) => {
   switch (tab) {
-    case 'posts':
-      return postsTotal.value
-    case 'topics':
-      return topicsTotal.value
-    case 'users':
-      return usersTotal.value
-    default:
-      return 0
+    case 'posts': return postsTotal.value
+    case 'topics': return topicsTotal.value
+    case 'users': return usersTotal.value
+    default: return 0
   }
 }
 
-// 获取当前列表
 const getCurrentList = () => {
   switch (currentTab.value) {
-    case 'posts':
-      return posts.value
-    case 'topics':
-      return topics.value
-    case 'users':
-      return users.value
-    default:
-      return []
+    case 'posts': return posts.value
+    case 'topics': return topics.value
+    case 'users': return users.value
+    default: return []
   }
 }
 
-// 执行搜索
 const handleSearch = async () => {
   if (!keyword.value.trim()) {
     ElMessage.warning('请输入搜索关键词')
     return
   }
-
-  // 保存搜索历史
   saveHistory(keyword.value)
-
-  // 更新 URL
   router.push({ query: { q: keyword.value } })
 
-  // 执行搜索
   searched.value = true
   page.value = 1
   posts.value = []
@@ -292,7 +298,6 @@ const handleSearch = async () => {
   await searchAll()
 }
 
-// 清空搜索
 const handleClear = () => {
   keyword.value = ''
   searched.value = false
@@ -302,32 +307,22 @@ const handleClear = () => {
   router.push({ query: {} })
 }
 
-// 搜索全部类型
 const searchAll = async () => {
   loading.value = true
   try {
-    const params = {
-      keyword: keyword.value,
-      page: page.value,
-      pageSize
-    }
-
-    // 并行搜索三种类型
+    const params = { keyword: keyword.value, page: page.value, pageSize }
     const [postsData, topicsData, usersData] = await Promise.all([
       communityApi.search({ ...params, type: 'post' }),
       communityApi.search({ ...params, type: 'topic' }),
-      communityApi.search({ ...params, type: 'user' })
+      communityApi.search({ ...params, type: 'user' }),
     ])
-
     posts.value = postsData.list || []
     topics.value = topicsData.list || []
     users.value = usersData.list || []
-
-    postsTotal.value = postsData.total || 0
-    topicsTotal.value = topicsData.total || 0
-    usersTotal.value = usersData.total || 0
-
-    hasMore.value = false // 首次搜索不支持加载更多（需要切换 Tab）
+    postsTotal.value = postsData.total || posts.value.length
+    topicsTotal.value = topicsData.total || topics.value.length
+    usersTotal.value = usersData.total || users.value.length
+    hasMore.value = false
   } catch (error) {
     ElMessage.error('搜索失败')
   } finally {
@@ -335,64 +330,43 @@ const searchAll = async () => {
   }
 }
 
-// 切换 Tab
 const switchTab = async (tab) => {
   currentTab.value = tab
   if (!searched.value) return
-
-  page.value = 1
-  await loadTabContent(true)
+  // 首次搜索已拉全量三类，切 Tab 无需再请求
+  hasMore.value = false
 }
 
-// 加载 Tab 内容
 const loadTabContent = async (reset = false) => {
   if (loading.value) return
-
   loading.value = true
   try {
-    if (reset) {
-      page.value = 1
-    }
-
+    if (reset) page.value = 1
     const params = {
       keyword: keyword.value,
-      type: currentTab.value === 'posts' ? 'post' : currentTab.value.slice(0, -1), // posts -> post
+      type: currentTab.value === 'posts' ? 'post' : currentTab.value.slice(0, -1),
       page: page.value,
-      pageSize
+      pageSize,
     }
-
     const data = await communityApi.search(params)
-
+    const list = data.list || []
     switch (currentTab.value) {
       case 'posts':
-        if (reset) {
-          posts.value = data.list || []
-        } else {
-          posts.value.push(...(data.list || []))
-        }
+        reset ? (posts.value = list) : posts.value.push(...list)
         postsTotal.value = data.total || 0
         hasMore.value = posts.value.length < postsTotal.value
         break
       case 'topics':
-        if (reset) {
-          topics.value = data.list || []
-        } else {
-          topics.value.push(...(data.list || []))
-        }
+        reset ? (topics.value = list) : topics.value.push(...list)
         topicsTotal.value = data.total || 0
         hasMore.value = topics.value.length < topicsTotal.value
         break
       case 'users':
-        if (reset) {
-          users.value = data.list || []
-        } else {
-          users.value.push(...(data.list || []))
-        }
+        reset ? (users.value = list) : users.value.push(...list)
         usersTotal.value = data.total || 0
         hasMore.value = users.value.length < usersTotal.value
         break
     }
-
     page.value++
   } catch (error) {
     ElMessage.error('加载失败')
@@ -401,67 +375,63 @@ const loadTabContent = async (reset = false) => {
   }
 }
 
-// 加载更多
-const loadMore = () => {
-  loadTabContent(false)
-}
+const loadMore = () => loadTabContent(false)
 
-// 关注话题
 const handleFollowTopic = async (topic) => {
   try {
     await communityApi.followTopic(topic.id)
     topic.isFollowed = !topic.isFollowed
-    topic.followCount += topic.isFollowed ? 1 : -1
+    topic.followCount = Math.max(0, (topic.followCount || 0) + (topic.isFollowed ? 1 : -1))
   } catch (error) {
-    ElMessage.error(error.message || '操作失败')
+    ElMessage.error('操作失败')
   }
 }
 
-// 关注用户
 const handleFollowUser = async (user) => {
   try {
     if (user.isFollowed) {
       await communityApi.unfollowUser(user.id)
       user.isFollowed = false
-      user.followerCount--
+      user.followerCount = Math.max(0, (user.followerCount || 0) - 1)
     } else {
       await communityApi.followUser(user.id)
       user.isFollowed = true
-      user.followerCount++
+      user.followerCount = (user.followerCount || 0) + 1
     }
   } catch (error) {
-    ElMessage.error(error.message || '操作失败')
+    ElMessage.error('操作失败')
   }
 }
 
-// 高亮关键词
+/** 高亮关键词：先转义再包裹，避免把用户输入当 HTML 执行 */
 const highlightKeyword = (text) => {
-  if (!keyword.value || !text) return text
-  const regex = new RegExp(`(${keyword.value})`, 'gi')
-  return text.replace(regex, '<span style="color: #667eea; font-weight: 600;">$1</span>')
+  if (!text) return ''
+  const safe = String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  const kw = keyword.value.trim()
+  if (!kw) return safe
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return safe.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="hl">$1</mark>')
 }
 
-// 搜索历史管理
 const loadHistory = () => {
   const history = localStorage.getItem('search_history')
   if (history) {
-    searchHistory.value = JSON.parse(history)
+    try {
+      searchHistory.value = JSON.parse(history) || []
+    } catch {
+      searchHistory.value = []
+    }
   }
 }
 
-const saveHistory = (keyword) => {
-  // 去重
-  const index = searchHistory.value.indexOf(keyword)
-  if (index > -1) {
-    searchHistory.value.splice(index, 1)
-  }
-  // 添加到最前
-  searchHistory.value.unshift(keyword)
-  // 最多保留 10 条
-  if (searchHistory.value.length > 10) {
-    searchHistory.value = searchHistory.value.slice(0, 10)
-  }
-  // 保存到本地
+const saveHistory = (kw) => {
+  const index = searchHistory.value.indexOf(kw)
+  if (index > -1) searchHistory.value.splice(index, 1)
+  searchHistory.value.unshift(kw)
+  if (searchHistory.value.length > 10) searchHistory.value = searchHistory.value.slice(0, 10)
   localStorage.setItem('search_history', JSON.stringify(searchHistory.value))
 }
 
@@ -480,403 +450,351 @@ const searchHistoryItem = (item) => {
   handleSearch()
 }
 
-// 格式化数字
 const formatCount = (count) => {
-  if (count >= 10000) {
-    return (count / 10000).toFixed(1) + 'w'
-  }
-  return count || 0
+  const n = Number(count) || 0
+  return n >= 10000 ? `${(n / 10000).toFixed(1)}w` : n
 }
 
 onMounted(() => {
   loadHistory()
-  // 如果有关键词，自动搜索
-  if (keyword.value) {
-    handleSearch()
-  }
+  if (keyword.value) handleSearch()
 })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .search-page {
   min-height: 100vh;
-  background: #f5f7fa;
-  padding: 40px 0;
+  padding-bottom: var(--wd-s9);
+}
 
-  .search-header {
-    margin-bottom: 24px;
-    padding: 32px;
+/* Hero */
+.search-hero {
+  padding: var(--wd-s6) 0 var(--wd-s7);
+  text-align: center;
+}
+.hero-title {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--wd-text-1);
+}
+.hero-sub {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--wd-text-3);
+}
+.search-box {
+  max-width: 640px;
+  margin: var(--wd-s6) auto 0;
+  padding: 10px 12px;
+  border-radius: var(--wd-r-pill);
+  box-shadow: var(--wd-sh-2);
+}
+.search-box :deep(.el-input__wrapper) {
+  box-shadow: none;
+  background: transparent;
+}
+.search-box :deep(.el-input-group__append) {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
 
-    :deep(.el-input-group__append) {
-      background: #667eea;
-      color: #fff;
-      border: none;
+/* 面板（历史/热搜） */
+.panel {
+  padding: var(--wd-s5) var(--wd-s6);
+  margin-bottom: var(--wd-s5);
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--wd-s4);
+}
+.panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--wd-text-1);
+}
+.panel-icon {
+  color: var(--wd-text-4);
+}
 
-      .el-button {
-        color: #fff;
-      }
-    }
+.chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.history-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--wd-r-pill);
+  font-size: 13px;
+  color: var(--wd-text-2);
+  background: #f1f3f7;
+  cursor: pointer;
+  transition: all 0.24s var(--wd-ease);
+}
+.history-chip:hover {
+  color: var(--wd-brand);
+  background: var(--wd-brand-soft);
+  transform: translateY(-2px);
+}
+.chip-close {
+  font-size: 12px;
+  color: var(--wd-text-4);
+}
+.chip-close:hover {
+  color: var(--wd-brand);
+}
+
+.hot-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 4px;
+}
+.hot-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--wd-r-xs);
+  cursor: pointer;
+  transition: background 0.24s var(--wd-ease);
+}
+.hot-item:hover {
+  background: #f7f9fc;
+}
+.hot-rank {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--wd-r-xs);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--wd-text-3);
+  background: #f1f3f7;
+}
+.hot-rank.top {
+  color: #fff;
+  background: linear-gradient(135deg, var(--wd-brand-400), var(--wd-brand-600));
+}
+.hot-keyword {
+  flex: 1;
+  font-size: 14.5px;
+  color: var(--wd-text-2);
+}
+.hot-item:hover .hot-keyword {
+  color: var(--wd-brand);
+}
+.trend.up {
+  color: var(--wd-brand-400);
+}
+.trend.down {
+  color: #1e7a45;
+}
+
+/* 结果栏 */
+.result-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wd-s4);
+  margin-bottom: var(--wd-s6);
+  padding: 10px 16px;
+  border-radius: var(--wd-r-pill);
+  box-shadow: var(--wd-sh-1);
+}
+.result-tabs {
+  display: flex;
+  gap: 4px;
+}
+.result-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: var(--wd-r-pill);
+  font-size: 15px;
+  color: var(--wd-text-2);
+  cursor: pointer;
+  transition: all 0.26s var(--wd-ease);
+}
+.result-tab:hover {
+  color: var(--wd-brand);
+  background: var(--wd-brand-soft);
+}
+.result-tab.active {
+  color: #fff;
+  font-weight: 600;
+  background: linear-gradient(140deg, var(--wd-brand-400), var(--wd-brand-600));
+  box-shadow: 0 6px 18px rgba(var(--wd-brand-rgb), 0.24);
+}
+.tab-count {
+  padding: 0 7px;
+  border-radius: var(--wd-r-pill);
+  font-size: 11.5px;
+  background: rgba(255, 255, 255, 0.28);
+}
+.result-tab:not(.active) .tab-count {
+  color: var(--wd-text-3);
+  background: #f1f3f7;
+}
+.result-summary {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--wd-text-4);
+}
+
+/* 游记卡片 */
+.post-card .video-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.post-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--wd-text-3);
+}
+.post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wd-border);
+}
+.post-footer .author {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--wd-text-3);
+}
+.author-name {
+  max-width: 90px;
+}
+.post-footer .stats {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--wd-text-4);
+}
+.post-footer .stats span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* 话题 / 用户行卡片 */
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-s4);
+}
+.row-card {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-s5);
+  padding: var(--wd-s4) var(--wd-s5);
+}
+.row-thumb {
+  flex-shrink: 0;
+  width: 128px;
+  height: 92px;
+  border-radius: var(--wd-r-sm);
+  overflow: hidden;
+  background: linear-gradient(120deg, #eef1f6, #e6eaf2);
+}
+.row-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--wd-ease);
+}
+.row-card:hover .row-thumb img {
+  transform: scale(1.06);
+}
+.row-avatar {
+  flex-shrink: 0;
+}
+.row-main {
+  flex: 1;
+  min-width: 0;
+}
+.row-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--wd-text-1);
+  transition: color var(--wd-dur) var(--wd-ease);
+}
+.row-card:hover .row-title {
+  color: var(--wd-brand);
+}
+.row-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--wd-text-3);
+}
+.row-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--wd-text-4);
+}
+.row-meta .dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--wd-border-strong);
+}
+.row-action {
+  flex-shrink: 0;
+}
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--wd-s8) 0 0;
+}
+
+:deep(mark.hl) {
+  padding: 0 2px;
+  border-radius: 4px;
+  color: var(--wd-brand);
+  font-weight: 700;
+  background: var(--wd-brand-soft);
+}
+
+@media (max-width: 760px) {
+  .result-bar {
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: var(--wd-r-lg);
   }
-
-  .search-tabs {
-    display: flex;
-    gap: 48px;
-    padding: 16px 32px;
-    background: #fff;
-    border-radius: 12px;
-    margin-bottom: 24px;
-
-    .search-tab {
-      font-size: 16px;
-      color: #666;
-      cursor: pointer;
-      padding: 8px 0;
-      position: relative;
-      transition: color 0.3s;
-
-      .tab-count {
-        font-size: 14px;
-        color: #999;
-        margin-left: 4px;
-      }
-
-      &:hover {
-        color: #667eea;
-      }
-
-      &.active {
-        color: #667eea;
-        font-weight: 600;
-
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 1px;
-        }
-      }
-    }
+  .row-card {
+    flex-wrap: wrap;
   }
-
-  .search-content {
-    .waterfall {
-      columns: 4;
-      column-gap: 24px;
-
-      @media (max-width: 1200px) {
-        columns: 3;
-      }
-
-      .waterfall-item {
-        break-inside: avoid;
-        margin-bottom: 24px;
-      }
-
-      .post-card {
-        cursor: pointer;
-        overflow: hidden;
-        padding: 0;
-        transition: all 0.3s ease;
-
-        &:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .post-image {
-          position: relative;
-          width: 100%;
-          overflow: hidden;
-
-          img {
-            width: 100%;
-            display: block;
-            transition: transform 0.3s;
-          }
-
-          .video-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(0, 0, 0, 0.6);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-          }
-        }
-
-        &:hover .post-image img {
-          transform: scale(1.1);
-        }
-
-        .post-content {
-          padding: 16px;
-
-          .post-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-          }
-
-          .post-desc {
-            font-size: 14px;
-            color: #999;
-            margin-bottom: 12px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-          }
-
-          .post-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            .author {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              font-size: 14px;
-              color: #666;
-            }
-
-            .stats {
-              display: flex;
-              gap: 12px;
-              font-size: 14px;
-              color: #999;
-
-              span {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    .topic-list {
-      display: grid;
-      gap: 16px;
-
-      .topic-item {
-        display: flex;
-        gap: 20px;
-        padding: 20px;
-        cursor: pointer;
-        transition: all 0.3s;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .topic-cover {
-          width: 120px;
-          height: 90px;
-          border-radius: 8px;
-          overflow: hidden;
-
-          img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-        }
-
-        .topic-info {
-          flex: 1;
-
-          .topic-name {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
-          }
-
-          .topic-desc {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 12px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-          }
-
-          .topic-stats {
-            display: flex;
-            gap: 20px;
-            font-size: 14px;
-            color: #999;
-          }
-        }
-
-        .topic-action {
-          display: flex;
-          align-items: center;
-        }
-      }
-    }
-
-    .user-list {
-      display: grid;
-      gap: 16px;
-
-      .user-item {
-        display: flex;
-        gap: 20px;
-        padding: 20px;
-        cursor: pointer;
-        transition: all 0.3s;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .user-info {
-          flex: 1;
-
-          .user-name {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-          }
-
-          .user-bio {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 12px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-
-          .user-stats {
-            display: flex;
-            gap: 20px;
-            font-size: 14px;
-            color: #999;
-          }
-        }
-
-        .user-action {
-          display: flex;
-          align-items: center;
-        }
-      }
-    }
-
-    .load-more {
-      text-align: center;
-      padding: 40px 0;
-    }
-  }
-
-  .search-history {
-    margin-bottom: 24px;
-    padding: 24px;
-
-    .history-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-
-      h3 {
-        font-size: 16px;
-        font-weight: 600;
-      }
-    }
-
-    .history-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-
-      .history-tag {
-        cursor: pointer;
-        transition: all 0.3s;
-
-        &:hover {
-          transform: translateY(-2px);
-        }
-      }
-    }
-  }
-
-  .hot-search {
-    padding: 24px;
-
-    .hot-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-
-      h3 {
-        font-size: 16px;
-        font-weight: 600;
-      }
-    }
-
-    .hot-list {
-      .hot-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        cursor: pointer;
-        border-radius: 8px;
-        transition: background 0.3s;
-
-        &:hover {
-          background: #f7f8fa;
-        }
-
-        .hot-rank {
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 14px;
-          font-weight: 600;
-          color: #999;
-          background: #f0f2f5;
-          border-radius: 4px;
-
-          &.top {
-            background: linear-gradient(135deg, #f56c6c 0%, #ff8a56 100%);
-            color: #fff;
-          }
-        }
-
-        .hot-keyword {
-          flex: 1;
-          font-size: 15px;
-        }
-      }
-    }
+  .row-thumb {
+    width: 96px;
+    height: 72px;
   }
 }
 </style>
-

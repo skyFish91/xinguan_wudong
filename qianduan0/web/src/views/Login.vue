@@ -1,38 +1,62 @@
 <template>
-  <div class="login-page">
-    <el-card class="login-card">
-      <h2 class="title">乌东文旅平台登录</h2>
-      <el-form :model="form" label-width="0" @keyup.enter="onLogin">
-        <el-form-item>
-          <el-input v-model="form.phone" placeholder="手机号" maxlength="11" />
-        </el-form-item>
-        <el-form-item>
-          <el-input v-model="form.password" type="password" placeholder="密码" show-password />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" class="full" :loading="loading" @click="onLogin">登录</el-button>
-        </el-form-item>
-      </el-form>
-      <div class="links">
-        <router-link to="/register">注册新账号</router-link>
-        <router-link to="/">返回首页</router-link>
+  <AuthShell
+    eyebrow="WUDONG · MIAO TOURISM"
+    title="欢迎回来"
+    subtitle="登录后即可下单、订票、发布游记"
+    visual-title="云雾深处的苗寨日常"
+    visual-desc="梯田、长桌宴、蜡染与银饰——把乌东的好物与风景，装进一次旅程。"
+    :visual-image="PHOTO_LARGE.terraces"
+  >
+    <el-form :model="form" label-position="top" @keyup.enter="onLogin">
+      <el-form-item label="手机号">
+        <el-input v-model="form.phone" placeholder="请输入手机号" maxlength="11" size="large">
+          <template #prefix><el-icon><Iphone /></el-icon></template>
+        </el-input>
+      </el-form-item>
+
+      <el-form-item label="密码">
+        <el-input
+          v-model="form.password"
+          type="password"
+          placeholder="请输入密码"
+          show-password
+          size="large"
+        >
+          <template #prefix><el-icon><Lock /></el-icon></template>
+        </el-input>
+      </el-form-item>
+
+      <el-button type="primary" size="large" class="full" :loading="loading" @click="onLogin">
+        登录
+      </el-button>
+    </el-form>
+
+    <div class="links">
+      <router-link to="/register">注册新账号</router-link>
+      <router-link to="/">返回首页</router-link>
+    </div>
+
+    <div class="demo-box">
+      <div class="demo-title">演示账号（点击可自动填入）</div>
+      <div class="demo-grid">
+        <button v-for="d in demoAccounts" :key="d.phone" class="demo-item" @click="fill(d)">
+          <span class="demo-role">{{ d.role }}</span>
+          <span class="demo-phone">{{ d.phone }}</span>
+          <span class="demo-pwd">{{ d.password }}</span>
+        </button>
       </div>
-      <el-divider />
-      <div class="demo-tips">
-        演示账号：<br />
-        游客 13800000001 / user123<br />
-        商家 13800000002 / merchant123<br />
-        管理员 13800000000 / admin123
-      </div>
-    </el-card>
-  </div>
+    </div>
+  </AuthShell>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { Iphone, Lock } from '@element-plus/icons-vue';
+import AuthShell from '../components/AuthShell.vue';
 import request from '../api/request';
+import { PHOTO_LARGE } from '../utils/media';
 import { useUserStore } from '../stores/user';
 
 const route = useRoute();
@@ -40,6 +64,17 @@ const router = useRouter();
 const userStore = useUserStore();
 const form = reactive({ phone: '', password: '' });
 const loading = ref(false);
+
+const demoAccounts = [
+  { role: '游客', phone: '13800000001', password: 'user123' },
+  { role: '商家', phone: '13800000002', password: 'merchant123' },
+  { role: '管理员', phone: '13800000000', password: 'admin123' },
+];
+
+function fill(d: { phone: string; password: string }) {
+  form.phone = d.phone;
+  form.password = d.password;
+}
 
 async function onLogin() {
   if (!form.phone || !form.password) {
@@ -68,33 +103,78 @@ async function onLogin() {
 </script>
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #2c3e50, #34495e);
-}
-.login-card {
-  width: 380px;
-  padding: 20px;
-}
-.title {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-}
 .full {
   width: 100%;
+  margin-top: var(--wd-s2);
 }
+
 .links {
   display: flex;
   justify-content: space-between;
+  margin-top: var(--wd-s4);
   font-size: 13px;
+  color: var(--wd-text-3);
 }
-.demo-tips {
+.links a {
+  text-decoration: none;
+  transition: color 0.24s var(--wd-ease);
+}
+.links a:hover {
+  color: var(--wd-brand);
+}
+
+.demo-box {
+  margin-top: var(--wd-s6);
+  padding: var(--wd-s4);
+  border-radius: var(--wd-r-sm);
+  background: var(--wd-brand-soft);
+  border: 1px dashed var(--wd-brand-200);
+}
+.demo-title {
+  margin-bottom: var(--wd-s3);
   font-size: 12px;
-  color: #999;
-  line-height: 1.8;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--wd-brand-400);
+}
+.demo-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.demo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: var(--wd-r-xs);
+  border: 1px solid transparent;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-size: 12.5px;
+  transition: all 0.22s var(--wd-ease);
+}
+.demo-item:hover {
+  border-color: var(--wd-brand-200);
+  transform: translateX(2px);
+  box-shadow: var(--wd-sh-1);
+}
+.demo-role {
+  flex-shrink: 0;
+  padding: 1px 9px;
+  border-radius: var(--wd-r-pill);
+  font-size: 11.5px;
+  color: var(--wd-brand);
+  background: var(--wd-brand-tint);
+}
+.demo-phone {
+  color: var(--wd-text-1);
+  font-variant-numeric: tabular-nums;
+}
+.demo-pwd {
+  margin-left: auto;
+  color: var(--wd-text-4);
+  font-variant-numeric: tabular-nums;
 }
 </style>

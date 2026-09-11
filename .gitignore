@@ -2,6 +2,13 @@
 # git 仓库地址、数据库密码等本地记录
 git
 pwd
+# 环境变量文件含 DB_PASSWORD / JWT_SECRET，只提交 .env.example
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
 
 # ============ 测试覆盖率报告 ============
 coverage/
@@ -11,6 +18,20 @@ node_modules/
 
 # ============ 构建产物 ============
 dist/
+# 构建时为了绕开 sandbox 的 emptyDir 卡顿，会把 dist 改名成 dist_bak_<时间戳>，
+# 这些是纯产物，不该进仓库
+dist_bak_*/
+dist_bak_*
+
+# ============ 构建缓存 / 临时文件 ============
+# vite 每次启动都会在项目根吐出的配置缓存
+*.timestamp-*.mjs
+.timestamp-*.mjs
+# 本地临时产物（截图、路由清单等调试用）
+.workbuddy/tmp/
+
+# ============ 原始素材池（体积大且与 public/images 重复，不入库） ============
+sucai/
 
 # ============ 日志 ============
 logs/

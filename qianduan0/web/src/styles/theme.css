@@ -1,0 +1,884 @@
+/* ==========================================================================
+   乌东文旅 · C 端全局设计系统
+   --------------------------------------------------------------------------
+   目标：留白与栅格 / 卡片与瀑布流 / 液态玻璃与骨架屏 / 空状态
+   引入顺序：必须在 element-plus/dist/index.css 之后（main.ts 中）
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 设计令牌
+   -------------------------------------------------------------------------- */
+:root {
+  /* ------------------------------------------------------------------
+     品牌色：苗族靛蓝（靛染）为主，苗绣红仅作极少量强调
+     ------------------------------------------------------------------
+     取色依据：苗族传统靛染布是接近黑蓝的深靛，银饰为冷调银白。
+     故主色走「深靛 → 亮靛」的冷色阶，暖色只留给价格与促销角标。
+
+     用法约定（重要，避免主色被稀释）：
+       · 主色  var(--wd-brand*)   —— 导航、按钮、链接、选中态、区块标题
+       · 强调  var(--wd-accent*)  —— 价格、折扣角标、必填星号、限时活动
+       · 银饰  var(--wd-silver*)  —— 分隔线、描边、头像底、纹样
+     除「价格/促销/必填」外，不要在新代码里直接写 accent 色。
+     ------------------------------------------------------------------ */
+  --wd-brand-900: #0d1f3d;
+  --wd-brand-700: #16305a;
+  --wd-brand-600: #1b3a6b;
+  --wd-brand: #22467e; /* 主色：靛蓝 */
+  --wd-brand-400: #3a68a8; /* 悬停 / 渐变亮端 */
+  --wd-brand-300: #6b8fc4;
+  --wd-brand-200: #a9c2e0;
+  --wd-brand-soft: #eef3fb; /* 极浅靛底：悬停背景 */
+  --wd-brand-tint: #dbe6f6; /* 浅靛底：选中背景 */
+  --wd-brand-rgb: 34, 70, 126; /* 供 rgba() 使用，改主色时同步改这里 */
+
+  /* 强调色：苗绣红 */
+  --wd-accent: #b93226;
+  --wd-accent-600: #a02a20;
+  --wd-accent-400: #d4574a;
+  --wd-accent-soft: #fdf2f1;
+  --wd-accent-rgb: 185, 50, 38;
+
+  /* 苗族银饰：冷调银白，用于描边与纹样 */
+  --wd-silver: #c9d3e2;
+  --wd-silver-strong: #a8b8cd;
+  --wd-silver-soft: #f2f5fa;
+
+  --wd-ink: #1b2233;
+  --wd-indigo: #16305a;
+  --wd-gold: #c9a227;
+
+  /* 文字层级：向蓝调微偏，与靛蓝主色同源 */
+  --wd-text-1: #1b2233;
+  --wd-text-2: #47506a;
+  --wd-text-3: #78829c;
+  --wd-text-4: #a2abc2;
+
+  /* 面与线 */
+  --wd-bg: #f6f8fc;
+  --wd-surface: #ffffff;
+  --wd-border: #eaeff7;
+  --wd-border-strong: #dbe3f0;
+
+  /* 圆角 */
+  --wd-r-xs: 8px;
+  --wd-r-sm: 12px;
+  --wd-r-md: 16px;
+  --wd-r-lg: 20px;
+  --wd-r-xl: 28px;
+  --wd-r-pill: 999px;
+
+  /* 阴影：多层柔和，避免「脏边」 */
+  --wd-sh-1: 0 1px 2px rgba(27, 34, 51, 0.04), 0 2px 8px rgba(27, 34, 51, 0.04);
+  --wd-sh-2: 0 2px 6px rgba(27, 34, 51, 0.05), 0 8px 24px rgba(27, 34, 51, 0.06);
+  --wd-sh-3: 0 6px 16px rgba(27, 34, 51, 0.08), 0 18px 48px rgba(27, 34, 51, 0.1);
+  --wd-sh-brand: 0 8px 28px rgba(var(--wd-brand-rgb), 0.22);
+  --wd-sh-accent: 0 6px 18px rgba(var(--wd-accent-rgb), 0.22);
+
+  /* 间距阶梯（8pt 栅格） */
+  --wd-s1: 4px;
+  --wd-s2: 8px;
+  --wd-s3: 12px;
+  --wd-s4: 16px;
+  --wd-s5: 20px;
+  --wd-s6: 24px;
+  --wd-s7: 32px;
+  --wd-s8: 40px;
+  --wd-s9: 48px;
+  --wd-s10: 64px;
+  --wd-s11: 80px;
+
+  /* 版心与栅格 */
+  --wd-container: 1240px;
+  --wd-gutter: 24px;
+
+  /* 动效 */
+  --wd-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --wd-dur: 0.32s;
+
+  /* 液态玻璃 */
+  --wd-glass-bg: rgba(255, 255, 255, 0.62);
+  --wd-glass-bg-strong: rgba(255, 255, 255, 0.8);
+  --wd-glass-border: rgba(255, 255, 255, 0.7);
+  --wd-glass-blur: saturate(180%) blur(18px);
+}
+
+/* --------------------------------------------------------------------------
+   2. 基础重置与排版
+   -------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui,
+    -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--wd-text-1);
+  background: var(--wd-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 页面底色：极淡的靛蓝光晕 + 一点苗绣红暖调，让白卡片「浮」起来 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 520px at 12% -8%, rgba(var(--wd-brand-rgb), 0.075), transparent 62%),
+    radial-gradient(1000px 460px at 92% 4%, rgba(var(--wd-accent-rgb), 0.045), transparent 60%),
+    radial-gradient(900px 420px at 78% 92%, rgba(107, 143, 196, 0.06), transparent 62%);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  border-style: none;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccd6e6;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--wd-r-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b3c1d8;
+  background-clip: content-box;
+}
+
+/* --------------------------------------------------------------------------
+   3. 版心与栅格
+   -------------------------------------------------------------------------- */
+.wd-container {
+  width: 100%;
+  max-width: var(--wd-container);
+  margin: 0 auto;
+  padding: 0 var(--wd-gutter);
+}
+
+/* 兼容社区页沿用的 .container / .card 命名
+   （这些页面移植自 Cool-Admin，依赖一个从未被引入的全局样式表，
+     导致容器宽度与卡片外观整体缺失 —— 这里补齐，不要删） */
+.container {
+  width: 100%;
+  max-width: var(--wd-container);
+  margin: 0 auto;
+  padding: 0 var(--wd-gutter);
+}
+.card {
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-r-md);
+  box-shadow: var(--wd-sh-1);
+}
+
+/* 页面主区：统一上下呼吸节奏 */
+.wd-page {
+  padding: var(--wd-s7) 0 var(--wd-s10);
+}
+
+/* 自动适应栅格：不用手写断点也能拿到合理列数 */
+.wd-grid {
+  display: grid;
+  gap: var(--wd-s6);
+}
+.wd-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.wd-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.wd-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.wd-grid-auto {
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .wd-grid-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 860px) {
+  .wd-grid-3,
+  .wd-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .wd-grid-2,
+  .wd-grid-3,
+  .wd-grid-4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  :root {
+    --wd-gutter: 16px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. 区块标题体系（统一的节奏与层级）
+   -------------------------------------------------------------------------- */
+.wd-section {
+  margin-top: var(--wd-s10);
+}
+.wd-section:first-child {
+  margin-top: 0;
+}
+
+.wd-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--wd-s4);
+  margin-bottom: var(--wd-s6);
+}
+
+.wd-section-title {
+  position: relative;
+  padding-left: 14px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--wd-text-1);
+}
+.wd-section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  border-radius: var(--wd-r-pill);
+  background: linear-gradient(180deg, var(--wd-brand-400), var(--wd-brand-600));
+}
+.wd-section-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--wd-text-3);
+}
+.wd-section-more {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--wd-text-3);
+  text-decoration: none;
+  transition: color var(--wd-dur) var(--wd-ease);
+}
+.wd-section-more:hover {
+  color: var(--wd-brand);
+}
+
+/* --------------------------------------------------------------------------
+   5. 液态玻璃
+   -------------------------------------------------------------------------- */
+.glass {
+  background: var(--wd-glass-bg);
+  -webkit-backdrop-filter: var(--wd-glass-blur);
+  backdrop-filter: var(--wd-glass-blur);
+  border: 1px solid var(--wd-glass-border);
+}
+
+.glass-strong {
+  background: var(--wd-glass-bg-strong);
+  -webkit-backdrop-filter: var(--wd-glass-blur);
+  backdrop-filter: var(--wd-glass-blur);
+  border: 1px solid var(--wd-glass-border);
+}
+
+/* 深色玻璃：压在图片上用 */
+.glass-dark {
+  background: rgba(20, 22, 30, 0.42);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+/* 玻璃浮层标签（图上角标） */
+.wd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 11px;
+  border-radius: var(--wd-r-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: #fff;
+  background: rgba(20, 22, 30, 0.42);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  white-space: nowrap;
+}
+.wd-chip-brand {
+  background: rgba(var(--wd-accent-rgb), 0.86);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+/* 靛蓝角标：非促销性质的图上标签（分类、精选、已售）用这个 */
+.wd-chip-indigo {
+  background: rgba(var(--wd-brand-rgb), 0.86);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 苗族纹样底纹：压在深靛底上做肌理，避免大面积纯色发闷
+   （纹样为白色半透明，需放在深色背景上使用） */
+.wd-miao-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url('/miao-pattern.svg');
+  background-size: 96px 96px;
+  opacity: 0.16;
+}
+.wd-miao-pattern-lg {
+  background-size: 132px 132px;
+  opacity: 0.12;
+}
+
+/* 装饰性回纹分隔线：区块之间用，替代生硬的 1px 直线 */
+.wd-meander {
+  height: 8px;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='8' viewBox='0 0 24 8'%3E%3Cpath d='M0 7 H6 V3 H12 V7 H18 V3 H24' fill='none' stroke='%23a9c2e0' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 24px 8px;
+}
+
+/* --------------------------------------------------------------------------
+   6. 卡片与悬停微交互
+   -------------------------------------------------------------------------- */
+.wd-card {
+  position: relative;
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-r-md);
+  box-shadow: var(--wd-sh-1);
+  overflow: hidden;
+  transition: transform var(--wd-dur) var(--wd-ease),
+    box-shadow var(--wd-dur) var(--wd-ease), border-color var(--wd-dur) var(--wd-ease);
+}
+
+.wd-card-hover {
+  cursor: pointer;
+}
+.wd-card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--wd-sh-3);
+  border-color: transparent;
+}
+
+/* 图片缩放容器：父级 overflow hidden，图 hover 放大 */
+.wd-media {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, #eef1f6, #e6eaf2);
+}
+.wd-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--wd-ease);
+}
+.wd-card-hover:hover .wd-media img,
+.wd-media-hover:hover img {
+  transform: scale(1.06);
+}
+
+/* 图上渐变遮罩，保证白色文字可读 */
+.wd-media::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(16, 18, 24, 0.5), transparent);
+  opacity: 0;
+  transition: opacity var(--wd-dur) var(--wd-ease);
+  pointer-events: none;
+}
+.wd-card-hover:hover .wd-media::after {
+  opacity: 1;
+}
+
+/* 卡片内容区统一内边距 */
+.wd-card-body {
+  padding: var(--wd-s5) var(--wd-s5) var(--wd-s5);
+}
+
+.wd-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wd-text-1);
+  transition: color var(--wd-dur) var(--wd-ease);
+}
+.wd-card-hover:hover .wd-title {
+  color: var(--wd-brand);
+}
+.wd-desc {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--wd-text-3);
+}
+.wd-price {
+  font-size: 18px;
+  font-weight: 700;
+  /* 价格是唯一允许用苗绣红的日常元素：全站只有它靠暖色抢注意力 */
+  color: var(--wd-accent);
+  font-variant-numeric: tabular-nums;
+}
+.wd-price small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--wd-text-3);
+}
+.wd-meta {
+  font-size: 12px;
+  color: var(--wd-text-4);
+}
+
+/* 多行截断 */
+.clamp-1,
+.clamp-2,
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.clamp-1 {
+  -webkit-line-clamp: 1;
+}
+.clamp-2 {
+  -webkit-line-clamp: 2;
+}
+.clamp-3 {
+  -webkit-line-clamp: 3;
+}
+
+/* --------------------------------------------------------------------------
+   7. 瀑布流（小红书式高低错落）
+   -------------------------------------------------------------------------- */
+.wd-waterfall {
+  column-count: 4;
+  column-gap: var(--wd-s5);
+}
+.wd-waterfall > * {
+  break-inside: avoid;
+  margin-bottom: var(--wd-s5);
+  display: block;
+}
+@media (max-width: 1100px) {
+  .wd-waterfall {
+    column-count: 3;
+  }
+}
+@media (max-width: 760px) {
+  .wd-waterfall {
+    column-count: 2;
+    column-gap: var(--wd-s3);
+  }
+  .wd-waterfall > * {
+    margin-bottom: var(--wd-s3);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   8. 骨架屏
+   -------------------------------------------------------------------------- */
+@keyframes wd-shimmer {
+  0% {
+    background-position: -480px 0;
+  }
+  100% {
+    background-position: 480px 0;
+  }
+}
+
+.wd-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--wd-r-xs);
+  background: #eef1f6;
+  background-image: linear-gradient(
+    90deg,
+    #eef1f6 0%,
+    #f7f9fc 40%,
+    #eef1f6 80%
+  );
+  background-size: 480px 100%;
+  background-repeat: no-repeat;
+  animation: wd-shimmer 1.4s linear infinite;
+}
+
+.wd-skel-line {
+  height: 12px;
+  border-radius: var(--wd-r-pill);
+}
+.wd-skel-title {
+  height: 16px;
+  width: 72%;
+}
+.wd-skel-text {
+  height: 12px;
+  margin-top: 10px;
+}
+.wd-skel-short {
+  width: 45%;
+}
+
+/* 骨架卡片 = 卡片外壳 + 灰块 */
+.wd-skel-card {
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-r-md);
+  overflow: hidden;
+}
+.wd-skel-cover {
+  width: 100%;
+  border-radius: 0;
+}
+.wd-skel-body {
+  padding: var(--wd-s5);
+}
+
+/* --------------------------------------------------------------------------
+   9. 空状态
+   -------------------------------------------------------------------------- */
+.wd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--wd-s10) var(--wd-s6);
+  text-align: center;
+}
+.wd-empty-art {
+  width: 180px;
+  max-width: 60%;
+  margin-bottom: var(--wd-s6);
+  opacity: 0.96;
+}
+.wd-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wd-text-2);
+}
+.wd-empty-desc {
+  margin-top: var(--wd-s2);
+  max-width: 380px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--wd-text-4);
+}
+.wd-empty-actions {
+  display: flex;
+  gap: var(--wd-s3);
+  margin-top: var(--wd-s6);
+}
+
+/* --------------------------------------------------------------------------
+   10. 入场动效（列表逐个淡入上浮）
+   -------------------------------------------------------------------------- */
+@keyframes wd-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.wd-rise {
+  animation: wd-rise 0.5s var(--wd-ease) both;
+}
+
+/* --------------------------------------------------------------------------
+   11. Element Plus 组件覆写
+   -------------------------------------------------------------------------- */
+
+/* 卡片：去掉默认描边感，换圆角 + 柔和阴影 */
+.el-card {
+  --el-card-border-color: var(--wd-border);
+  --el-card-border-radius: var(--wd-r-md);
+  --el-card-padding: var(--wd-s5);
+  border-radius: var(--wd-r-md);
+  border-color: var(--wd-border);
+  box-shadow: var(--wd-sh-1);
+  transition: transform var(--wd-dur) var(--wd-ease),
+    box-shadow var(--wd-dur) var(--wd-ease), border-color var(--wd-dur) var(--wd-ease);
+  overflow: hidden;
+}
+.el-card.is-hover-shadow:hover,
+.el-card.is-always-shadow {
+  box-shadow: var(--wd-sh-2);
+}
+.el-card.is-hover-shadow:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--wd-sh-3);
+  border-color: transparent;
+}
+.el-card__body {
+  padding: 0;
+}
+
+/* 按钮 */
+.el-button {
+  --el-button-border-radius: var(--wd-r-pill);
+  border-radius: var(--wd-r-pill);
+  font-weight: 500;
+  transition: transform 0.2s var(--wd-ease), box-shadow 0.2s var(--wd-ease),
+    background-color 0.2s var(--wd-ease);
+}
+.el-button:not(.is-text):not(.is-link):hover {
+  transform: translateY(-1px);
+}
+.el-button--primary {
+  --el-button-bg-color: var(--wd-brand);
+  --el-button-border-color: var(--wd-brand);
+  --el-button-hover-bg-color: var(--wd-brand-400);
+  --el-button-hover-border-color: var(--wd-brand-400);
+  --el-button-active-bg-color: var(--wd-brand-600);
+  box-shadow: 0 4px 14px rgba(var(--wd-brand-rgb), 0.2);
+}
+.el-button--large {
+  --el-button-size: 44px;
+  padding: 0 26px;
+}
+
+/* 输入框 / 选择器 */
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  border-radius: var(--wd-r-pill);
+  box-shadow: 0 0 0 1px var(--wd-border-strong) inset;
+  background: rgba(255, 255, 255, 0.9);
+  transition: box-shadow 0.2s var(--wd-ease);
+}
+.el-textarea__inner {
+  border-radius: var(--wd-r-sm);
+}
+.el-input__wrapper:hover,
+.el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px #cdd6e4 inset;
+}
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--wd-brand) inset,
+    0 0 0 4px rgba(var(--wd-brand-rgb), 0.1) !important;
+}
+
+/* 单选按钮组（分段控件）：做成胶囊容器 */
+.el-radio-group {
+  background: #f1f3f7;
+  border-radius: var(--wd-r-pill);
+  padding: 3px;
+  gap: 2px;
+}
+.el-radio-button__inner {
+  border: none !important;
+  background: transparent;
+  border-radius: var(--wd-r-pill) !important;
+  box-shadow: none !important;
+  color: var(--wd-text-2);
+  font-weight: 500;
+  transition: all 0.24s var(--wd-ease);
+}
+.el-radio-button__inner:hover {
+  color: var(--wd-brand);
+}
+.el-radio-button.is-active .el-radio-button__inner {
+  background: var(--wd-surface);
+  color: var(--wd-brand);
+  box-shadow: 0 2px 8px rgba(31, 36, 48, 0.1) !important;
+}
+
+/* 分页 */
+.el-pagination {
+  --el-pagination-button-bg-color: transparent;
+  gap: 6px;
+}
+.el-pagination button,
+.el-pager li {
+  border-radius: var(--wd-r-pill) !important;
+  min-width: 34px;
+  height: 34px;
+  font-weight: 500;
+  transition: all 0.2s var(--wd-ease);
+}
+.el-pager li:hover {
+  background: var(--wd-brand-soft);
+  color: var(--wd-brand);
+}
+.el-pager li.is-active {
+  background: var(--wd-brand) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(var(--wd-brand-rgb), 0.28);
+}
+
+/* 标签 */
+.el-tag {
+  --el-tag-border-radius: var(--wd-r-pill);
+  border-radius: var(--wd-r-pill);
+  font-weight: 500;
+  border: none;
+  background: #f1f3f7;
+  color: var(--wd-text-2);
+  transition: all 0.2s var(--wd-ease);
+}
+.el-tag:hover {
+  background: var(--wd-brand-soft);
+  color: var(--wd-brand);
+}
+
+/* 分隔线区块标题 */
+.el-divider__text {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--wd-text-1);
+  background: transparent;
+  padding: 0 16px 0 0;
+}
+
+/* Tabs */
+.el-tabs__item {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--wd-text-2);
+}
+.el-tabs__item.is-active {
+  color: var(--wd-brand);
+  font-weight: 600;
+}
+.el-tabs__active-bar {
+  background: var(--wd-brand);
+  height: 3px;
+  border-radius: var(--wd-r-pill);
+}
+.el-tabs__nav-wrap::after {
+  height: 1px;
+  background: var(--wd-border);
+}
+
+/* 对话框 / 抽屉：大圆角 + 玻璃遮罩 */
+.el-dialog {
+  border-radius: var(--wd-r-lg);
+  overflow: hidden;
+  box-shadow: var(--wd-sh-3);
+}
+.el-dialog__header {
+  padding: 22px 24px 8px;
+  font-weight: 700;
+}
+.el-dialog__body {
+  padding: 12px 24px 20px;
+}
+.el-overlay {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  background: rgba(20, 22, 30, 0.34);
+}
+
+/* 提示条 */
+.el-alert {
+  border-radius: var(--wd-r-sm);
+  border: 1px solid var(--wd-border);
+}
+
+/* 空数据（Element 自带，做一次轻量化，鼓励改用 EmptyState 组件） */
+.el-empty {
+  padding: 40px 0;
+}
+.el-empty__description p {
+  color: var(--wd-text-4);
+}
+
+/* 骨架屏（Element 自带） */
+.el-skeleton__item {
+  background: linear-gradient(90deg, #eef1f6 25%, #f7f9fc 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  border-radius: var(--wd-r-xs);
+}
+
+/* 菜单（顶部导航内使用） */
+.el-menu--horizontal {
+  border-bottom: none !important;
+}
+.el-menu--horizontal > .el-menu-item {
+  font-weight: 500;
+  color: var(--wd-text-2);
+  transition: color 0.24s var(--wd-ease);
+}
+.el-menu--horizontal > .el-menu-item:hover,
+.el-menu--horizontal > .el-menu-item.is-active {
+  color: var(--wd-brand) !important;
+  background: transparent !important;
+}
+.el-menu--horizontal > .el-menu-item.is-active {
+  border-bottom: none !important;
+}
+
+/* 头像 */
+.el-avatar {
+  background: linear-gradient(135deg, #d9e0ee, #c7d0e2);
+  color: var(--wd-indigo);
+  font-weight: 600;
+}
+
+/* 下拉菜单 */
+.el-dropdown-menu {
+  border-radius: var(--wd-r-sm);
+  padding: 6px;
+  box-shadow: var(--wd-sh-2);
+  border: 1px solid var(--wd-border);
+}
+.el-dropdown-menu__item {
+  border-radius: var(--wd-r-xs);
+  font-weight: 500;
+}
+.el-dropdown-menu__item:hover {
+  background: var(--wd-brand-soft) !important;
+  color: var(--wd-brand) !important;
+}
+
+/* 徽标 */
+.el-badge__content {
+  border: none;
+  font-weight: 600;
+}

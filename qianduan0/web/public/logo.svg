@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!--
+    乌东文旅 · 品牌标志
+    母题取自苗族三个最核心的视觉符号，全部做几何化处理，
+    以贴近苗绣、蜡染、银饰上的实际造型语言（而非写实绘画）：
+
+      1. 铜鼓太阳纹：外圈同心环 + 12 道光芒，源自苗族铜鼓鼓面
+      2. 蝴蝶妈妈：中心主体。苗族创世神话中的始祖，苗绣第一纹样
+      3. 银饰银角：蝴蝶触须做成银角上翘的弧线
+
+    几何约定：64×64 画布，中心 (32,32)，太阳环半径 21。
+    注意：SVG 注释内不能出现连续两个短横线，会破坏 XML 解析。
+  -->
+  <defs>
+    <linearGradient id="wdLogoBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3a68a8" />
+      <stop offset="55%" stop-color="#22467e" />
+      <stop offset="100%" stop-color="#16305a" />
+    </linearGradient>
+    <linearGradient id="wdLogoWing" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#dfe9f8" />
+    </linearGradient>
+  </defs>
+
+  <!-- 靛蓝底 -->
+  <rect width="64" height="64" rx="16" fill="url(#wdLogoBg)" />
+
+  <!-- 铜鼓太阳纹：同心环 -->
+  <g stroke="#ffffff" fill="none">
+    <circle cx="32" cy="32" r="21" stroke-width="1.6" opacity="0.3" />
+  </g>
+
+  <!-- 铜鼓太阳纹：12 道光芒 -->
+  <g stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" opacity="0.78">
+    <path d="M53 32 L56.5 32" />
+    <path d="M50.19 42.5 L53.2 44.25" />
+    <path d="M42.5 50.19 L44.25 53.2" />
+    <path d="M32 53 L32 56.5" />
+    <path d="M21.5 50.19 L19.75 53.2" />
+    <path d="M13.81 42.5 L10.8 44.25" />
+    <path d="M11 32 L7.5 32" />
+    <path d="M13.81 21.5 L10.8 19.75" />
+    <path d="M21.5 13.81 L19.75 10.8" />
+    <path d="M32 11 L32 7.5" />
+    <path d="M42.5 13.81 L44.25 10.8" />
+    <path d="M50.19 21.5 L53.2 19.75" />
+  </g>
+
+  <!-- 蝴蝶妈妈：四翅（左右对称） -->
+  <g fill="url(#wdLogoWing)">
+    <path d="M30 30.5C23 23.5 16.4 21 14.4 25.4C12.4 29.8 19 34.8 30 34.8Z" />
+    <path d="M34 30.5C41 23.5 47.6 21 49.6 25.4C51.6 29.8 45 34.8 34 34.8Z" />
+    <path d="M30 36.2C23.8 39 19.2 43.6 22.4 47.2C25.6 50.8 30.6 44 30.6 37.6Z" />
+    <path d="M34 36.2C40.2 39 44.8 43.6 41.6 47.2C38.4 50.8 33.4 44 33.4 37.6Z" />
+  </g>
+
+  <!-- 蝴蝶妈妈：身体与头 -->
+  <ellipse cx="32" cy="34.4" rx="2.3" ry="7.2" fill="#ffffff" />
+  <circle cx="32" cy="25.4" r="2.7" fill="#ffffff" />
+
+  <!-- 银饰银角式触须 -->
+  <g stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.9">
+    <path d="M30.4 23.4C27.6 18.6 24.4 17.4 22.2 18.6" />
+    <path d="M33.6 23.4C36.4 18.6 39.6 17.4 41.8 18.6" />
+  </g>
+</svg>

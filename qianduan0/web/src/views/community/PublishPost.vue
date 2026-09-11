@@ -1,97 +1,124 @@
 ﻿<template>
   <div class="publish-post-page">
-    <div class="container">
-      <div class="publish-card card">
-        <h1>发布游记</h1>
+    <TopNav />
 
-        <el-form :model="formData" label-width="100px">
-          <!-- 标题 -->
-          <el-form-item label="标题" required>
-            <el-input
-              v-model="formData.title"
-              placeholder="请输入游记标题"
-              maxlength="100"
-            />
-          </el-form-item>
+    <div class="wd-container wd-page">
+      <header class="page-head">
+        <h1 class="page-title">发布游记</h1>
+        <p class="page-sub">记录一段旅途，分享给同样在路上的人</p>
+      </header>
 
-          <!-- 内容 -->
-          <el-form-item label="内容" required>
-            <el-input
-              v-model="formData.content"
-              type="textarea"
-              placeholder="请输入游记内容"
-              :rows="6"
-              maxlength="5000"
-            />
-          </el-form-item>
-
-          <!-- 地点 -->
-          <el-form-item label="地点">
-            <div style="display: flex; gap: 10px;">
+      <div class="publish-layout">
+        <!-- 表单 -->
+        <div class="wd-card publish-card">
+          <el-form :model="formData" label-width="88px" label-position="top">
+            <!-- 标题 -->
+            <el-form-item label="标题" required>
               <el-input
-                v-model="formData.location"
-                placeholder="请输入旅游地点或点击定位"
+                v-model="formData.title"
+                placeholder="一句话说清这段旅程，例如「四月的乌东梯田，灌水正当时」"
                 maxlength="100"
+                show-word-limit
+                size="large"
               />
-              <el-button
-                type="primary"
-                @click="handleLocationClick"
-                :loading="locating"
-                icon="location"
+            </el-form-item>
+
+            <!-- 内容 -->
+            <el-form-item label="正文" required>
+              <el-input
+                v-model="formData.content"
+                type="textarea"
+                placeholder="路程怎么走、住在哪、吃了什么、花了多少钱……写下来就是别人的攻略。"
+                :rows="9"
+                maxlength="5000"
+                show-word-limit
+              />
+            </el-form-item>
+
+            <!-- 地点 -->
+            <el-form-item label="地点">
+              <div class="loc-row">
+                <el-input
+                  v-model="formData.location"
+                  placeholder="填写地点名称，或点击右侧定位"
+                  maxlength="100"
+                />
+                <el-button type="primary" plain :loading="locating" @click="handleLocationClick">
+                  <el-icon><Location /></el-icon>
+                  定位
+                </el-button>
+              </div>
+              <p v-if="formData.lng && formData.lat" class="field-hint">
+                已获取坐标：{{ formData.lat.toFixed(6) }}, {{ formData.lng.toFixed(6) }}
+              </p>
+            </el-form-item>
+
+            <!-- 话题 -->
+            <el-form-item label="话题">
+              <el-select
+                v-model="formData.topicIds"
+                multiple
+                placeholder="选择相关话题，更容易被同好看到"
+                class="full"
               >
-                📍 定位
-              </el-button>
-            </div>
-            <div v-if="formData.lng && formData.lat" style="font-size: 12px; color: #666; margin-top: 5px;">
-              坐标: {{ formData.lat.toFixed(6) }}, {{ formData.lng.toFixed(6) }}
-            </div>
-          </el-form-item>
+                <el-option v-for="topic in topics" :key="topic.id" :label="topic.name" :value="topic.id" />
+              </el-select>
+            </el-form-item>
 
-          <!-- 话题 -->
-          <el-form-item label="话题">
-            <el-select
-              v-model="formData.topicIds"
-              multiple
-              placeholder="选择相关话题"
-            >
-              <el-option
-                v-for="topic in topics"
-                :key="topic.id"
-                :label="topic.name"
-                :value="topic.id"
-              />
-            </el-select>
-          </el-form-item>
+            <!-- 图片 -->
+            <el-form-item label="配图">
+              <div class="upload-wrap">
+                <el-upload
+                  v-model:file-list="fileList"
+                  action="/api/upload/file"
+                  :headers="uploadHeaders"
+                  name="file"
+                  list-type="picture-card"
+                  :on-preview="handlePreview"
+                  :on-remove="handleRemove"
+                  :on-success="handleUploadSuccess"
+                  multiple
+                >
+                  <el-icon><Plus /></el-icon>
+                </el-upload>
+                <p class="field-hint">支持多张，第一张会自动作为封面</p>
+              </div>
+            </el-form-item>
 
-          <!-- 图片上传 -->
-          <el-form-item label="图片">
-            <el-upload
-              v-model:file-list="fileList"
-              action="/api/upload/file"
-              :headers="uploadHeaders"
-              name="file"
-              list-type="picture-card"
-              :on-preview="handlePreview"
-              :on-remove="handleRemove"
-              :on-success="handleUploadSuccess"
-              multiple
-            >
-              <el-icon><Plus /></el-icon>
-            </el-upload>
-          </el-form-item>
+            <!-- 操作 -->
+            <el-form-item class="actions-item">
+              <div class="actions">
+                <el-button type="primary" size="large" :loading="publishing" @click="handlePublish">
+                  {{ publishing ? '发布中…' : '发布游记' }}
+                </el-button>
+                <el-button size="large" @click="handleCancel">取消</el-button>
+              </div>
+            </el-form-item>
+          </el-form>
+        </div>
 
-          <!-- 按钮 -->
-          <el-form-item>
-            <el-button type="primary" @click="handlePublish" :loading="publishing">
-              {{ publishing ? '发布中...' : '发布' }}
-            </el-button>
-            <el-button @click="handleCancel">取消</el-button>
-          </el-form-item>
-        </el-form>
+        <!-- 侧栏提示 -->
+        <aside class="side-col">
+          <div class="wd-card tip-card">
+            <h3 class="tip-title">怎么写更受欢迎</h3>
+            <ul class="tip-list">
+              <li>标题具体一点，带上季节或地点</li>
+              <li>正文分段写，路线、花费、避坑分开说</li>
+              <li>配 3 张以上实拍图，封面选最有代表性的</li>
+              <li>选好话题，让同好能找到你</li>
+            </ul>
+          </div>
+
+          <div class="wd-card tip-card">
+            <h3 class="tip-title">审核说明</h3>
+            <p class="tip-text">
+              游记提交后进入审核，通过后会在社区公开展示；如有问题会附带驳回原因。
+            </p>
+          </div>
+        </aside>
       </div>
     </div>
 
-    <!-- 图片预览 -->
     <el-image-viewer
       v-if="showImageViewer"
       :url-list="[previewImageUrl]"
@@ -101,10 +128,11 @@
 </template>
 
 <script setup>
+import TopNav from '../../components/TopNav.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Location } from '@element-plus/icons-vue'
 import { communityApi } from '@/api/community'
 
 const router = useRouter()
@@ -116,7 +144,7 @@ const formData = ref({
   topicIds: [],
   images: [],
   lat: null,
-  lng: null
+  lng: null,
 })
 
 const fileList = ref([])
@@ -148,14 +176,14 @@ const handlePublish = async () => {
   publishing.value = true
   try {
     // 只取上传成功后由服务端返回的地址，避免把本地预览 blob: 地址发出去
-    const images = fileList.value.map(f => f.serverUrl || '').filter(url => url)
+    const images = fileList.value.map((f) => f.serverUrl || '').filter((url) => url)
 
     await communityApi.publish({
       title: formData.value.title,
       content: formData.value.content,
       topicIds: formData.value.topicIds,
       images,
-      linkedName: formData.value.location || ''
+      linkedName: formData.value.location || '',
     })
 
     ElMessage.success('发布成功')
@@ -177,7 +205,7 @@ const handlePreview = (file) => {
 }
 
 const handleRemove = (file) => {
-  fileList.value = fileList.value.filter(f => f !== file)
+  fileList.value = fileList.value.filter((f) => f !== file)
 }
 
 /** 上传需要登录态，统一从本地取 token */
@@ -233,22 +261,110 @@ onMounted(() => {
 })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .publish-post-page {
-  background: #f5f7fa;
-  padding: 40px 0;
   min-height: calc(100vh - 60px);
+  padding-bottom: var(--wd-s9);
+}
 
+.page-head {
+  padding-bottom: var(--wd-s6);
+}
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--wd-text-1);
+}
+.page-sub {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: var(--wd-text-3);
+}
+
+.publish-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--wd-s7);
+  align-items: start;
+}
+
+.publish-card {
+  padding: var(--wd-s6) var(--wd-s7) var(--wd-s5);
+}
+
+.loc-row {
+  display: flex;
+  gap: var(--wd-s3);
+  width: 100%;
+}
+.field-hint {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--wd-text-4);
+}
+.full {
+  width: 100%;
+}
+.upload-wrap {
+  width: 100%;
+}
+.actions-item {
+  margin-bottom: 0;
+}
+.actions {
+  display: flex;
+  gap: var(--wd-s3);
+  padding-top: var(--wd-s2);
+}
+
+/* 侧栏 */
+.side-col {
+  min-width: 0;
+}
+.tip-card {
+  padding: var(--wd-s5);
+  margin-bottom: var(--wd-s4);
+}
+.tip-title {
+  margin-bottom: var(--wd-s3);
+  padding-bottom: var(--wd-s3);
+  border-bottom: 1px solid var(--wd-border);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--wd-text-1);
+}
+.tip-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--wd-text-2);
+}
+.tip-list li + li {
+  margin-top: 4px;
+}
+.tip-text {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--wd-text-2);
+}
+
+/* 上传控件对齐卡片风格 */
+.publish-card :deep(.el-upload--picture-card),
+.publish-card :deep(.el-upload-list--picture-card .el-upload-list__item) {
+  border-radius: var(--wd-r-sm);
+}
+
+@media (max-width: 1000px) {
+  .publish-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .publish-card {
-    padding: 40px;
-    margin: 0 auto;
-
-    h1 {
-      margin-bottom: 30px;
-      font-size: 24px;
-      font-weight: 600;
-    }
+    padding: var(--wd-s5);
+  }
+  .loc-row {
+    flex-direction: column;
   }
 }
 </style>
-

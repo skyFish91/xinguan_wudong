@@ -1,37 +1,91 @@
 <template>
   <div>
     <TopNav />
-    <div class="page">
-      <div class="toolbar">
-        <el-input v-model="keyword" placeholder="搜索民宿名称/地址" class="search" clearable @keyup.enter="load(1)" />
-        <el-button type="primary" @click="load(1)">搜索</el-button>
+    <div class="wd-container wd-page">
+      <header class="page-head">
+        <h1 class="page-title">民宿住宿</h1>
+        <p class="page-sub">吊脚楼、木楼小院与山景房，住进苗寨的清晨与夜色</p>
+      </header>
+
+      <div class="toolbar glass-strong">
+        <el-input
+          v-model="keyword"
+          placeholder="搜索民宿名称 / 地址"
+          class="search"
+          clearable
+          :prefix-icon="Search"
+          @keyup.enter="load(1)"
+        />
         <div class="price-range">
-          价格
+          <span class="pr-label">价格</span>
           <el-input-number v-model="minPrice" :min="0" :max="9999" :controls="false" placeholder="最低" class="price-input" />
-          -
+          <span class="pr-dash">—</span>
           <el-input-number v-model="maxPrice" :min="0" :max="9999" :controls="false" placeholder="最高" class="price-input" />
         </div>
         <el-button @click="load(1)">筛选</el-button>
         <el-radio-group v-model="sort" class="sorts" @change="load(1)">
           <el-radio-button value="rating">评分优先</el-radio-button>
-          <el-radio-button value="price_asc">价格升序</el-radio-button>
+          <el-radio-button value="price_asc">价格从低到高</el-radio-button>
         </el-radio-group>
       </div>
 
-      <el-empty v-if="!loading && !list.length" description="暂无民宿" />
-      <div class="grid">
-        <el-card v-for="h in list" :key="h.id" class="item" shadow="hover" @click="$router.push(`/hotel/${h.id}`)">
-          <img :src="h.mainImage" class="item-img" />
-          <div class="item-title">{{ h.name }}</div>
-          <div class="item-sub">{{ h.address }}</div>
-          <div class="tags">
-            <el-tag v-for="t in splitTags(h.styleTags)" :key="t" size="small" class="tag">{{ t }}</el-tag>
+      <div v-if="!loading && list.length" class="result-bar">
+        共 <b>{{ total }}</b> 家美宿
+      </div>
+
+      <!-- 骨架屏 -->
+      <div v-if="loading" class="wd-grid wd-grid-3">
+        <SkeletonCard v-for="i in 6" :key="`s${i}`" cover="230px" />
+      </div>
+
+      <!-- 民宿卡片 -->
+      <div v-else-if="list.length" class="wd-grid wd-grid-3">
+        <article
+          v-for="(h, i) in list"
+          :key="h.id"
+          class="wd-card wd-card-hover wd-rise"
+          :style="{ animationDelay: `${Math.min(i, 6) * 60}ms` }"
+          @click="$router.push(`/hotel/${h.id}`)"
+        >
+          <div class="wd-media" style="height: 230px">
+            <img :src="img(h.mainImage, h.name, true)" :alt="h.name" @error="imgError" />
+            <span class="rating-chip wd-chip">
+              <el-icon><StarFilled /></el-icon> {{ h.rating }}
+            </span>
+            <div class="place-overlay">
+              <span class="place-name">{{ h.name }}</span>
+              <span class="place-addr">
+                <el-icon><LocationInformation /></el-icon> {{ h.address }}
+              </span>
+            </div>
           </div>
-          <div class="item-bottom">
-            <span class="price"><span v-if="h.minPrice !== null && h.minPrice !== undefined">¥{{ h.minPrice }} 起</span></span>
-            <span class="sales">评分 {{ h.rating }}</span>
+          <div class="wd-card-body">
+            <div class="wd-title clamp-1">{{ h.name }}</div>
+            <div class="wd-desc clamp-1">{{ h.address }}</div>
+            <div v-if="splitTags(h.styleTags).length" class="tag-row">
+              <span v-for="t in splitTags(h.styleTags).slice(0, 3)" :key="t" class="mini-tag">{{ t }}</span>
+            </div>
+            <div class="card-foot">
+              <span class="wd-price">
+                <template v-if="h.minPrice !== null && h.minPrice !== undefined">¥{{ h.minPrice }} <small>起/晚</small></template>
+                <template v-else>价格待定</template>
+              </span>
+              <span class="buy-hint">查看房型 <el-icon><ArrowRight /></el-icon></span>
+            </div>
           </div>
-        </el-card>
+        </article>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else class="wd-card">
+        <EmptyState
+          variant="search"
+          :title="hasFilter ? '没有符合条件的民宿' : '暂无民宿上架'"
+          :desc="hasFilter ? '试着放宽价格区间，或清空关键词重新搜索。' : '苗寨的房源正在陆续入驻，先去看看别的吧。'"
+        >
+          <el-button v-if="hasFilter" @click="resetFilter">清空筛选</el-button>
+          <router-link v-else to="/travel"><el-button type="primary">看看景区</el-button></router-link>
+        </EmptyState>
       </div>
 
       <el-pagination
@@ -48,9 +102,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import {
+  ArrowRight,
+  LocationInformation,
+  Search,
+  StarFilled,
+} from '@element-plus/icons-vue';
 import TopNav from '../../components/TopNav.vue';
+import SkeletonCard from '../../components/SkeletonCard.vue';
+import EmptyState from '../../components/EmptyState.vue';
 import request from '../../api/request';
+import { img, imgError } from '../../utils/media';
 
 const keyword = ref('');
 const minPrice = ref<number | undefined>(undefined);
@@ -62,8 +125,19 @@ const page = ref(1);
 const pageSize = 12;
 const loading = ref(false);
 
+const hasFilter = computed(
+  () => !!keyword.value || minPrice.value !== undefined || maxPrice.value !== undefined
+);
+
 function splitTags(tags: string) {
-  return tags ? tags.split(',').filter(t => t) : [];
+  return tags ? tags.split(',').filter((t) => t) : [];
+}
+
+function resetFilter() {
+  keyword.value = '';
+  minPrice.value = undefined;
+  maxPrice.value = undefined;
+  load(1);
 }
 
 async function load(p = 1) {
@@ -93,16 +167,31 @@ onMounted(() => load());
 </script>
 
 <style scoped>
-.page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+.page-head {
+  margin-bottom: var(--wd-s6);
 }
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.page-sub {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: var(--wd-text-3);
+}
+
 .toolbar {
+  position: sticky;
+  top: 80px;
+  z-index: 60;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  padding: 12px 16px;
+  margin-bottom: var(--wd-s7);
+  border-radius: var(--wd-r-pill);
+  box-shadow: var(--wd-sh-1);
 }
 .search {
   width: 260px;
@@ -110,65 +199,128 @@ onMounted(() => load());
 .price-range {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #666;
-  margin-left: 12px;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--wd-border);
+}
+.pr-label {
+  font-size: 13px;
+  color: var(--wd-text-3);
+}
+.pr-dash {
+  color: var(--wd-text-4);
 }
 .price-input {
-  width: 90px;
+  width: 88px;
 }
 .sorts {
   margin-left: auto;
 }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+
+.result-bar {
+  margin-bottom: var(--wd-s5);
+  font-size: 13px;
+  color: var(--wd-text-4);
 }
-.item {
-  cursor: pointer;
+.result-bar b {
+  color: var(--wd-text-1);
+  font-size: 15px;
 }
-.item-img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 4px;
+
+.rating-chip {
+  position: absolute;
+  right: 12px;
+  top: 12px;
 }
-.item-title {
-  margin-top: 8px;
-  font-weight: 600;
-}
-.item-sub {
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tags {
-  margin-top: 6px;
-}
-.tag {
-  margin-right: 4px;
-  margin-top: 4px;
-}
-.item-bottom {
+
+.place-overlay {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  z-index: 2;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 3px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.36s var(--wd-ease);
+  pointer-events: none;
+}
+.wd-card:hover .place-overlay {
+  opacity: 1;
+  transform: none;
+}
+.place-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+.place-addr {
+  display: inline-flex;
   align-items: center;
-  margin-top: 8px;
-}
-.price {
-  color: #c0392b;
-  font-weight: bold;
-}
-.sales {
+  gap: 4px;
   font-size: 12px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
+
+.tag-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.mini-tag {
+  padding: 3px 10px;
+  border-radius: var(--wd-r-pill);
+  font-size: 11.5px;
+  color: var(--wd-indigo);
+  background: #eef2f9;
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+.buy-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--wd-text-4);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: all 0.3s var(--wd-ease);
+}
+.wd-card:hover .buy-hint {
+  opacity: 1;
+  transform: none;
+  color: var(--wd-brand);
+}
+
 .pager {
-  margin-top: 20px;
+  margin-top: var(--wd-s8);
   justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    flex-wrap: wrap;
+    border-radius: var(--wd-r-lg);
+  }
+  .search {
+    width: 100%;
+  }
+  .price-range {
+    border-left: none;
+    padding-left: 0;
+  }
+  .sorts {
+    margin-left: 0;
+  }
 }
 </style>

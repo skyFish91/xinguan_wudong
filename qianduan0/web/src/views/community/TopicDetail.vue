@@ -1,26 +1,31 @@
 ﻿<template>
   <div class="topic-detail-page">
-    <div class="container">
-      <!-- 话题头部 -->
-      <div class="topic-header card">
-        <div class="topic-cover" v-if="topic.cover || topic.name">
-          <img
-            :src="getTopicImage(topic.name)"
-            :alt="topic.name"
-            onerror="this.src='https://via.placeholder.com/800x400?text=话题'"
-          />
-          <div class="topic-overlay">
-            <div class="topic-info">
-              <h1 class="topic-name"># {{ topic.name }}</h1>
-              <p class="topic-desc">{{ topic.intro }}</p>
-              <div class="topic-stats">
-                <span>{{ formatCount(topic.postCount) }} 篇游记</span>
-                <span>{{ formatCount(topic.followCount) }} 人关注</span>
+    <TopNav />
+
+    <div class="wd-container wd-page">
+      <!-- 话题头图 + 玻璃浮层 -->
+      <header class="topic-hero wd-card">
+        <div class="hero-media">
+          <img :src="img(topic.cover, topic.name, true)" :alt="topic.name" @error="imgError" />
+          <div class="hero-overlay">
+            <div class="hero-info">
+              <h1 class="hero-name"># {{ topic.name }}</h1>
+              <p class="hero-desc" v-if="topic.intro || topic.description">
+                {{ topic.intro || topic.description }}
+              </p>
+              <div class="hero-stats">
+                <span class="stat-item">
+                  <strong>{{ formatCount(topic.postCount) }}</strong> 篇游记
+                </span>
+                <span class="stat-item">
+                  <strong>{{ formatCount(topic.followCount) }}</strong> 人关注
+                </span>
               </div>
             </div>
           </div>
         </div>
-        <div class="topic-actions">
+
+        <div class="hero-actions">
           <el-button
             :type="topic.isFollowed ? '' : 'primary'"
             round
@@ -35,62 +40,76 @@
             发布游记
           </el-button>
         </div>
-      </div>
+      </header>
 
-      <!-- 游记列表筛选 -->
-      <div class="filter-bar">
-        <div class="filter-tabs">
+      <!-- 排序栏 -->
+      <div class="sort-bar glass-strong">
+        <div class="sort-tabs">
           <div
             v-for="tab in tabs"
             :key="tab.value"
-            :class="['filter-tab', { active: currentTab === tab.value }]"
+            :class="['sort-tab', { active: currentTab === tab.value }]"
             @click="switchTab(tab.value)"
           >
             {{ tab.label }}
           </div>
         </div>
+        <span class="sort-hint">共 {{ formatCount(topic.postCount) }} 篇</span>
       </div>
 
-      <!-- 游记瀑布流 -->
-      <div class="waterfall" v-if="posts.length">
-        <div
-          v-for="post in posts"
+      <!-- 骨架屏 -->
+      <div v-if="loading && !posts.length" class="wd-waterfall">
+        <SkeletonCard v-for="i in 8" :key="`s${i}`" variant="waterfall" cover="170px" />
+      </div>
+
+      <!-- 瀑布流 -->
+      <div v-else-if="posts.length" class="wd-waterfall">
+        <article
+          v-for="(post, i) in posts"
           :key="post.id"
-          class="waterfall-item"
+          class="wd-card wd-card-hover post-card wd-rise"
+          :style="{ animationDelay: `${Math.min(i, 10) * 45}ms` }"
           @click="$router.push(`/community/post/${post.id}`)"
         >
-          <div class="post-card card">
-            <div class="post-image">
-              <img :src="post.cover" :alt="post.title" />
-              <div class="video-badge" v-if="post.videoUrl">
-                <el-icon><VideoPlay /></el-icon>
-              </div>
+          <div class="wd-media" :style="{ height: postHeight(post) + 'px' }">
+            <img :src="img(post.cover, post.title)" :alt="post.title" @error="imgError" />
+            <div class="video-badge wd-chip" v-if="post.videoUrl">
+              <el-icon><VideoPlay /></el-icon> 视频
             </div>
-            <div class="post-content">
-              <h3 class="post-title">{{ post.title }}</h3>
-              <p class="post-desc">{{ post.content }}</p>
-              <div class="post-footer">
-                <div class="author">
-                  <el-avatar :size="28" :src="post.userAvatar" />
-                  <span>{{ post.userName }}</span>
-                </div>
-                <div class="stats">
-                  <span><el-icon><View /></el-icon> {{ formatCount(post.viewCount) }}</span>
-                  <span><el-icon><Star /></el-icon> {{ formatCount(post.likeCount) }}</span>
-                </div>
+          </div>
+
+          <div class="wd-card-body">
+            <h3 class="wd-title clamp-2">{{ post.title }}</h3>
+            <p class="post-desc clamp-2" v-if="post.content">{{ post.content }}</p>
+
+            <div class="post-footer">
+              <div class="author">
+                <el-avatar :size="24" :src="post.userAvatar">{{ (post.userName || '旅').slice(0, 1) }}</el-avatar>
+                <span class="author-name clamp-1">{{ post.userName }}</span>
+              </div>
+              <div class="stats">
+                <span><el-icon><View /></el-icon> {{ formatCount(post.viewCount) }}</span>
+                <span><el-icon><Star /></el-icon> {{ formatCount(post.likeCount) }}</span>
               </div>
             </div>
           </div>
-        </div>
+        </article>
       </div>
 
       <!-- 空状态 -->
-      <el-empty v-if="!loading && !posts.length" description="暂无内容" />
+      <div v-else-if="!loading" class="wd-card">
+        <EmptyState
+          title="这个话题下还没有游记"
+          desc="由你来写下第一篇，让更多人看到这里的风景。"
+        >
+          <el-button type="primary" @click="$router.push('/community/publish')">发布游记</el-button>
+        </EmptyState>
+      </div>
 
       <!-- 加载更多 -->
       <div class="load-more" v-if="hasMore && posts.length">
-        <el-button @click="loadMore" :loading="loading">
-          {{ loading ? '加载中...' : '加载更多' }}
+        <el-button size="large" :loading="loading" @click="loadMore">
+          {{ loading ? '加载中…' : '加载更多' }}
         </el-button>
       </div>
     </div>
@@ -98,14 +117,15 @@
 </template>
 
 <script setup>
+import TopNav from '../../components/TopNav.vue'
+import SkeletonCard from '../../components/SkeletonCard.vue'
+import EmptyState from '../../components/EmptyState.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Plus, Edit, View, Star, VideoPlay } from '@element-plus/icons-vue'
 import { communityApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
-
-// 动态加载本地图片
-const localImages = import.meta.glob('./topics_photos/*.{jpg,jpeg,png}', { eager: true })
+import { img, imgError } from '../../utils/media'
 
 const route = useRoute()
 const topicId = ref(route.params.id)
@@ -113,336 +133,270 @@ const topicId = ref(route.params.id)
 const topic = ref({
   id: 0,
   name: '',
+  intro: '',
   description: '',
   cover: '',
   postCount: 0,
   followCount: 0,
-  isFollowed: false
+  isFollowed: false,
 })
 
 const currentTab = ref('hot')
 const tabs = [
   { label: '最热', value: 'hot' },
-  { label: '最新', value: 'new' }
+  { label: '最新', value: 'new' },
 ]
 
 const posts = ref([])
-const loading = ref(false)
+const loading = ref(true)
 const hasMore = ref(true)
 const page = ref(1)
 const pageSize = 20
 
-// 加载话题详情
+// 瀑布流高度：按 id 稳定错落
+const HEIGHTS = [190, 250, 210, 280, 200, 240, 220, 260]
+const postHeight = (post) => HEIGHTS[(Number(post.id) || 0) % HEIGHTS.length]
+
 const loadTopicDetail = async () => {
   try {
-    const data = await communityApi.getTopicDetail(topicId.value)
-    topic.value = data
+    topic.value = await communityApi.getTopicDetail(topicId.value)
   } catch (error) {
-    ElMessage.error('加载失败')
+    ElMessage.error('加载话题失败')
   }
 }
 
-// 加载游记列表
 const loadPosts = async (reset = false) => {
-  if (loading.value) return
-
+  if (loading.value && !reset) return
   loading.value = true
   try {
     if (reset) {
       page.value = 1
       posts.value = []
     }
-
-    const params = {
+    const data = await communityApi.getTopicPosts(topicId.value, {
       topicId: topicId.value,
       page: page.value,
-      size: pageSize
-    }
-
-    const data = await communityApi.getTopicPosts(topicId.value, params)
-
-    if (reset) {
-      posts.value = data.list || []
-    } else {
-      posts.value.push(...(data.list || []))
-    }
-
-    hasMore.value = posts.value.length < (data.pagination?.total || 0)
+      size: pageSize,
+      sort: currentTab.value,
+    })
+    if (reset) posts.value = data.list || []
+    else posts.value.push(...(data.list || []))
+    hasMore.value = posts.value.length < (data.total || data.pagination?.total || 0)
     page.value++
   } catch (error) {
-    ElMessage.error('加载失败')
+    ElMessage.error('加载游记失败')
   } finally {
     loading.value = false
   }
 }
 
-// 切换 Tab
 const switchTab = (tab) => {
   currentTab.value = tab
   loadPosts(true)
 }
 
-// 加载更多
-const loadMore = () => {
-  loadPosts(false)
-}
+const loadMore = () => loadPosts(false)
 
-// 关注/取消关注话题
 const handleFollow = async () => {
   try {
     await communityApi.followTopic(topicId.value)
     topic.value.isFollowed = !topic.value.isFollowed
-    topic.value.followCount += topic.value.isFollowed ? 1 : -1
+    topic.value.followCount = Math.max(
+      0,
+      (topic.value.followCount || 0) + (topic.value.isFollowed ? 1 : -1)
+    )
     ElMessage.success(topic.value.isFollowed ? '关注成功' : '已取消关注')
   } catch (error) {
-    ElMessage.error(error.message || '操作失败')
+    ElMessage.error('操作失败')
   }
 }
 
-// 格式化数字
 const formatCount = (count) => {
-  if (count >= 10000) {
-    return (count / 10000).toFixed(1) + 'w'
-  }
-  return count
+  const n = Number(count) || 0
+  return n >= 10000 ? `${(n / 10000).toFixed(1)}w` : n
 }
 
-// 获取话题对应的本地图片
-const getTopicImage = (topicName) => {
-  for (const [path, module] of Object.entries(localImages)) {
-    const fileName = path.split('/').pop().split('.').slice(0, -1).join('.')
-    if (fileName === topicName) {
-      return module.default || path
-    }
-  }
-  const firstImage = Object.values(localImages)[0]
-  return firstImage?.default || topic.value.cover || 'https://via.placeholder.com/800x400?text=话题'
-}
-
-onMounted(() => {
-  loadTopicDetail()
+onMounted(async () => {
+  await loadTopicDetail()
   loadPosts(true)
 })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .topic-detail-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  padding-bottom: var(--wd-s9);
+}
 
-  .topic-header {
-    margin-bottom: 24px;
-    padding: 0;
-    overflow: hidden;
+/* 话题头图 */
+.topic-hero {
+  margin-bottom: var(--wd-s6);
+}
+.hero-media {
+  position: relative;
+  height: 320px;
+  overflow: hidden;
+  background: linear-gradient(120deg, #eef1f6, #e6eaf2);
+}
+.hero-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(180deg, rgba(16, 18, 24, 0.05) 0%, rgba(16, 18, 24, 0.72) 100%);
+}
+.hero-info {
+  padding: var(--wd-s8) var(--wd-s7) var(--wd-s7);
+  color: #fff;
+}
+.hero-name {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+}
+.hero-desc {
+  max-width: 720px;
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.88);
+}
+.hero-stats {
+  display: flex;
+  gap: var(--wd-s6);
+  margin-top: var(--wd-s4);
+}
+.stat-item {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.82);
+}
+.stat-item strong {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
 
-    .topic-cover {
-      position: relative;
-      width: 100%;
-      height: 320px;
-      overflow: hidden;
+.hero-actions {
+  display: flex;
+  gap: var(--wd-s3);
+  padding: var(--wd-s4) var(--wd-s6);
+}
 
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
+/* 排序栏 */
+.sort-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wd-s4);
+  margin-bottom: var(--wd-s6);
+  padding: 10px 16px;
+  border-radius: var(--wd-r-pill);
+  box-shadow: var(--wd-sh-1);
+}
+.sort-tabs {
+  display: flex;
+  gap: 4px;
+}
+.sort-tab {
+  padding: 8px 20px;
+  border-radius: var(--wd-r-pill);
+  font-size: 15px;
+  color: var(--wd-text-2);
+  cursor: pointer;
+  transition: all 0.26s var(--wd-ease);
+}
+.sort-tab:hover {
+  color: var(--wd-brand);
+  background: var(--wd-brand-soft);
+}
+.sort-tab.active {
+  color: #fff;
+  font-weight: 600;
+  background: linear-gradient(140deg, var(--wd-brand-400), var(--wd-brand-600));
+  box-shadow: 0 6px 18px rgba(var(--wd-brand-rgb), 0.24);
+}
+.sort-hint {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--wd-text-4);
+}
 
-      .topic-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
-        display: flex;
-        align-items: flex-end;
-        padding: 40px;
+/* 卡片 */
+.post-card .video-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.post-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--wd-text-3);
+}
+.post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wd-border);
+}
+.post-footer .author {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--wd-text-3);
+}
+.author-name {
+  max-width: 90px;
+}
+.post-footer .stats {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--wd-text-4);
+}
+.post-footer .stats span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
 
-        .topic-info {
-          color: #fff;
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--wd-s8) 0 0;
+}
 
-          .topic-name {
-            font-size: 42px;
-            font-weight: 700;
-            margin-bottom: 12px;
-          }
-
-          .topic-desc {
-            font-size: 16px;
-            margin-bottom: 16px;
-            opacity: 0.9;
-          }
-
-          .topic-stats {
-            display: flex;
-            gap: 24px;
-            font-size: 15px;
-            opacity: 0.8;
-          }
-        }
-      }
-    }
-
-    .topic-actions {
-      display: flex;
-      gap: 16px;
-      padding: 24px;
-      background: #fff;
-    }
+@media (max-width: 760px) {
+  .hero-media {
+    height: 220px;
   }
-
-  .filter-bar {
-    margin-bottom: 24px;
-    padding: 20px 32px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-
-    .filter-tabs {
-      display: flex;
-      gap: 32px;
-
-      .filter-tab {
-        font-size: 16px;
-        color: #666;
-        cursor: pointer;
-        padding: 8px 0;
-        position: relative;
-        transition: color 0.3s;
-
-        &:hover {
-          color: #667eea;
-        }
-
-        &.active {
-          color: #667eea;
-          font-weight: 600;
-
-          &::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 1px;
-          }
-        }
-      }
-    }
+  .hero-name {
+    font-size: 26px;
   }
-
-  .waterfall {
-    columns: 4;
-    column-gap: 24px;
-
-    @media (max-width: 1200px) {
-      columns: 3;
-    }
-
-    .waterfall-item {
-      break-inside: avoid;
-      margin-bottom: 24px;
-    }
-
-    .post-card {
-      cursor: pointer;
-      overflow: hidden;
-      padding: 0;
-      transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-      }
-
-      .post-image {
-        position: relative;
-        width: 100%;
-        overflow: hidden;
-
-        img {
-          width: 100%;
-          display: block;
-          transition: transform 0.3s;
-        }
-
-        .video-badge {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          background: rgba(0, 0, 0, 0.6);
-          color: #fff;
-          padding: 6px 12px;
-          border-radius: 16px;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-      }
-
-      &:hover .post-image img {
-        transform: scale(1.1);
-      }
-
-      .post-content {
-        padding: 16px;
-
-        .post-title {
-          font-size: 16px;
-          font-weight: 600;
-          margin-bottom: 8px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-        }
-
-        .post-desc {
-          font-size: 14px;
-          color: #999;
-          margin-bottom: 12px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-        }
-
-        .post-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-
-          .author {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #666;
-          }
-
-          .stats {
-            display: flex;
-            gap: 12px;
-            font-size: 14px;
-            color: #999;
-
-            span {
-              display: flex;
-              align-items: center;
-              gap: 4px;
-            }
-          }
-        }
-      }
-    }
+  .hero-info {
+    padding: var(--wd-s5) var(--wd-s5) var(--wd-s4);
   }
-
-  .load-more {
-    text-align: center;
-    padding: 40px 0;
+  .sort-bar {
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: var(--wd-r-lg);
   }
 }
 </style>
-

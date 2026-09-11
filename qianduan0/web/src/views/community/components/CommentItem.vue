@@ -171,7 +171,7 @@ const handleDelete = () => {
     }
 
     .comment-replies {
-      background: #f7f8fa;
+      background: var(--wd-silver-soft);
       border-radius: 8px;
       padding: 16px;
       margin-bottom: 12px;
@@ -200,7 +200,7 @@ const handleDelete = () => {
             }
 
             .reply-to {
-              color: #667eea;
+              color: var(--wd-brand);
             }
 
             .reply-time {
@@ -232,7 +232,7 @@ const handleDelete = () => {
         user-select: none;
 
         &:hover {
-          color: #667eea;
+          color: var(--wd-brand);
         }
 
         &.active {
@@ -248,7 +248,7 @@ const handleDelete = () => {
     .reply-input {
       margin-top: 12px;
       padding: 12px;
-      background: #f7f8fa;
+      background: var(--wd-silver-soft);
       border-radius: 8px;
 
       .reply-actions {

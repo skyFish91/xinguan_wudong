@@ -1,97 +1,99 @@
 ﻿<template>
   <div class="topic-list-page">
-    <div class="container">
-      <!-- 顶部导航 -->
-      <div class="page-header">
-        <h1>📌 热门话题</h1>
-        <p class="subtitle">发现有趣的话题，分享你的见闻</p>
-      </div>
+    <TopNav />
 
-      <!-- 搜索和筛选 -->
-      <div class="filter-bar">
+    <div class="wd-container wd-page">
+      <!-- 页头 -->
+      <header class="page-head">
+        <h1 class="page-title">热门话题</h1>
+        <p class="page-sub">跟着话题读游记，找到同好与路线</p>
+      </header>
+
+      <!-- 搜索框（液态玻璃吸顶） -->
+      <div class="search-bar glass-strong">
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索话题..."
+          placeholder="搜索话题名称或简介…"
+          size="large"
           clearable
-          @keyup.enter="handleSearch"
-          @input="handleSearch"
-          style="width: 300px"
-        >
-          <template #suffix>
-            <el-icon style="cursor: pointer" @click="handleSearch">
-              <Search />
-            </el-icon>
-          </template>
-        </el-input>
+          :prefix-icon="Search"
+        />
+        <span class="search-count" v-if="searchKeyword.trim()">
+          匹配 {{ filteredTopics.length }} 个话题
+        </span>
       </div>
 
-      <!-- 话题列表 -->
-      <div v-if="loading" class="loading">
-        <el-icon class="is-loading"><Loading /></el-icon>
-        <p>加载中...</p>
+      <!-- 骨架屏 -->
+      <div v-if="loading" class="wd-grid wd-grid-3">
+        <div v-for="i in 6" :key="`s${i}`" class="wd-skel-card">
+          <div class="wd-skeleton wd-skel-cover topic-skel-cover"></div>
+          <div class="wd-skel-body">
+            <div class="wd-skeleton wd-skel-title"></div>
+            <div class="wd-skeleton wd-skel-text"></div>
+            <div class="wd-skeleton wd-skel-text wd-skel-short"></div>
+          </div>
+        </div>
       </div>
 
-      <div v-else-if="filteredTopics.length" class="topics-grid">
-        <el-card
-          v-for="topic in filteredTopics"
+      <!-- 话题卡片 -->
+      <div v-else-if="filteredTopics.length" class="wd-grid wd-grid-3">
+        <article
+          v-for="(topic, i) in filteredTopics"
           :key="topic.id"
-          shadow="hover"
-          class="topic-card"
+          class="wd-card wd-card-hover topic-card wd-rise"
+          :style="{ animationDelay: `${Math.min(i, 8) * 45}ms` }"
           @click="goToTopic(topic.id)"
         >
-          <!-- 话题背景图 -->
-          <div class="topic-image-wrapper">
-            <img
-              :src="getTopicImage(topic.name)"
-              :alt="topic.name"
-              class="topic-image"
-              onerror="this.src='https://via.placeholder.com/300x200?text=话题'"
-            />
+          <div class="wd-media topic-cover">
+            <img :src="img(topic.cover, topic.name, true)" :alt="topic.name" @error="imgError" />
+            <span class="wd-chip hash-chip"># {{ topic.name }}</span>
           </div>
 
-          <!-- 话题头部 -->
-          <div class="topic-header">
-            <div class="topic-info">
-              <h3 class="topic-name">#{{ topic.name }}</h3>
-              <p class="topic-desc">{{ topic.intro || '暂无描述' }}</p>
+          <div class="wd-card-body">
+            <div class="topic-head">
+              <h3 class="wd-title topic-name clamp-1">{{ topic.name }}</h3>
+              <button
+                class="follow-btn"
+                :class="{ followed: isFollowed(topic.id) }"
+                @click.stop="handleFollowTopic(topic)"
+              >
+                {{ isFollowed(topic.id) ? '已关注' : '+ 关注' }}
+              </button>
             </div>
-            <el-button
-              v-if="!isFollowed(topic.id)"
-              type="primary"
-              round
-              size="small"
-              @click.stop="handleFollowTopic(topic.id, true)"
-            >
-              + 关注
-            </el-button>
-            <el-button
-              v-else
-              round
-              size="small"
-              @click.stop="handleFollowTopic(topic.id, false)"
-            >
-              已关注
-            </el-button>
-          </div>
 
-          <!-- 话题统计 -->
-          <div class="topic-stats">
-            <div class="stat">
-              <span class="label">游记</span>
-              <span class="value">{{ topic.postCount || 0 }}</span>
-            </div>
-            <div class="stat">
-              <span class="label">关注</span>
-              <span class="value">{{ topic.followCount || 0 }}</span>
+            <p class="topic-desc clamp-2">{{ topic.intro || topic.description || '还没有简介，点进去看看大家在聊什么' }}</p>
+
+            <div class="topic-stats">
+              <div class="stat">
+                <span class="value">{{ formatCount(topic.postCount) }}</span>
+                <span class="label">篇游记</span>
+              </div>
+              <div class="divider"></div>
+              <div class="stat">
+                <span class="value">{{ formatCount(topic.followCount) }}</span>
+                <span class="label">人关注</span>
+              </div>
             </div>
           </div>
-        </el-card>
+        </article>
       </div>
 
-      <el-empty v-else description="暂无话题" />
+      <!-- 空状态 -->
+      <div v-else class="wd-card">
+        <EmptyState
+          :variant="searchKeyword.trim() ? 'search' : 'default'"
+          :title="searchKeyword.trim() ? '没有匹配的话题' : '还没有话题'"
+          :desc="searchKeyword.trim()
+            ? '换个关键词试试，或直接发起一个新话题。'
+            : '话题由游记沉淀而来，发一篇游记就能带出新的讨论。'"
+        >
+          <el-button v-if="searchKeyword.trim()" @click="searchKeyword = ''">清空搜索</el-button>
+          <router-link to="/community/publish"><el-button type="primary">发布游记</el-button></router-link>
+        </EmptyState>
+      </div>
 
       <!-- 分页 -->
-      <div v-if="filteredTopics.length && pagination.total > size" class="pagination">
+      <div class="pager-wrap" v-if="filteredTopics.length && pagination.total > size">
         <el-pagination
           :current-page="page"
           :page-size="size"
@@ -105,279 +107,227 @@
 </template>
 
 <script setup>
+import TopNav from '../../components/TopNav.vue';
+import EmptyState from '../../components/EmptyState.vue';
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import { communityApi } from '@/api/community'
-import { Search, Loading } from '@element-plus/icons-vue'
+import { img, imgError } from '../../utils/media'
 
 const router = useRouter()
 
 const topics = ref([])
-const loading = ref(false)
+const loading = ref(true)
 const searchKeyword = ref('')
 const page = ref(1)
 const size = ref(15)
 const pagination = ref({ total: 0, page: 1, size: 15 })
 const followedTopics = ref(new Set())
 
-// 本地搜索过滤
 const filteredTopics = computed(() => {
-  if (!searchKeyword.value.trim()) {
-    return topics.value
-  }
-  const keyword = searchKeyword.value.toLowerCase()
-  return topics.value.filter(topic =>
-    topic.name.toLowerCase().includes(keyword) ||
-    (topic.intro && topic.intro.toLowerCase().includes(keyword))
+  const kw = searchKeyword.value.trim().toLowerCase()
+  if (!kw) return topics.value
+  return topics.value.filter(
+    (t) =>
+      String(t.name || '').toLowerCase().includes(kw) ||
+      String(t.intro || t.description || '').toLowerCase().includes(kw)
   )
 })
 
-// 加载话题列表
 const loadTopics = async () => {
   loading.value = true
   try {
-    const res = await communityApi.getTopics({
-      page: 1,
-      size: 100  // 一次加载所有话题
-    })
-
-    console.log('原始响应:', JSON.stringify(res))
-
+    const res = await communityApi.getTopics({ page: 1, size: 100 })
     topics.value = res.list || []
-    pagination.value = res.pagination || { total: 0 }
-
-    console.log('设置的topics长度:', topics.value.length)
+    pagination.value = res.pagination || { total: topics.value.length }
   } catch (error) {
-    console.error('加载错误:', error)
-    ElMessage.error(error.message || '加载话题失败')
+    ElMessage.error('加载话题失败')
+    topics.value = []
   } finally {
     loading.value = false
   }
 }
 
-// 检查是否已关注
-const isFollowed = (topicId) => {
-  return followedTopics.value.has(topicId)
-}
+const isFollowed = (topicId) => followedTopics.value.has(topicId)
 
-// 关注/取消关注话题
-const handleFollowTopic = async (topicId, follow) => {
+const handleFollowTopic = async (topic) => {
   try {
-    await communityApi.followTopic(topicId)
-    if (follow) {
-      followedTopics.value.add(topicId)
-      ElMessage.success('关注成功')
-    } else {
-      followedTopics.value.delete(topicId)
+    await communityApi.followTopic(topic.id)
+    if (followedTopics.value.has(topic.id)) {
+      followedTopics.value.delete(topic.id)
+      topic.followCount = Math.max(0, (topic.followCount || 0) - 1)
       ElMessage.success('已取消关注')
+    } else {
+      followedTopics.value.add(topic.id)
+      topic.followCount = (topic.followCount || 0) + 1
+      ElMessage.success('关注成功')
     }
   } catch (error) {
-    ElMessage.error(error.message || '操作失败')
+    ElMessage.error('操作失败')
   }
 }
 
-// 搜索话题（本地过滤）
-const handleSearch = () => {
-  // 本地过滤，不需要重新请求
-}
-
-// 页码变化
 const handlePageChange = (newPage) => {
   page.value = newPage
   loadTopics()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// 跳转到话题详情
-const goToTopic = (topicId) => {
-  router.push(`/community/topic/${topicId}`)
+const goToTopic = (topicId) => router.push(`/community/topic/${topicId}`)
+
+const formatCount = (count) => {
+  const n = Number(count) || 0
+  return n >= 10000 ? `${(n / 10000).toFixed(1)}w` : n
 }
 
-// 动态加载本地图片
-const localImages = import.meta.glob('./topics_photos/*.{jpg,jpeg,png}', { eager: true })
-
-// 获取话题对应的图片
-const getTopicImage = (topicName) => {
-  // 遍历所有加载的图片，找匹配的文件名
-  for (const [path, module] of Object.entries(localImages)) {
-    // 从路径中提取文件名（不带扩展名）
-    const fileName = path.split('/').pop().split('.').slice(0, -1).join('.')
-    // 比较话题名和文件名
-    if (fileName === topicName) {
-      return module.default || path
-    }
-  }
-  // 没找到对应图片，返回第一张作为fallback
-  const firstImage = Object.values(localImages)[0]
-  return firstImage?.default || 'https://via.placeholder.com/300x200?text=话题'
-}
-
-onMounted(() => {
-  loadTopics()
-})
+onMounted(() => loadTopics())
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .topic-list-page {
-  padding: 20px;
-  background: #f5f5f5;
   min-height: 100vh;
-
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .page-header {
-    margin-bottom: 30px;
-    text-align: center;
-
-    h1 {
-      font-size: 32px;
-      margin: 0 0 10px 0;
-      color: #333;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: #999;
-      margin: 0;
-    }
-  }
-
-  .filter-bar {
-    margin-bottom: 20px;
-    display: flex;
-    gap: 10px;
-  }
-
-  .loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-    color: #999;
-
-    .is-loading {
-      font-size: 32px;
-      margin-bottom: 10px;
-      animation: spin 1s linear infinite;
-    }
-
-    p {
-      margin: 0;
-    }
-  }
-
-  .topics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-
-    .topic-card {
-      cursor: pointer;
-      transition: all 0.3s;
-      height: 100%;
-
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
-      }
-
-      .topic-image-wrapper {
-        width: 100%;
-        height: 180px;
-        margin: -20px -20px 16px -20px;
-        overflow: hidden;
-        border-radius: 4px 4px 0 0;
-
-        .topic-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.3s;
-        }
-      }
-
-      &:hover .topic-image {
-        transform: scale(1.05);
-      }
-
-      .topic-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 15px;
-        margin-bottom: 15px;
-
-        .topic-info {
-          flex: 1;
-
-          .topic-name {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 0 0 8px 0;
-            color: #667eea;
-          }
-
-          .topic-desc {
-            font-size: 13px;
-            color: #999;
-            margin: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-          }
-        }
-      }
-
-      .topic-stats {
-        display: flex;
-        gap: 20px;
-        padding-top: 15px;
-        border-top: 1px solid #eee;
-
-        .stat {
-          flex: 1;
-          text-align: center;
-
-          .label {
-            display: block;
-            font-size: 12px;
-            color: #999;
-            margin-bottom: 4px;
-          }
-
-          .value {
-            display: block;
-            font-size: 18px;
-            font-weight: 600;
-            color: #667eea;
-          }
-        }
-      }
-    }
-  }
-
-  .pagination {
-    display: flex;
-    justify-content: center;
-    padding: 20px 0;
-  }
+  padding-bottom: var(--wd-s9);
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+.page-head {
+  padding-bottom: var(--wd-s5);
+}
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--wd-text-1);
+}
+.page-sub {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: var(--wd-text-3);
+}
+
+.search-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--wd-s4);
+  margin-bottom: var(--wd-s6);
+  padding: 10px 16px;
+  border-radius: var(--wd-r-pill);
+  box-shadow: var(--wd-sh-1);
+}
+.search-count {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--wd-text-3);
+}
+
+/* 话题卡 */
+.topic-cover {
+  height: 172px;
+}
+.hash-chip {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topic-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.topic-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+}
+.follow-btn {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: var(--wd-r-pill);
+  border: 1px solid rgba(var(--wd-brand-rgb), 0.3);
+  background: var(--wd-brand-soft);
+  color: var(--wd-brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.24s var(--wd-ease);
+}
+.follow-btn:hover {
+  background: var(--wd-brand);
+  border-color: var(--wd-brand);
+  color: #fff;
+}
+.follow-btn.followed {
+  border-color: var(--wd-border-strong);
+  background: #f1f3f7;
+  color: var(--wd-text-3);
+}
+.follow-btn.followed:hover {
+  background: #e8ebf1;
+  color: var(--wd-text-2);
+}
+
+.topic-desc {
+  margin-top: 10px;
+  min-height: 42px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--wd-text-3);
+}
+
+.topic-stats {
+  display: flex;
+  align-items: center;
+  margin-top: var(--wd-s4);
+  padding-top: var(--wd-s4);
+  border-top: 1px solid var(--wd-border);
+}
+.topic-stats .stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.topic-stats .divider {
+  width: 1px;
+  height: 22px;
+  background: var(--wd-border);
+}
+.topic-stats .value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--wd-text-1);
+  font-variant-numeric: tabular-nums;
+}
+.topic-stats .label {
+  font-size: 11.5px;
+  color: var(--wd-text-4);
+}
+
+.topic-skel-cover {
+  height: 172px;
+}
+
+.pager-wrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--wd-s8) 0 0;
+}
+
+@media (max-width: 760px) {
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: var(--wd-r-lg);
   }
 }
 </style>
-

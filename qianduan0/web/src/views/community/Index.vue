@@ -1,8 +1,15 @@
 ﻿<template>
   <div class="community-page">
+    <TopNav />
     <div class="container">
-      <!-- 顶部筛选 -->
-      <div class="filter-bar">
+      <!-- 页头 -->
+      <header class="page-head">
+        <h1 class="page-title">社区分享</h1>
+        <p class="page-sub">旅人的真实记录——路线、避坑、光影与小店</p>
+      </header>
+
+      <!-- 筛选栏（液态玻璃吸顶） -->
+      <div class="filter-bar glass-strong">
         <div class="filter-tabs">
           <div
             v-for="tab in tabs"
@@ -19,93 +26,99 @@
             placeholder="搜索游记、话题"
             prefix-icon="Search"
             class="search-input"
+            clearable
             @keyup.enter="handleSearch"
           />
-          <el-button type="primary" round @click="$router.push('/community/publish')">
+          <el-button type="primary" @click="$router.push('/community/publish')">
             <el-icon><Edit /></el-icon>
             发布游记
           </el-button>
         </div>
       </div>
 
-      <!-- 话题标签（热门话题） -->
-      <div class="topic-bar" v-if="hotTopics.length">
-        <div class="topic-tags">
-          <span class="topic-label">热门话题：</span>
-          <el-tag
-            v-for="topic in hotTopics"
-            :key="topic.id"
-            type="info"
-            class="topic-tag"
-            @click="goToTopic(topic.id)"
-            style="cursor: pointer;"
-          >
-            # {{ topic.name }}
-          </el-tag>
-        </div>
+      <!-- 热门话题 -->
+      <div class="topic-bar glass" v-if="hotTopics.length">
+        <span class="topic-label">热门话题</span>
+        <span
+          v-for="topic in hotTopics"
+          :key="topic.id"
+          class="topic-pill"
+          :class="{ active: selectedTopicId === topic.id }"
+          @click="goToTopic(topic.id)"
+        >
+          # {{ topic.name }}
+        </span>
+      </div>
+
+      <!-- 骨架屏 -->
+      <div v-if="loading && !posts.length" class="wd-waterfall">
+        <SkeletonCard v-for="i in 8" :key="`s${i}`" variant="waterfall" cover="170px" />
       </div>
 
       <!-- 瀑布流 -->
-      <div class="waterfall" v-if="posts.length">
-        <div
-          v-for="post in posts"
+      <div v-else-if="posts.length" class="wd-waterfall">
+        <article
+          v-for="(post, i) in posts"
           :key="post.id"
-          class="waterfall-item"
+          class="wd-card wd-card-hover post-card wd-rise"
+          :style="{ animationDelay: `${Math.min(i, 10) * 45}ms` }"
           @click="$router.push(`/community/${post.id}`)"
         >
-          <div class="post-card card">
-            <div class="post-image">
-              <img :src="post.cover" :alt="post.title" />
-              <!-- 视频标识 -->
-              <div class="video-badge" v-if="post.videoUrl">
-                <el-icon><VideoPlay /></el-icon>
-              </div>
-              <!-- 关联地点 -->
-              <div class="poi-badge" v-if="post.poiName">
-                <el-icon><Location /></el-icon>
-                {{ post.poiName }}
-              </div>
+          <div class="wd-media" :style="{ height: postHeight(post) + 'px' }">
+            <img :src="img(post.cover, post.title)" :alt="post.title" @error="imgError" />
+            <div class="video-badge wd-chip" v-if="post.videoUrl">
+              <el-icon><VideoPlay /></el-icon> 视频
             </div>
-            <div class="post-content">
-              <h3 class="post-title">{{ post.title }}</h3>
-              <p class="post-desc">{{ post.content }}</p>
-              <!-- 话题标签 -->
-              <div class="post-topics" v-if="post.topics && post.topics.length">
-                <el-tag
-                  v-for="topic in post.topics.slice(0, 3)"
-                  :key="topic.id"
-                  size="small"
-                  type="info"
-                  class="topic-mini"
-                >
-                  # {{ topic.name }}
-                </el-tag>
+            <div class="poi-badge wd-chip wd-chip-indigo" v-if="post.poiName">
+              <el-icon><Location /></el-icon>
+              <span class="poi-text">{{ post.poiName }}</span>
+            </div>
+          </div>
+
+          <div class="wd-card-body">
+            <h3 class="wd-title clamp-2">{{ post.title }}</h3>
+            <p class="post-desc clamp-2">{{ post.content }}</p>
+
+            <div class="post-topics" v-if="post.topics && post.topics.length">
+              <span v-for="topic in post.topics.slice(0, 2)" :key="topic.id" class="mini-tag">
+                # {{ topic.name }}
+              </span>
+            </div>
+
+            <div class="post-footer">
+              <div class="author">
+                <el-avatar :size="24" :src="post.userAvatar">{{ (post.userName || '旅').slice(0, 1) }}</el-avatar>
+                <span class="author-name clamp-1">{{ post.userName }}</span>
               </div>
-              <div class="post-footer">
-                <div class="author">
-                  <el-avatar :size="28" :src="post.userAvatar" />
-                  <span>{{ post.userName }}</span>
-                </div>
-                <div class="stats">
-                  <span><el-icon><View /></el-icon> {{ formatCount(post.viewCount) }}</span>
-                  <span><el-icon><Star /></el-icon> {{ formatCount(post.likeCount) }}</span>
-                  <span><el-icon><ChatDotRound /></el-icon> {{ formatCount(post.commentCount) }}</span>
-                </div>
+              <div class="stats">
+                <span><el-icon><View /></el-icon> {{ formatCount(post.viewCount) }}</span>
+                <span><el-icon><Star /></el-icon> {{ formatCount(post.likeCount) }}</span>
               </div>
             </div>
           </div>
-        </div>
+        </article>
       </div>
 
       <!-- 空状态 -->
-      <el-empty v-if="!loading && !posts.length" description="暂无内容" />
+      <div v-else class="wd-card">
+        <EmptyState
+          variant="search"
+          title="还没有人分享"
+          desc="成为第一个记录乌东的人吧——一张图、一段话都算数。"
+        >
+          <router-link to="/community/publish">
+            <el-button type="primary">写第一篇游记</el-button>
+          </router-link>
+        </EmptyState>
+      </div>
 
       <!-- 加载更多 -->
       <div class="load-more" v-if="hasMore && posts.length">
-        <el-button @click="loadMore" :loading="loading">
-          {{ loading ? '加载中...' : '加载更多' }}
+        <el-button size="large" :loading="loading" @click="loadMore">
+          {{ loading ? '加载中…' : '加载更多' }}
         </el-button>
       </div>
+      <div class="list-end" v-else-if="posts.length">— 已经到底啦 —</div>
     </div>
 
     <!-- 发布游记对话框 -->
@@ -114,11 +127,15 @@
 </template>
 
 <script setup>
+import TopNav from '../../components/TopNav.vue';
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Edit, View, Star, ChatDotRound, VideoPlay, Location } from '@element-plus/icons-vue'
 import { communityApi } from '@/api/community'
 import { ElMessage } from 'element-plus'
+import SkeletonCard from '../../components/SkeletonCard.vue'
+import EmptyState from '../../components/EmptyState.vue'
+import { img, imgError } from '../../utils/media'
 import PublishDialog from './components/PublishDialog.vue'
 
 const $router = useRouter()
@@ -140,6 +157,10 @@ const searchKeyword = ref('')
 const selectedTopicId = ref(null)
 const hotTopics = ref([])
 const showPublishDialog = ref(false)
+
+// 瀑布流高度：按 id 稳定错落，模拟小红书的高低节奏
+const HEIGHTS = [190, 250, 210, 280, 200, 240, 220, 260]
+const postHeight = (post) => HEIGHTS[(Number(post.id) || 0) % HEIGHTS.length]
 
 // 加载游记列表
 const loadPosts = async (reset = false) => {
@@ -245,235 +266,215 @@ onMounted(() => {
 <style lang="scss" scoped>
 .community-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  padding-bottom: var(--wd-s10);
+}
 
-  .filter-bar {
+/* 页头 */
+.page-head {
+  padding: var(--wd-s7) 0 var(--wd-s5);
+}
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--wd-text-1);
+}
+.page-sub {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: var(--wd-text-3);
+}
+
+/* 筛选栏 */
+.filter-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 60;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: var(--wd-s5);
+  padding: 10px 16px;
+  border-radius: var(--wd-r-pill);
+  box-shadow: var(--wd-sh-1);
+
+  .filter-tabs {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 20px 32px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    gap: 4px;
 
-    .filter-tabs {
-      display: flex;
-      gap: 32px;
-
-      .filter-tab {
-        font-size: 16px;
-        color: #666;
-        cursor: pointer;
-        padding: 8px 0;
-        position: relative;
-        transition: color 0.3s;
-
-        &:hover {
-          color: #667eea;
-        }
-
-        &.active {
-          color: #667eea;
-          font-weight: 600;
-
-          &::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 1px;
-          }
-        }
-      }
-    }
-
-    .filter-actions {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-
-      .search-input {
-        width: 240px;
-      }
-    }
-  }
-
-  .topic-bar {
-    margin-bottom: 24px;
-    padding: 16px 24px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
-    .topic-tags {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-
-      .topic-label {
-        color: #999;
-        font-size: 14px;
-      }
-
-      .topic-tag {
-        cursor: pointer;
-        transition: all 0.3s;
-
-        &:hover {
-          transform: translateY(-2px);
-        }
-      }
-    }
-  }
-
-  .waterfall {
-    columns: 4;
-    column-gap: 24px;
-
-    @media (max-width: 1200px) {
-      columns: 3;
-    }
-
-    .waterfall-item {
-      break-inside: avoid;
-      margin-bottom: 24px;
-    }
-
-    .post-card {
+    .filter-tab {
+      padding: 8px 18px;
+      border-radius: var(--wd-r-pill);
+      font-size: 15px;
+      color: var(--wd-text-2);
       cursor: pointer;
-      overflow: hidden;
-      padding: 0;
-      transition: all 0.3s ease;
+      transition: all 0.26s var(--wd-ease);
 
       &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        color: var(--wd-brand);
+        background: var(--wd-brand-soft);
       }
 
-      .post-image {
-        position: relative;
-        width: 100%;
-        overflow: hidden;
-
-        img {
-          width: 100%;
-          display: block;
-          transition: transform 0.3s;
-        }
-
-        .video-badge {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          background: rgba(0, 0, 0, 0.6);
-          color: #fff;
-          padding: 6px 12px;
-          border-radius: 16px;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .poi-badge {
-          position: absolute;
-          bottom: 12px;
-          left: 12px;
-          background: rgba(102, 126, 234, 0.9);
-          color: #fff;
-          padding: 6px 12px;
-          border-radius: 16px;
-          font-size: 12px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          max-width: calc(100% - 24px);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
-
-      &:hover .post-image img {
-        transform: scale(1.1);
-      }
-
-      .post-content {
-        padding: 16px;
-
-        .post-title {
-          font-size: 16px;
-          font-weight: 600;
-          margin-bottom: 8px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-        }
-
-        .post-desc {
-          font-size: 14px;
-          color: #999;
-          margin-bottom: 12px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-        }
-
-        .post-topics {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 12px;
-          flex-wrap: wrap;
-
-          .topic-mini {
-            border: none;
-            background: #f0f2f5;
-          }
-        }
-
-        .post-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-
-          .author {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #666;
-          }
-
-          .stats {
-            display: flex;
-            gap: 12px;
-            font-size: 14px;
-            color: #999;
-
-            span {
-              display: flex;
-              align-items: center;
-              gap: 4px;
-            }
-          }
-        }
+      &.active {
+        color: #fff;
+        font-weight: 600;
+        background: linear-gradient(140deg, var(--wd-brand-400), var(--wd-brand-600));
+        box-shadow: 0 6px 18px rgba(var(--wd-brand-rgb), 0.24);
       }
     }
   }
 
-  .load-more {
-    text-align: center;
-    padding: 40px 0;
+  .filter-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+
+    .search-input {
+      width: 240px;
+    }
+  }
+}
+
+/* 热门话题 */
+.topic-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: var(--wd-s6);
+  padding: 12px 18px;
+  border-radius: var(--wd-r-md);
+}
+.topic-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--wd-text-4);
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.topic-pill {
+  padding: 6px 14px;
+  border-radius: var(--wd-r-pill);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wd-text-2);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--wd-border);
+  cursor: pointer;
+  transition: all 0.24s var(--wd-ease);
+
+  &:hover {
+    transform: translateY(-2px);
+    color: var(--wd-brand);
+    border-color: rgba(var(--wd-brand-rgb), 0.28);
+    box-shadow: var(--wd-sh-1);
+  }
+
+  &.active {
+    color: #fff;
+    background: var(--wd-brand);
+    border-color: var(--wd-brand);
+  }
+}
+
+/* 帖子卡片 */
+.post-card {
+  .video-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+  .poi-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    max-width: calc(100% - 24px);
+  }
+  .poi-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.post-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--wd-text-3);
+}
+
+.post-topics {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.mini-tag {
+  padding: 3px 10px;
+  border-radius: var(--wd-r-pill);
+  font-size: 11.5px;
+  color: var(--wd-indigo);
+  background: #eef2f9;
+}
+
+.post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wd-border);
+
+  .author {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    font-size: 12.5px;
+    color: var(--wd-text-3);
+  }
+  .author-name {
+    max-width: 90px;
+  }
+  .stats {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--wd-text-4);
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+  }
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: var(--wd-s8) 0 var(--wd-s3);
+}
+.list-end {
+  text-align: center;
+  padding: var(--wd-s7) 0;
+  font-size: 12.5px;
+  color: var(--wd-text-4);
+}
+
+@media (max-width: 900px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: var(--wd-r-lg);
+  }
+  .filter-bar .filter-actions .search-input {
+    width: 100%;
   }
 }
 </style>
-

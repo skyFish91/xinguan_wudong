@@ -1,5 +1,6 @@
 ﻿<template>
   <div class="user-profile-page">
+    <TopNav />
     <div class="container">
       <!-- 用户信息卡片 -->
       <div class="profile-header card">
@@ -80,7 +81,7 @@
           >
             <div class="post-card card">
               <div class="post-image">
-                <img :src="post.cover" :alt="post.title" />
+                <img :src="img(post.cover, post.title)" :alt="post.title" @error="imgError" />
                 <div class="video-badge" v-if="post.videoUrl">
                   <el-icon><VideoPlay /></el-icon>
                 </div>
@@ -106,7 +107,7 @@
           >
             <div class="post-card card">
               <div class="post-image">
-                <img :src="post.cover" :alt="post.title" />
+                <img :src="img(post.cover, post.title)" :alt="post.title" @error="imgError" />
               </div>
               <div class="post-content">
                 <h3 class="post-title">{{ post.title }}</h3>
@@ -129,7 +130,7 @@
           >
             <div class="post-card card">
               <div class="post-image">
-                <img :src="post.cover" :alt="post.title" />
+                <img :src="img(post.cover, post.title)" :alt="post.title" @error="imgError" />
               </div>
               <div class="post-content">
                 <h3 class="post-title">{{ post.title }}</h3>
@@ -193,7 +194,10 @@
 </template>
 
 <script setup>
+
+import TopNav from '../../components/TopNav.vue';
 import { ref, computed, onMounted } from 'vue'
+import { img, imgError } from '../../utils/media'
 import { useRoute } from 'vue-router'
 import { Plus, ChatDotRound, Setting, View, Star, VideoPlay } from '@element-plus/icons-vue'
 import { communityApi } from '@/api/community'
@@ -433,18 +437,17 @@ onMounted(() => {
 <style lang="scss" scoped>
 .user-profile-page {
   min-height: 100vh;
-  background: #f5f7fa;
-  padding: 40px 0;
+  padding: var(--wd-s7) 0 var(--wd-s10);
 
   .profile-header {
-    margin-bottom: 32px;
+    margin-bottom: var(--wd-s6);
     padding: 0;
     overflow: hidden;
 
     .profile-cover {
       position: relative;
       width: 100%;
-      height: 200px;
+      height: 220px;
       background-size: cover;
       background-position: center;
 
@@ -457,7 +460,7 @@ onMounted(() => {
 
     .profile-main {
       position: relative;
-      padding: 0 40px 32px;
+      padding: 0 var(--wd-s8) var(--wd-s7);
       display: flex;
       gap: 32px;
 
@@ -502,7 +505,7 @@ onMounted(() => {
               transform: translateY(-2px);
 
               .stat-value {
-                color: #667eea;
+                color: var(--wd-brand);
               }
             }
 
@@ -535,7 +538,7 @@ onMounted(() => {
     gap: 48px;
     padding: 0 32px 16px;
     background: #fff;
-    border-radius: 12px;
+    border-radius: var(--wd-r-md);
     margin-bottom: 24px;
 
     .profile-tab {
@@ -555,11 +558,11 @@ onMounted(() => {
       }
 
       &:hover {
-        color: #667eea;
+        color: var(--wd-brand);
       }
 
       &.active {
-        color: #667eea;
+        color: var(--wd-brand);
         font-weight: 600;
 
         &::after {
@@ -569,7 +572,7 @@ onMounted(() => {
           left: 0;
           right: 0;
           height: 2px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(140deg, var(--wd-brand-400), var(--wd-brand-600));
           border-radius: 1px;
         }
       }
@@ -698,7 +701,7 @@ onMounted(() => {
         cursor: pointer;
 
         &:hover .follow-user-name {
-          color: #667eea;
+          color: var(--wd-brand);
         }
 
         .follow-user-info {
