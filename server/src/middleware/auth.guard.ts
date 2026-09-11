@@ -15,7 +15,10 @@ import { CurrentUser } from '../common/decorators';
  *  - /api/auth/*                公开（登录/注册/profile）
  *  - /api/admin/*               仅 admin
  *  - /api/(clothing|food|hotel|travel|community)/admin/*  仅 admin（运营域管理员接口）
- *  - /api/(clothing|food|hotel|travel)/*       商家本人 + admin（商家业务）
+ *  - /api/merchant/*            要求登录（商家角色由 controller 内 mustMerchant 精确校验）
+ *  - /api/home、/api/ai/*       公开浏览
+ *  - /api/(clothing|food|hotel|travel|community|search)/* 的 GET  公开浏览（游客可看列表/详情）
+ *  - /api/travel/* 的非 GET     仅商家/管理员（写操作）
  *  - 其它 /api/*                要求登录即可
  *
  * 商家类型的精确校验（merchantType 与商家自身匹配）由 controller 内调 mustMerchant() 完成。
@@ -74,9 +77,30 @@ export class AuthGuard implements IMiddleware<Context, NextFunction> {
         return;
       }
 
-      // 商家业务接口：商家本人或平台管理员可访问
-      const merchantBizMatch = path.match(/^\/api\/(clothing|food|hotel|travel)\//);
-      if (merchantBizMatch) {
+      // 商家管理接口（商家中心，角色由 controller 内 mustMerchant 精确校验）
+      if (path.startsWith('/api/merchant/')) {
+        this.requireUser(ctx);
+        await next();
+        return;
+      }
+
+      // 游客可浏览的公开接口：
+      //  - 首页 / AI 客服：全部放行
+      //  - 衣食住行/社区/搜索：GET 放行（列表、详情浏览）
+      //  - 例外：/api/travel/my-etickets 是个人数据，必须登录
+      const publicBrowse =
+        /^\/api\/home(\/|$)/.test(path) ||
+        /^\/api\/ai(\/|$)/.test(path) ||
+        (/^\/api\/(clothing|food|hotel|travel|community|search)\//.test(path) &&
+          ctx.method === 'GET' &&
+          !path.startsWith('/api/travel/my-etickets'));
+      if (publicBrowse) {
+        await next();
+        return;
+      }
+
+      // 商家写接口：travel 模块的非 GET（create/update/delete 等）仅商家/管理员
+      if (/^\/api\/travel\//.test(path) && ctx.method !== 'GET') {
         this.requireUser(ctx);
         const user = ctx.currentUser as CurrentUser;
         if (!['merchant', 'admin'].includes(user.role)) {
@@ -86,7 +110,7 @@ export class AuthGuard implements IMiddleware<Context, NextFunction> {
         return;
       }
 
-      // 其它 /api/*（如上传、社区用户接口）要求登录
+      // 其它 /api/*（下单、收藏、评价、上传、个人数据等）要求登录
       this.requireUser(ctx);
 
       await next();
